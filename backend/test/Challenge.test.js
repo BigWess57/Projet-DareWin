@@ -375,6 +375,56 @@ describe("tests Challenge contract", function () {
 
     });
 
+    ///Automated Vote Ending (chainlink automation)
+    // describe("Automated vote ending with chainlink", function() {
+    //     let challenge;
+    //     let signers;
+    //     let bid;
+    //     let token;
+    //     beforeEach(async function () {
+    //         ({challenge, signers, bid, token} = await loadFixture(VotingForWinnerFixture));
+    //     });
+
+    //     it("should end the vote 'Automatically', after everyone has voted", async function() {
+
+    //         await challenge.voteForWinner(signers[1].address)
+    //         await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
+    //         await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+    //         await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+    //         await challenge.connect(signers[4]).voteForWinner(signers[2].address)
+
+    //         // Vérifier que checkUpkeep renvoie true
+    //         const [upkeepNeeded] = await challenge.checkUpkeep("0x");
+    //         expect(upkeepNeeded).to.be.true;
+    //         // Simuler l'appel performUpkeep (manuellement ou via impersonation)
+    //         await challenge.performUpkeep("0x");
+    //         // Vérifier que le statut a changé
+    //         expect(await challenge.currentStatus()).to.equal(ChallengeStatus.ChallengeWon);
+    //     })
+
+    //     it("should end the vote 'Automatically', after voting time has passed", async function() {
+
+    //         await challenge.voteForWinner(signers[1].address)
+    //         await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
+    //         await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+    //         await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+
+    //         //Pass enough time
+    //         await time.increase(votingDelay);
+
+    //         // Vérifier que checkUpkeep renvoie true
+    //         const [upkeepNeeded] = await challenge.checkUpkeep("0x");
+    //         expect(upkeepNeeded).to.be.true;
+    //         // Simuler l'appel performUpkeep (manuellement ou via impersonation)
+    //         await challenge.performUpkeep("0x");
+    //         // Vérifier que le statut a changé
+    //         expect(await challenge.currentStatus()).to.equal(ChallengeStatus.ChallengeWon);
+    //     })
+        
+    // })
+
+
+
 //Ending vote
     describe('challenge won state', function() { 
         let challenge;

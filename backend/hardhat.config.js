@@ -8,12 +8,15 @@ const ALCHEMY_MAINNET_RPC = process.env.ALCHEMY_MAINNET || ''
 module.exports = {
   solidity: {
     version: "0.8.28",
-    // settings: {
-    //   optimizer: {
-    //     enabled: true,
-    //     runs: 200
+    // compilers: [
+    //   {
+    //     version: "0.8.28",
+    //     settings: {
+    //       optimizer: { enabled: true, runs: 200 },
+    //       evmVersion: "paris"   // IMPORTANT : évite le PUSH0
+    //     }
     //   }
-    // }
+    // ]
   },
   gasReporter: {
     enabled: false
@@ -24,7 +27,7 @@ module.exports = {
   //     forking: {
   //       enabled: true,
   //       url: ALCHEMY_MAINNET_RPC,
-  //       blockNumber: 22876685
+  //       blockNumber: 22889343
   //     }
   //   }
   // }

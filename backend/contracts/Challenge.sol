@@ -7,9 +7,11 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+// import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
+
 import "./DareWinTokenERC20.sol";
 
-contract Challenge is Ownable{
+contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
 
     // Énumération qui définit tous les états possibles du processus de défi
     enum ChallengeStatus {
@@ -212,7 +214,7 @@ contract Challenge is Ownable{
         }
     }
 
-    function endWinnerVote() external /*onlyOwner*/ isCorrectState(ChallengeStatus.VotingForWinner) {
+    function endWinnerVote() public isCorrectState(ChallengeStatus.VotingForWinner) {
         require(currentPlayerNumber==0 || (voteForWinnerStarted + minimumDelayBeforeEndingVote <= block.timestamp), "Not all player have voted for a winner yet (and minimum delay has not passed)");
         uint winnerCount = challengeWinners.length;
         require(winnerCount > 0, "Winner not set");
@@ -254,5 +256,27 @@ contract Challenge is Ownable{
 
         currentStatus = ChallengeStatus.ChallengeWon;
     }
+
+
+    ///Chainlink automation functions
+    // function checkUpkeep(bytes calldata)
+    //     external
+    //     view
+    //     override
+    //     returns (bool upkeepNeeded, bytes memory)
+    // {
+    //     upkeepNeeded = (
+    //       currentStatus == ChallengeStatus.VotingForWinner && 
+    //       (currentPlayerNumber == 0 || (voteForWinnerStarted + minimumDelayBeforeEndingVote <= block.timestamp))
+    //     );
+    // }
+
+    // function performUpkeep(bytes calldata) external override {
+    //     require(
+    //       currentPlayerNumber == 0 || (voteForWinnerStarted + minimumDelayBeforeEndingVote <= block.timestamp),
+    //       "Upkeep conditions not met"
+    //     );
+    //     endWinnerVote(); // ta logique de clôture
+    // }
 
 }
