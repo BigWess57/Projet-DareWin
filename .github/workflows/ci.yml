@@ -3,6 +3,8 @@ name: Test Unitaires
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**' # trigger only when backend files change
 
 jobs:
   tests:
