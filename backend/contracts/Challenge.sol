@@ -36,13 +36,13 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
         uint voteCount;
     }
 
-    uint256 private duration;
-    uint256 private maxPlayers;
-    uint256 private bid;
+    uint256 public duration;
+    uint256 public maxPlayers;
+    uint256 public bid;
     string public description;
     bool private groupMode;
 
-    DareWin public dareWinToken;
+    DareWin private dareWinToken;
 
     address private feeReceiver;
 
