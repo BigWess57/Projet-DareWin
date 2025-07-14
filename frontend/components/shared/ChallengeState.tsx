@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { parseAbiItem } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { DurationContext } from "./Challenge";
+import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 
 
 export const RefreshDisplayContext = createContext<(() => Promise<void>)>(async () => {});
@@ -70,7 +71,6 @@ const ChallengeState = () => {
             // jusqu'au dernier
             toBlock: 'latest'
         })
-        // console.log(Logs)
         
         if (Logs.length === 0) {
             console.error("Could not get the start of the challenge")
@@ -152,8 +152,7 @@ const ChallengeState = () => {
 
             {currentDisplayStatus === WorkflowStatus.VotingForWinner && (
                 <>
-                    <p>🗳️ Time to vote for the winner!</p>
-                    <Button>Vote</Button>
+                    <VotingForWinner/>
                 </>
             )}
 

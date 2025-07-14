@@ -15,10 +15,7 @@ export function ChallengeTimer({
     const dur = Number(duration)
 
     const calculateTimeLeft = () => {
-        console.log(start)
-        console.log(dur)
         const now = Math.floor(Date.now() / 1000)
-        console.log(now)
         return Math.max(start + dur - now, 0)
     }
 

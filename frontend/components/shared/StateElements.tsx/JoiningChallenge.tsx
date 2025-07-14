@@ -155,8 +155,8 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         <div>
             <div className="flex-between">
                 <p>🚀 Waiting for players to join...</p>
-                {challengeOwner === address && events.length >= 2 &&
-                    <Button onClick={startChallenge}>Start Challenge</Button>
+                {challengeOwner === address &&
+                    <Button disabled={events.length < 2} onClick={startChallenge}>Start Challenge</Button>
                 }
                 
             </div>
