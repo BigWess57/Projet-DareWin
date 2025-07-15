@@ -14,6 +14,7 @@ import { parseAbiItem } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { DurationContext } from "./Challenge";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
+import ChallengeWon from "./StateElements.tsx/ChallengeWon";
 
 
 export const RefreshDisplayContext = createContext<(() => Promise<void>)>(async () => {});
@@ -152,15 +153,12 @@ const ChallengeState = () => {
 
             {currentDisplayStatus === WorkflowStatus.VotingForWinner && (
                 <>
-                    <VotingForWinner/>
+                    <VotingForWinner refetchStatus={refetchStatus}/>
                 </>
             )}
 
             {currentDisplayStatus === WorkflowStatus.ChallengeWon && (
-                <>
-                    <p>🎉 The vote has concluded. A winner has been declared!</p>
-                    <div>Winner : Shiggy!!</div>
-                </>
+                <ChallengeWon></ChallengeWon>
             )}
             {/* Fallback if none of the above matched */}
             {!IsPending &&
