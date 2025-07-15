@@ -12,8 +12,10 @@ import { ChallengeTimer } from './ChallengeTimer'
 
 const OngoingChallenge = ({
   challengeStart,
+  refreshDisplay,
 } : {
   challengeStart : bigint,
+  refreshDisplay : () => Promise<void>,
 }) => {
 
   const duration = useContext(DurationContext)
@@ -62,6 +64,7 @@ const OngoingChallenge = ({
             <ChallengeTimer
               startingTime={challengeStart}
               duration={duration}
+              refreshDisplay={refreshDisplay}
             />
           </div>
         </div>

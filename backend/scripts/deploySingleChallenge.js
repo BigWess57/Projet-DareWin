@@ -22,7 +22,7 @@ async function main() {
     }
 
     //Challenge
-    const duration = 10n;
+    const duration = 1n;
     const maxPlayers = 5n;
     const bid = ethers.parseUnits("1000", await DareWinToken.decimals());
     const description = "test";

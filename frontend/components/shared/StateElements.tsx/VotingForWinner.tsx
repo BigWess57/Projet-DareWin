@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { contractAbi, contractAddress, fromBlock } from '@/constants/ChallengeInfo'
@@ -7,11 +7,12 @@ import { publicClient } from '@/utils/client'
 import Event from "../Event";
 
 import { Address, isAddressEqual, parseAbiItem, ReadContractErrorType } from 'viem'
-import { useAccount, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
+import { useAccount, useReadContract, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
-import { isDataView } from 'util/types';
 import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
+
+import { ChallengeTimer } from './ChallengeTimer';
 
 const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
 
@@ -19,22 +20,34 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
     
 /*********** Variables ************ */
-const [selectedPlayer, setSelectedPlayer] = useState<Address | null>(null)
+    const [selectedPlayer, setSelectedPlayer] = useState<Address | null>(null)
 
-const [players, setPlayers] = useState<(Address | undefined)[]>([]);
-const [playersVoted, setPlayersVoted] = useState<(Address | undefined)[]>([]);
+    const [players, setPlayers] = useState<(Address | undefined)[]>([]);
+    const [playersVoted, setPlayersVoted] = useState<(Address | undefined)[]>([]);
 
-//Current user a player 
-const [isPlayer, setIsPlayer] = useState<boolean>(false);
-//Current user voted?
-const [hasVoted, setHasVoted] = useState<boolean>(false);
-//has everyone voted?
-const [hasEveryoneVoted, setHasEveryoneVoted] = useState<boolean>(false);
+    //Current user a player 
+    const [isPlayer, setIsPlayer] = useState<boolean>(false);
+    //Current user voted?
+    const [hasVoted, setHasVoted] = useState<boolean>(false);
+    //has everyone voted?
+    const [hasEveryoneVoted, setHasEveryoneVoted] = useState<boolean>(false);
 
+    //Has voting duration ended?
+    const [votingDurationEnded, setVotingDurationEnded] = useState<boolean>(false);
 
 /***************** 
  * Functions for interaction with the blokchain 
  * **************/   
+
+    // Used to read the contract (voting delay)
+    const { data: durationVote, error: error, isPending: IsPending, refetch: refetchVotingDuration } = useReadContract({
+        address: contractAddress,
+        abi: contractAbi,
+        functionName: 'minimumDelayBeforeEndingVote',
+        account: address as `0x${string}` | undefined,
+    })
+
+
 
     ////// Vote transaction hooks //////
     const { data: voteHash, isPending: isVoting, writeContract: voteContract, } = useWriteContract({
@@ -89,7 +102,7 @@ const [hasEveryoneVoted, setHasEveryoneVoted] = useState<boolean>(false);
             // jusqu'au dernier
             toBlock: 'latest' // Pas besoin valeur par défaut
         })
-        console.log(Logs)
+        console.log("players : ",Logs)
 
         const players = Logs.map(
             log => (log.args.player)
@@ -198,14 +211,52 @@ const [hasEveryoneVoted, setHasEveryoneVoted] = useState<boolean>(false);
         },
     })
 
+    ///
+    //Get the challenge start event
+    const [votingStarted, setVotingStarted] = useState<bigint>(0n);
+
+    const getChallengeEndedEvents = async() => {
+
+        const Logs = await publicClient.getLogs({
+            address: contractAddress,
+            event: parseAbiItem("event ChallengeEnded(uint256 endTime)"),
+            // du premier bloc
+            fromBlock: BigInt(fromBlock),
+            // jusqu'au dernier
+            toBlock: 'latest'
+        })
+        console.log("chellenge end events : ", Logs)
+        if (Logs.length === 0) {
+            // console.error("Could not get the end of the challenge")
+            // toast.error("Error : Could not get the end of the challenge", {
+            //     duration: 3000,
+            // });
+            setVotingStarted(0n);
+            return 0n;
+        }else{
+            const startingTime = Logs[0].args.endTime || 0n;
+            setVotingStarted(startingTime)
+            console.log("setting start time :", startingTime)
+            return startingTime;
+        }
+    }
     
+
+
+
+/****** Other functions ******* */
+    const endVoteTimerDisplay = async () => {
+        setVotingDurationEnded(true);
+    }
 
 /******* Use effect ***** */
 
-useEffect(() => {
+    useEffect(() => {
         getPlayersEvents().then((playersArray) => {
             getPlayersVotedEvents(playersArray);
         });
+        getChallengeEndedEvents();
+        refetchVotingDuration()
     }, [address])
 
 
@@ -214,7 +265,8 @@ useEffect(() => {
     useEffect(() => {
         if(voteSuccess) {
             getPlayersVotedEvents(players);
-            toast.success("Success", {
+            getChallengeEndedEvents();
+            toast.success("Success!", {
                 description: "You have successfully voted",
             })
         }
@@ -229,8 +281,8 @@ useEffect(() => {
     useEffect(() => {
         if(voteEndSuccess) {
             refetchStatus()
-            toast.success("Success", {
-                description: "You have successfully voted",
+            toast.success("Success!", {
+                description: "Winner revealed!",
             })
         }
         if(voteEndReceiptError) {
@@ -253,12 +305,44 @@ useEffect(() => {
                 </div>
             ) : (
                 <div>
-                    <p>🗳️ Time to vote for the winner!</p>
-                    <Button disabled={!selectedPlayer || hasVoted || !isPlayer} onClick={voteForWinner}>
-                        {hasVoted && <div>You have already voted</div>}
-                        {!isPlayer && <div>You are not a player</div>}
-                        {!hasVoted && isPlayer && <div>Vote</div>}
-                    </Button>
+                    <div className='flex-between'>
+                        <div>
+                            <p className='mb-3'>🗳️ Time to vote for the winner!</p>
+                            <Button disabled={!selectedPlayer || hasVoted || !isPlayer} onClick={voteForWinner}>
+                                {hasVoted && <div>You have already voted</div>}
+                                {!isPlayer && <div>You are not a player</div>}
+                                {!hasVoted && isPlayer && <div>Vote</div>}
+                            </Button>
+                        </div>
+
+                        {playersVoted.length > 0 ? 
+                            (<div>
+                                {!votingDurationEnded ? 
+                                    (votingStarted > 0n ? (
+                                        <div>
+                                            <div className="mb-2">Time remaining for vote :</div>
+                                            <ChallengeTimer
+                                                startingTime={votingStarted}
+                                                duration={durationVote as bigint}
+                                                refreshDisplay={endVoteTimerDisplay}
+                                            />
+                                        </div>
+                                        ) : (
+                                            <div>Initializing timer…</div>
+                                        )
+                                    ) : (
+                                    <div>
+                                        <div>Vote ended (You can still vote if you didn't do it!)</div>
+                                        <Button onClick={endWinnerVote}>Reveal Winner(s)</Button>
+                                    </div>)
+                                }
+                            </div>)
+                            : 
+                            (<div>
+                                <div className='text-xl'>Waiting for the first player to vote...</div>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="p-10">
                         <div>Players :</div>

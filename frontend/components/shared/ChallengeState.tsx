@@ -17,7 +17,7 @@ import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
 
 
-export const RefreshDisplayContext = createContext<(() => Promise<void>)>(async () => {});
+// export const RefreshDisplayContext = createContext<(() => Promise<void>)>(async () => {});
 
 
 //State Enum
@@ -146,9 +146,9 @@ const ChallengeState = () => {
             )}
 
             {currentDisplayStatus === WorkflowStatus.OngoingChallenge && (
-                <RefreshDisplayContext value={refreshDisplayStatus} >
-                    <OngoingChallenge challengeStart={challengeStart} />
-                </RefreshDisplayContext>
+                // <RefreshDisplayContext value={refreshDisplayStatus} >
+                    <OngoingChallenge challengeStart={challengeStart} refreshDisplay={refreshDisplayStatus} />
+                // </RefreshDisplayContext>
             )}
 
             {currentDisplayStatus === WorkflowStatus.VotingForWinner && (

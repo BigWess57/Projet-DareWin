@@ -1,22 +1,24 @@
 import { useState, useEffect, useContext } from 'react'
-import { RefreshDisplayContext } from '../ChallengeState';
+// import { RefreshDisplayContext } from '../ChallengeState';
 
 export function ChallengeTimer({
   startingTime,
   duration,
+  refreshDisplay = async () => {},
 }: {
   startingTime: bigint
   duration: bigint
+  refreshDisplay?: () => Promise<void>
 }) {
 
-    const refreshDisplay = useContext(RefreshDisplayContext);
+    // const refreshDisplay = useContext(RefreshDisplayContext);
 
     const start = Number(startingTime)
     const dur = Number(duration)
 
     const calculateTimeLeft = () => {
         const now = Math.floor(Date.now() / 1000)
-        return Math.max(start + dur - now, 0)
+        return Math.max(start + 35 - now, 0)
     }
 
     const [timeLeft, setTimeLeft] = useState<number>(calculateTimeLeft)
@@ -24,7 +26,7 @@ export function ChallengeTimer({
     useEffect(() => {
         const interval = setInterval(() => {
             const amountTimeLeft = calculateTimeLeft()
-            //If time left is 0, refresh the state display (go to voting)
+            //If time left is 0, refresh the state display (go to voting/challengeWon)
             if(amountTimeLeft == 0){
                 refreshDisplay()
             }

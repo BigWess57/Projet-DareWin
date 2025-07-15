@@ -50,7 +50,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
 
     uint256 private challengeStartTimestamp;
     uint256 private voteForWinnerStarted;
-    uint256 private minimumDelayBeforeEndingVote = 1 hours;
+    uint256 public minimumDelayBeforeEndingVote = 1 hours;
 
     ChallengeStatus public currentStatus;
 
