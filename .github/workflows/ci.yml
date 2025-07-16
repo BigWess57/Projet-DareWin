@@ -5,7 +5,8 @@ on:
     branches: [main]
     paths:
       - 'backend/**' # trigger only when backend files change
-
+  workflow_dispatch:
+  
 jobs:
   tests:
     name: Smart Contract Tests
