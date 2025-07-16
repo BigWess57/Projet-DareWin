@@ -1,7 +1,6 @@
 'use client'
 
-import ChallengePage from "@/components/shared/ChallengePage";
-import { NotConnected } from "@/components/shared/NotConnected";
+import { NotConnected } from "@/components/shared/Miscellaneous/NotConnected";
 
 import { useAccount } from "wagmi";
 
@@ -13,7 +12,7 @@ export default function Home() {
   return (
     <div>
       {isConnected ? (
-        <ChallengePage/>
+        <div>HOME</div>
       ) : (
         <NotConnected/>
       )}

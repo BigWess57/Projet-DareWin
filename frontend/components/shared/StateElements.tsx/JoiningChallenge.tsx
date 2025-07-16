@@ -8,11 +8,11 @@ import { useAccount, useReadContract, useSimulateContract, useWaitForTransaction
 
 import { contractAbi, contractAddress, fromBlock } from "@/constants/ChallengeInfo"
 import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
-import Event from "../Event";
+import Event from "../Miscellaneous/Event";
 
 import { publicClient } from '@/utils/client';
 
-import CurrentTransaction from "../CurrentTransaction";
+import CurrentTransaction from "../Miscellaneous/CurrentTransaction";
 import { BidContext } from "../Challenge";
 import { ReadContractErrorType, waitForTransactionReceipt, writeContract } from "wagmi/actions";
 import { config } from "@/app/RainbowKitAndWagmiProvider";

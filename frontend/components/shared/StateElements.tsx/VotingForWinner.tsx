@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { contractAbi, contractAddress, fromBlock } from '@/constants/ChallengeInfo'
 import { publicClient } from '@/utils/client'
 
-import Event from "../Event";
+import Event from "../Miscellaneous/Event";
 
 import { Address, isAddressEqual, parseAbiItem, ReadContractErrorType } from 'viem'
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
