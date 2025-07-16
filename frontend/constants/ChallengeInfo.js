@@ -154,6 +154,12 @@ export const contractAbi=[
           "internalType": "address",
           "name": "winnerAddress",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "prizeShare",
+          "type": "uint256"
         }
       ],
       "name": "PrizeSent",

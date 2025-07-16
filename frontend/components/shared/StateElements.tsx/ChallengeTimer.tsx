@@ -18,7 +18,7 @@ export function ChallengeTimer({
 
     const calculateTimeLeft = () => {
         const now = Math.floor(Date.now() / 1000)
-        return Math.max(start + 35 - now, 0)
+        return Math.max(start + dur - now, 0)
     }
 
     const [timeLeft, setTimeLeft] = useState<number>(calculateTimeLeft)

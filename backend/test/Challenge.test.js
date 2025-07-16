@@ -558,22 +558,6 @@ describe("tests Challenge contract", function () {
                challenge.connect(signers[1]).startChallenge()
             ).to.be.revertedWithCustomError(challenge, "OwnableUnauthorizedAccount").withArgs(signers[1].address);
         })
-
-        // it('should not allow not admin player to go to VotingForWinner state', async function() {
-        //     const {challenge, signers} = await loadFixture(OngoingChallengeFixture);
-
-        //     await expect(
-        //        challenge.connect(signers[1]).goToVoting()
-        //     ).to.be.revertedWithCustomError(challenge, "OwnableUnauthorizedAccount").withArgs(signers[1].address);
-        // })
-
-        // it('should not allow not admin player to go to ChallengeWon state', async function() {
-        //     const {challenge, signers} = await loadFixture(EndingVoteFixture);
-
-        //     await expect(
-        //        challenge.connect(signers[1]).endWinnerVote()
-        //     ).to.be.revertedWithCustomError(challenge, "OwnableUnauthorizedAccount").withArgs(signers[1].address);
-        // })
     })
 
 
@@ -736,28 +720,30 @@ describe("tests Challenge contract", function () {
                 .withArgs(signers[0].address, signers[1].address)
         })
 
-        it("should emit an event when VoteEnded", async function() {
-            const {challenge, signers} = await loadFixture(VotingForWinnerFixture)
+        // it("should emit an event when VoteEnded", async function() {
+        //     const {challenge, signers} = await loadFixture(VotingForWinnerFixture)
 
-            await challenge.voteForWinner(signers[1].address)
-            await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
-            await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
-            await challenge.connect(signers[3]).voteForWinner(signers[2].address) 
-            await challenge.connect(signers[4]).voteForWinner(signers[4].address)
+        //     await challenge.voteForWinner(signers[1].address)
+        //     await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
+        //     await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+        //     await challenge.connect(signers[3]).voteForWinner(signers[2].address) 
+        //     await challenge.connect(signers[4]).voteForWinner(signers[4].address)
 
-            const winnersArray = [signers[1].address, signers[2].address];
+        //     const winnersArray = [signers[1].address, signers[2].address];
 
-            await expect(challenge.endWinnerVote())
-                .to.emit(challenge, "VoteEnded")
-                .withArgs(winnersArray)
-        })
+        //     await expect(challenge.endWinnerVote())
+        //         .to.emit(challenge, "VoteEnded")
+        //         .withArgs(winnersArray)
+        // })
 
         it("should emit an event when a prize is sent", async function() {
-            const {challenge, signers} = await loadFixture(EndingVoteFixture)
+            const {challenge, signers, bid} = await loadFixture(EndingVoteFixture)
             
+            const expectedPrize = bid*5n - 5n*bid*BigInt(totalFee*1000)/1000n;
+
             await expect(await challenge.endWinnerVote())
                 .to.emit(challenge, "PrizeSent")
-                .withArgs(signers[1].address)
+                .withArgs(signers[1].address, expectedPrize)
         })
     })
 

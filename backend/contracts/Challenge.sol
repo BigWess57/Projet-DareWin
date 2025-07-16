@@ -83,7 +83,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     event ChallengeEnded(uint256 endTime);
     event PlayerVoted(address voter, address votedFor);
     event VoteEnded(address[] challengeWinners);
-    event PrizeSent(address winnerAddress);
+    event PrizeSent(address winnerAddress, uint256 prizeShare);
 
 
     constructor(DareWin _tokenAddress, uint256 _duration, uint256 _maxPlayers, uint256 _bid, string memory _description, address _feeReceiver, bool _groupMode, address[] memory _group) Ownable(msg.sender) {
@@ -238,7 +238,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
                 dareWinToken.transfer(winner, share),
                 "Token transfer failed"
             );
-            emit PrizeSent(winner);
+            emit PrizeSent(winner, share);
         }
 
         // Send half of balance remaining (fee) to team
@@ -251,7 +251,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
         dareWinToken.burn(dareWinToken.balanceOf(address(this)));
 
 
-        emit VoteEnded(challengeWinners);
+        // emit VoteEnded(challengeWinners);
          
 
         currentStatus = ChallengeStatus.ChallengeWon;
