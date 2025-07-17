@@ -1,13 +1,16 @@
-import { contractAddress, fromBlock } from '@/constants/ChallengeInfo'
+import { fromBlock } from '@/constants/ChallengeInfo'
 import { publicClient } from '@/utils/client'
 import { log } from 'console'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Address, formatEther, parseAbiItem, } from 'viem'
 import { useAccount } from 'wagmi'
+import { ContractAddressContext } from '../ChallengePage'
 
 const ChallengeWon = () => {
 
   const {address} = useAccount()
+
+  const contractAddress = useContext(ContractAddressContext)
 
   type Winner = {
     winnerAddress : Address,

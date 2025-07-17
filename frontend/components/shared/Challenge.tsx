@@ -1,11 +1,12 @@
 'use client'
-import { createContext, ReactNode, useEffect, useState } from "react"
+import { createContext, ReactNode, useContext, useEffect, useState } from "react"
 
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { Abi, Account, formatEther, numberToBytes } from "viem"
 
-import { contractAddress, contractAbi } from "@/constants/ChallengeInfo"
+import { contractAbi } from "@/constants/ChallengeInfo"
 import ChallengeState from "./ChallengeState"
+import { ContractAddressContext } from "./ChallengePage"
 
 
 export const BidContext = createContext<bigint>(0n);
@@ -19,6 +20,7 @@ const Challenge = () => {
  * Functions for interaction with the blokchain 
  * **************/
 
+  const contractAddress = useContext(ContractAddressContext)
   const {address} = useAccount()
 
   // Used to read the contract current state

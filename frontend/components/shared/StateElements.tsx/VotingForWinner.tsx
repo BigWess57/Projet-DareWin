@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { contractAbi, contractAddress, fromBlock } from '@/constants/ChallengeInfo'
+import { contractAbi, fromBlock } from '@/constants/ChallengeInfo'
 import { publicClient } from '@/utils/client'
 
 import Event from "../Miscellaneous/Event";
@@ -13,11 +13,13 @@ import { toast } from 'sonner';
 import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
 
 import { ChallengeTimer } from './ChallengeTimer';
+import { ContractAddressContext } from '../ChallengePage';
 
 const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
 
     const {address} = useAccount()
 
+    const contractAddress = useContext(ContractAddressContext)
     
 /*********** Variables ************ */
     const [selectedPlayer, setSelectedPlayer] = useState<Address | null>(null)
@@ -73,6 +75,12 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
 
     const voteForWinner = () => {
+        if(selectedPlayer == null){
+            toast.error("Error : No selected player", {
+                duration: 3000,
+            });
+            return
+        }
         voteContract({
             address: contractAddress,
             abi: contractAbi,

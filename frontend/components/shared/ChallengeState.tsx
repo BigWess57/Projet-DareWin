@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useContext, useEffect, useState } from "react";
 
-import { contractAbi, contractAddress, fromBlock } from "@/constants/ChallengeInfo"
+import { contractAbi, fromBlock } from "@/constants/ChallengeInfo"
 import { publicClient } from "@/utils/client";
 
 import JoiningChallenge from "./StateElements.tsx/JoiningChallenge";
@@ -15,6 +15,7 @@ import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { DurationContext } from "./Challenge";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
+import { ContractAddressContext } from "./ChallengePage";
 
 
 // export const RefreshDisplayContext = createContext<(() => Promise<void>)>(async () => {});
@@ -44,7 +45,7 @@ const ChallengeState = () => {
  * *************/
     // const [description, setDescription] = useState<string>("");    
     const duration = useContext(DurationContext)
-
+    const contractAddress = useContext(ContractAddressContext)
 
 /***************** 
  * Functions for interaction with the blokchain 

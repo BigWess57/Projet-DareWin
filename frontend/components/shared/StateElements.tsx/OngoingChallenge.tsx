@@ -1,13 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext } from 'react'
 
-import { useAccount, useReadContract } from 'wagmi'
+import { useAccount } from 'wagmi'
 
 import { DurationContext } from '../Challenge'
-import { tokenAbi, tokenAddress } from '@/constants/TokenInfo'
-import { parseAbiItem } from 'viem'
-import { contractAddress, fromBlock } from '@/constants/ChallengeInfo'
-import { publicClient } from '@/utils/client'
-import { toast } from 'sonner'
 import { ChallengeTimer } from './ChallengeTimer'
 
 const OngoingChallenge = ({

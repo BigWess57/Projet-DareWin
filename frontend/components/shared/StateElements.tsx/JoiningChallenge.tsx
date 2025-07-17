@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { Abi, Address, parseAbiItem } from "viem"
 import { useAccount, useReadContract, useSimulateContract, useWaitForTransactionReceipt, useWriteContract, WagmiConfig } from "wagmi"
 
-import { contractAbi, contractAddress, fromBlock } from "@/constants/ChallengeInfo"
+import { contractAbi, fromBlock } from "@/constants/ChallengeInfo"
 import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
 import Event from "../Miscellaneous/Event";
 
@@ -17,11 +17,13 @@ import { BidContext } from "../Challenge";
 import { ReadContractErrorType, waitForTransactionReceipt, writeContract } from "wagmi/actions";
 import { config } from "@/app/RainbowKitAndWagmiProvider";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
+import { ContractAddressContext } from "../ChallengePage";
 
 
 const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
 
     const bid = useContext(BidContext)
+    const contractAddress = useContext(ContractAddressContext)
 
     const {address} = useAccount()
 

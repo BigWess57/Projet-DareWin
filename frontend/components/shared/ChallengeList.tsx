@@ -9,6 +9,7 @@ import { contractAbi, fromBlock } from '@/constants/ChallengeInfo';
 import { readContracts } from 'wagmi/actions';
 import { config } from '@/app/RainbowKitAndWagmiProvider';
 import ChallengePreview from './ChallengePreview';
+import { useRouter } from 'next/navigation';
 
 
 export type Challenge = {
@@ -24,6 +25,7 @@ const ChallengeList = () => {
 
     const {address} = useAccount()
 
+    const router = useRouter()
 
     //Get challenges created and display them
     const [challengesCreated, setChallengesCreated] = useState<(Challenge)[]>([])
@@ -166,9 +168,13 @@ const ChallengeList = () => {
 
         setChallengesJoined(challengesJoinedInfo)
         console.log("Stored Joined challenges :", challengesJoinedInfo)
-        
     }
     
+    
+    function handleChallengeClick(challengeAddress: Address) {
+        router.push(`/mychallenges/${challengeAddress}`);
+        console.log("Clicked challenge:", challengeAddress);
+    }
 
 
     useEffect(() => {
@@ -184,7 +190,13 @@ const ChallengeList = () => {
                         (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {challengesCreated.map((challenge) => 
                                 // <div key={crypto.randomUUID()}>{challenge.contractAddress.toString()}</div>
-                                <ChallengePreview key={crypto.randomUUID()} challenge={challenge} />
+                                <div 
+                                    key={challenge.contractAddress}
+                                    className='transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer'
+                                    onClick={() => handleChallengeClick(challenge.contractAddress)}
+                                >
+                                    <ChallengePreview challenge={challenge} />
+                                </div>
                             )}
                         </div>
                         ) : (
@@ -200,7 +212,14 @@ const ChallengeList = () => {
                         (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {challengesjoined.map((challenge) => 
                                 // <div key={crypto.randomUUID()}>{challenge.contractAddress.toString()}</div>
-                                <ChallengePreview key={crypto.randomUUID()} challenge={challenge} />
+                                <div 
+                                    key={challenge.contractAddress}
+                                    className='transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer'
+                                    onClick={() => handleChallengeClick(challenge.contractAddress)}
+                                >
+                                    <ChallengePreview challenge={challenge} />
+                                </div>
+                                
                             )}
                         </div>
                         ) : (

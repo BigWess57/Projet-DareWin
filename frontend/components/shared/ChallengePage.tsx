@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react'
+import React, { createContext, useEffect } from 'react'
 
 import Challenge from './Challenge'
 
 import { useAccount, useReadContract } from 'wagmi'
 import { tokenAbi, tokenAddress } from '@/constants/TokenInfo'
-import { formatEther } from 'viem'
+import { Address, formatEther } from 'viem'
 
 
-const ChallengePage = () => {
+export const ContractAddressContext = createContext<Address>("0x0000000000000000000000000000000000000000");
+
+const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
 
     const {address} = useAccount()
 
@@ -35,7 +37,9 @@ const ChallengePage = () => {
     return (
         <div>
             <div className='pb-5 flex justify-end'>DARE Balance : <span className='font-bold ml-1'>{displayBalance}</span></div>
-            <Challenge/>
+            <ContractAddressContext value={contractAddress}>
+                <Challenge/>
+            </ContractAddressContext>
         </div>
     )
 }
