@@ -9,7 +9,7 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
       
       {/* Full‑width header */}
       <div className="col-span-full">
-        <h2 className="text-2xl font-extrabold">
+        <h2 className="text-2xl font-extrabold truncate max-w-full">
           Challenge: {challenge.description}
         </h2>
       </div>
@@ -29,13 +29,29 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
       {/* Duration */}
       <div className="flex flex-col">
         <span className="text-sm text-gray-500">Duration</span>
-        <span className="font-medium">{challenge.duration}s</span>
+        <span className="font-medium">
+            {(() => {
+                const totalSeconds = Number(challenge.duration);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                return `${hours}h ${minutes}m ${seconds}s`;
+            })()}
+        </span>
       </div>
 
       {/* Max Players */}
       <div className="flex flex-col">
         <span className="text-sm text-gray-500">Max Players</span>
         <span className="font-medium">{challenge.maxPlayers}</span>
+      </div>
+
+      {/* Time of Creation */}
+      <div className="flex flex-col">
+        <span className="text-sm text-gray-500">Created on </span>
+        <span className="font-medium">
+            {new Date(Number(challenge.timestampOfCreation) * 1000).toLocaleString()}
+        </span>
       </div>
 
     </div>

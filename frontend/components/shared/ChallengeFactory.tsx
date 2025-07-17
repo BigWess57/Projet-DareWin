@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { useAccount, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
 
-import ChallengeForm from "./Miscellaneous/ChallengForm"
+import ChallengeForm, { ChallengeFormValues } from "./Miscellaneous/ChallengForm"
 import { factoryAbi, factoryAddress } from '@/constants/ChallengeFactoryInfo'
 
 import { toast } from 'sonner'
@@ -16,14 +16,7 @@ import { _toLowerCase } from 'zod/v4/core'
 
 
 
-export const formSchema = z.object({
-  duration: z.coerce.number().min(1),
-  maxPlayers: z.coerce.number().min(1),
-  bid: z.string().regex(/^\d+(\.\d+)?$/, 'Must be a valid number'),
-  description: z.string().min(3),
-})
 
-export type ChallengeFormValues = z.infer<typeof formSchema>
 
 
 const ChallengeFactory = () => {

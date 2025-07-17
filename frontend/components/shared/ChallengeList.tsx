@@ -19,6 +19,7 @@ export type Challenge = {
     duration : string,
     bid : string,
     maxPlayers : string,
+    timestampOfCreation : bigint
 }
 
 const ChallengeList = () => {
@@ -54,32 +55,35 @@ const ChallengeList = () => {
         //keep only the addresses of the ones created by current user
         const challengeCreatedAddresses = Logs
             .filter((log) => log.args?.admin && isAddressEqual(log.args?.admin, address))
-            .map((log) => log.args!.challengeAddress as Address)
+            .map((log) => ({
+                address: log.args!.challengeAddress as Address,
+                blockNumber: log.args!.blockNumber as bigint,
+            }))
 
 
         let challengesCreatedInfo: Challenge[] = [];
 
         //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
-        for(const challengeAddr of challengeCreatedAddresses){
+        for(const challenge of challengeCreatedAddresses){
             const result = await readContracts(config, {
                 contracts: [
                     {
-                        address: challengeAddr,
+                        address: challenge.address,
                         abi: contractAbi,
                         functionName: 'duration',
                     },
                     {
-                        address: challengeAddr,
+                        address: challenge.address,
                         abi: contractAbi,
                         functionName: 'bid',
                     },
                     {
-                        address: challengeAddr,
+                        address: challenge.address,
                         abi: contractAbi,
                         functionName: 'maxPlayers',
                     },
                     {
-                        address: challengeAddr,
+                        address: challenge.address,
                         abi: contractAbi,
                         functionName: 'description',
                     },
@@ -88,13 +92,15 @@ const ChallengeList = () => {
 
             const [duration, bid, maxPlayers, description] = result.map((r) => r.result!)
             
+
             challengesCreatedInfo.push({
                 creator: address,
-                contractAddress: challengeAddr,
+                contractAddress: challenge.address,
                 duration: duration as string,
                 bid: formatEther(bid as bigint),
                 maxPlayers: maxPlayers as string,
                 description: description as string,
+                timestampOfCreation: challenge.blockNumber
             })
         }
 
@@ -105,21 +111,24 @@ const ChallengeList = () => {
 
 
         //FOR CHALLENGES JOINED
-        const challengeAddresses = Logs
-            .map((log) => log.args!.challengeAddress as Address)
+        const challengeJoinedAddresses = Logs
+            .map((log) => ({
+                address: log.args!.challengeAddress as Address,
+                blockNumber: log.args!.blockNumber as bigint,
+            }))
 
         let challengesJoinedInfo: Challenge[] = [];
 
         //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
-        for(const challengeAddr of challengeAddresses){
+        for(const challenge of challengeJoinedAddresses){
 
             const joinedEvents = await publicClient.getLogs({
-                address: challengeAddr,
+                address: challenge.address,
                 event: parseAbiItem("event PlayerJoined(address player)"),
                 fromBlock: BigInt(fromBlock),
                 toBlock: 'latest'
             })
-            console.log("Players that joined challenge at " + challengeAddr + " :", joinedEvents)
+            console.log("Players that joined challenge at " + challenge.address + " :", joinedEvents)
 
             for(const log of joinedEvents){
                 if(log.args?.player !== address){
@@ -129,22 +138,22 @@ const ChallengeList = () => {
                 const result = await readContracts(config, {
                     contracts: [
                         {
-                            address: challengeAddr,
+                            address: challenge.address,
                             abi: contractAbi,
                             functionName: 'duration',
                         },
                         {
-                            address: challengeAddr,
+                            address: challenge.address,
                             abi: contractAbi,
                             functionName: 'bid',
                         },
                         {
-                            address: challengeAddr,
+                            address: challenge.address,
                             abi: contractAbi,
                             functionName: 'maxPlayers',
                         },
                         {
-                            address: challengeAddr,
+                            address: challenge.address,
                             abi: contractAbi,
                             functionName: 'description',
                         },
@@ -155,11 +164,12 @@ const ChallengeList = () => {
                 
                 challengesJoinedInfo.push({
                     creator: address,
-                    contractAddress: challengeAddr,
+                    contractAddress: challenge.address,
                     duration: duration as string,
                     bid: formatEther(bid as bigint),
                     maxPlayers: maxPlayers as string,
                     description: description as string,
+                    timestampOfCreation: challenge.blockNumber
                 })
 
             }
