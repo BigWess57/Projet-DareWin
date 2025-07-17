@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
-import { Abi, Address, parseAbiItem } from "viem"
+import { Abi, Address, isAddressEqual, parseAbiItem } from "viem"
 import { useAccount, useReadContract, useSimulateContract, useWaitForTransactionReceipt, useWriteContract, WagmiConfig } from "wagmi"
 
 import { contractAbi, fromBlock } from "@/constants/ChallengeInfo"
@@ -60,7 +60,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             // jusqu'au dernier
             toBlock: 'latest' // Pas besoin valeur par défaut
         })
-        console.log(Logs)
+        console.log("Player joined events :",Logs)
 
         setEvents(Logs.map(
             log => (log.args.player)
@@ -69,10 +69,17 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
 
     const refetchAll = async () => {
-        refetchAllowance()
-        getEvents()
-        refetchStatus()
-        refetchOwner()
+        await refetchAllowance()
+        await getEvents()
+        await refetchStatus()
+        refetchOwner().then(() => {
+            console.log("refreshing owner of challenge :", challengeOwner)
+            console.log('curretn user address :',address)
+            console.log("contract address :", contractAddress)
+            console.log('allowance :',allowance)
+        })
+        if(errorOwner) console.log("error owner :", errorOwner)
+        if(IsPendingOwner) console.log("is Pending owner :", IsPendingOwner)
     }
 
     const joinChallenge = async () => {
@@ -150,6 +157,9 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     }, [address])
 
 
+    useEffect(() => {
+        console.log("Challegne owner fetched!! :", challengeOwner);
+    }, [challengeOwner])
 /************
  * Display
  *************/
@@ -157,7 +167,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         <div>
             <div className="flex-between">
                 <p>🚀 Waiting for players to join...</p>
-                {challengeOwner === address &&
+                {challengeOwner && address && isAddressEqual(challengeOwner, address) &&
                     <Button disabled={events.length < 2} onClick={startChallenge}>Start Challenge</Button>
                 }
                 

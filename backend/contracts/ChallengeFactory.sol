@@ -33,7 +33,7 @@ contract ChallengeFactory {
     
 
     function createChallenge(uint duration, uint maxPlayers, uint bid, string memory description, bool _groupMode, address[] memory _group) external {
-        Challenge c = new Challenge(dareWinToken, duration, maxPlayers, bid, description, feeReceiver, _groupMode, _group);
+        Challenge c = new Challenge(msg.sender, dareWinToken, duration, maxPlayers, bid, description, feeReceiver, _groupMode, _group);
         emit ChallengeCreated(msg.sender, address(c), block.timestamp);
 
         // //Now register for chainlink automation

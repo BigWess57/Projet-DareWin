@@ -59,11 +59,11 @@ describe("tests Challenge contract", function () {
 
         let challenge;
         if(mode == "link"){
-            challenge = await Challenge.deploy(token.target, duration, maxPlayers, bid, description, signers[0].address, false, []);
+            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, []);
         }else if(mode == "group"){
             //array of players to store
             const players = [signers[0].address, signers[1].address, signers[2].address, signers[3].address, signers[4].address]
-            challenge = await Challenge.deploy(token.target, duration, maxPlayers, bid, description, signers[0].address, true, players);
+            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, players);
         }
         
 

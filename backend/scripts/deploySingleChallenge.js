@@ -28,7 +28,7 @@ async function main() {
     const description = "test";
 
     //Deploy a single challenge for now
-    const Challenge = await ethers.deployContract("Challenge", [DareWinToken.target, duration, maxPlayers, bid, description, signers[0].address, false, []]);
+    const Challenge = await ethers.deployContract("Challenge", [signers[0].address, DareWinToken.target, duration, maxPlayers, bid, description, signers[0].address, false, []]);
 
     await Challenge.deploymentTransaction()?.wait();
     console.log(`Challenge deployed to ${Challenge.target}`)

@@ -1,8 +1,13 @@
 // export const contractAddress="0xc6D0F551813f93E76c37C45fcAd48271b8EDa1AD";
-export const contractAddress="0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
+// export const contractAddress="0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
 export const contractAbi=[
     {
       "inputs": [
+        {
+          "internalType": "address",
+          "name": "initialOwner",
+          "type": "address"
+        },
         {
           "internalType": "contract DareWin",
           "name": "_tokenAddress",

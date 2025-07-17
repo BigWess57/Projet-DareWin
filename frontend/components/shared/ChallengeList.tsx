@@ -43,7 +43,7 @@ const ChallengeList = () => {
         })
         console.log("Challenge creation events :", Logs)
         if (Logs.length === 0) {
-            console.error("No challenge created have been found")
+            console.log("No challenge created have been found")
             return;
         }
 

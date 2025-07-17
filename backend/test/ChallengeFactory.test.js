@@ -97,20 +97,34 @@ describe("tests ChallengeFactory contract", function () {
         const Challenge = await ethers.getContractFactory("Challenge");
         const challenge = Challenge.attach(newContractAddress);
 
-        // 4. Verify initialization works (direct storage access)
-        const slot1 = await ethers.provider.getStorage(challenge.target, durationSlot);
-        const _duration = ethers.toBigInt(slot1);
-        const slot2 = await ethers.provider.getStorage(challenge.target, maxPlayersSlot);
-        const _maxPlayers = ethers.toBigInt(slot2);
-        const slot3 = await ethers.provider.getStorage(challenge.target, bidSlot);
-        const _bid = ethers.toBigInt(slot3);
-
+        // Verify initialisation
+        const _duration = await challenge.duration();
+        const _maxPlayers = await challenge.maxPlayers();
+        const _bid = await challenge.bid();
         const _description = await challenge.description();
 
         expect(_duration).to.equal(1000n);
         expect(_maxPlayers).to.equal(5n);
         expect(_bid).to.equal(bid);
         expect(_description).to.equal("test")
+
+    })
+
+    it('should set the caller of the function createChallenge as owner of the challenge', async function() {
+
+        // 2. Extract the address from the event
+        const filter = challengeFactory.filters.ChallengeCreated;
+        const events = await challengeFactory.queryFilter(filter, -1)
+        const event = events[0]
+        const newContractAddress = event.args.challengeAddress;
+
+        // 3. Attach to the deployed challenge
+        const Challenge = await ethers.getContractFactory("Challenge");
+        const challenge = Challenge.attach(newContractAddress);
+
+        const owner = await challenge.owner()
+
+        expect(owner).to.equal(signers[0].address)
 
     })
 
@@ -132,9 +146,9 @@ describe("tests ChallengeFactory contract", function () {
             const challengeContract = Challenge.attach(addr);
 
             // Now you can call read-only functions to confirm it's really a deployed contract of this type
-            const slot1 = await ethers.provider.getStorage(challengeContract.target, durationSlot);
+            const _duration = await challengeContract.duration();
 
-            expect(ethers.toBigInt(slot1)).to.equal(1000n); // simple check that contract responds
+            expect(_duration).to.equal(1000n); // simple check that contract responds
         }
     })
 

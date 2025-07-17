@@ -86,7 +86,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     event PrizeSent(address winnerAddress, uint256 prizeShare);
 
 
-    constructor(DareWin _tokenAddress, uint256 _duration, uint256 _maxPlayers, uint256 _bid, string memory _description, address _feeReceiver, bool _groupMode, address[] memory _group) Ownable(msg.sender) {
+    constructor(address initialOwner, DareWin _tokenAddress, uint256 _duration, uint256 _maxPlayers, uint256 _bid, string memory _description, address _feeReceiver, bool _groupMode, address[] memory _group) Ownable(initialOwner) {
         dareWinToken=_tokenAddress;
         duration=_duration;
         maxPlayers=_maxPlayers;
