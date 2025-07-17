@@ -78,7 +78,21 @@ const ChallengeForm = ({
                         <FormItem>
                             <FormLabel>Bid Amount (DARE)</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="0.1" min={0} {...field} />
+                                    <Input 
+                                        placeholder="0.1" 
+                                        min={0} 
+                                        onKeyDown={(e) => {
+                                            const allowedKeys = [
+                                                'Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', '.', // allow decimal point
+                                            ];
+                                            if (
+                                                !allowedKeys.includes(e.key) &&
+                                                !/^\d$/.test(e.key) // only digits
+                                            ) {
+                                                e.preventDefault();
+                                            }
+                                        }}
+                                        {...field} />
                                 </FormControl>
                             <FormMessage />
                         </FormItem>

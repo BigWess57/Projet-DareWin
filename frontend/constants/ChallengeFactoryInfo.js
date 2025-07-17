@@ -30,6 +30,12 @@ export const factoryAbi=[
           "internalType": "address",
           "name": "challengeAddress",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "blockNumber",
+          "type": "uint256"
         }
       ],
       "name": "ChallengeCreated",

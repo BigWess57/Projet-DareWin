@@ -19,7 +19,7 @@ contract ChallengeFactory {
     // AutomationRegistrarInterface public immutable i_registrar;
     // uint32 public performGas = 500_000;
 
-    event ChallengeCreated(address indexed admin, address challengeAddress);
+    event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber);
 
     constructor(DareWin _tokenAddress, address _feeReceiver/*, LinkTokenInterface link, AutomationRegistrarInterface registrar*/) {
         dareWinToken = _tokenAddress;
@@ -34,7 +34,7 @@ contract ChallengeFactory {
 
     function createChallenge(uint duration, uint maxPlayers, uint bid, string memory description, bool _groupMode, address[] memory _group) external {
         Challenge c = new Challenge(dareWinToken, duration, maxPlayers, bid, description, feeReceiver, _groupMode, _group);
-        emit ChallengeCreated(msg.sender, address(c));
+        emit ChallengeCreated(msg.sender, address(c), block.timestamp);
 
         // //Now register for chainlink automation
         // _register(c);
