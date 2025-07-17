@@ -11,6 +11,7 @@ import { useEffect } from 'react'
 import { isAddressEqual, parseAbiItem, parseEther } from 'viem'
 import { publicClient } from '@/utils/client'
 import { fromBlock } from '@/constants/ChallengeInfo'
+import { _toLowerCase } from 'zod/v4/core'
 
 
 
@@ -31,7 +32,17 @@ const ChallengeFactory = () => {
 
     const { data: hash, isPending: isPending, writeContract } = useWriteContract({
         mutation: {
-            onError: (err) => toast.error("Vote failed: " + err.message),
+            onError: (err) => {
+                if(err.message.toLowerCase().includes("user rejected the request")){
+                    toast.error("Error : User rejected the request", {
+                        duration: 3000,
+                    });
+                    return
+                }
+                toast.error("Creation failed: " + err.message, {
+                    duration: 3000,
+                })
+            },
         },
     })
 
@@ -107,6 +118,12 @@ const ChallengeFactory = () => {
             })
         }
         if(errorConfirmation) {
+            if(errorConfirmation.message.toLowerCase().includes("user rejected the request")){
+                toast.error("Error : User rejected the request", {
+                    duration: 3000,
+                });
+                return
+            }
             toast.error(errorConfirmation.message, {
                 duration: 3000,
             });
