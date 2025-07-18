@@ -4,15 +4,14 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
 import { Abi, Address, isAddressEqual, parseAbi, parseAbiItem } from "viem"
-import { useAccount, useReadContract, useSimulateContract, useWaitForTransactionReceipt, useWriteContract, WagmiConfig } from "wagmi"
+import { useAccount, useReadContract, useReadContracts, useSimulateContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
 
 import { contractAbi, fromBlock } from "@/constants/ChallengeInfo"
 import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
 
 import { publicClient } from '@/utils/client';
 
-import CurrentTransaction from "../Miscellaneous/CurrentTransaction";
-import { BidContext } from "../Challenge";
+import { BidContext } from "../ChallengePage";
 import { ReadContractErrorType, waitForTransactionReceipt, writeContract } from "wagmi/actions";
 import { config } from "@/app/RainbowKitAndWagmiProvider";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
@@ -33,25 +32,53 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
  * Functions for interaction with the blokchain 
  * **************/
 
-    const { data: allowance, error: error, isPending: IsPending, refetch: refetchAllowance } = useReadContract({
-        address: tokenAddress,
-        abi: tokenAbi,
-        functionName: 'allowance',
-        args: [address, contractAddress],
-        account: address as `0x${string}` | undefined
-    })
+    // const { data: allowance, error: errorAllowance, isPending: IsPendingAllowance, refetch: refetchAllowance } = useReadContract({
+    //     address: tokenAddress,
+    //     abi: tokenAbi,
+    //     functionName: 'allowance',
+    //     args: [address, contractAddress],
+    //     account: address as `0x${string}` | undefined
+    // })
 
-    const { data: challengeOwner, error: errorOwner, isPending: IsPendingOwner, refetch: refetchOwner } = useReadContract({
-        address: contractAddress,
-        abi: contractAbi,
-        functionName: 'owner',
+    // const { data: challengeOwner, error: errorOwner, isPending: IsPendingOwner, refetch: refetchOwner } = useReadContract({
+    //     address: contractAddress,
+    //     abi: contractAbi,
+    //     functionName: 'owner',
+    //     account: address as `0x${string}` | undefined
+    // })
+    const { data: readData, error: error, isPending: IsPending, refetch: refetch } = useReadContracts({
+        contracts: [
+            {
+                address: tokenAddress,
+                abi: tokenAbi,
+                functionName: 'allowance',
+                args: [address, contractAddress],
+            },
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'owner',
+            },
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'groupMode',
+            },
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'isAllowed',
+                args: [address as Address],
+            },
+        ],
         account: address as `0x${string}` | undefined
-    })
+      })
 
-    // type Event = {
-    //     eventType : string,
-    //     playerAddress : Number
-    // }
+
+    const [allowance, setAllowance] = useState<bigint>(0n)
+    const [challengeOwner, setChallengeOwner] = useState<Address>("0x0000000000000000000000000000000000000000")
+    const [groupMode, setGroupMode] = useState<boolean>(false)
+    const [isAllowed, setIsAllowed] = useState<boolean>(false)
 
     //Events
     const [events, setEvents] = useState<(Address | undefined)[]>([]);
@@ -100,10 +127,9 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
 
     const refetchAll = async () => {
-        refetchAllowance()
         getEvents()
         refetchStatus()
-        refetchOwner()
+        refetch()
     }
 
     const joinChallenge = async () => {
@@ -202,8 +228,30 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
  /********** Use effects *************/
 
     useEffect(() => {
+        if (!readData) return
+
+        // allowance
+        const a = readData[0].result
+        setAllowance(a as bigint)
+
+        // owner
+        const owner = readData[1].result
+        setChallengeOwner(owner as Address)
+
+        // group mode
+        const mode = readData[2].result
+        setGroupMode(mode as boolean)
+
+        // is player allowed to join
+        const allowed = readData[3].result
+        setIsAllowed(allowed as boolean)
+
         refetchAll();
-    }, [address])
+    }, [readData, address])
+
+    // useEffect(() => {
+    //     refetchAll();
+    // }, [address])
 
 /************
  * Display
@@ -212,6 +260,18 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         <div>
             <div className="flex-between">
                 <p>🚀 Waiting for players to join...</p>
+                <div className="flex flex-col items-center">
+                    <div>Mode : <span className="font-bold">{groupMode ? "Friend Group" : "Public"}</span></div>
+                    {groupMode && 
+                        <div className="text-xl">
+                            {isAllowed ?
+                                <div>You are allowed to participate in this challenge</div> 
+                                : <div>You are not allowed to participate in this challenge</div>
+                            }
+                        </div>
+                    }
+                </div>
+                
                 {challengeOwner && address && isAddressEqual(challengeOwner, address) &&
                     <Button disabled={events.length < 2} onClick={startChallenge}>Start Challenge</Button>
                 }
@@ -219,11 +279,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             </div>
             <div className="flex gap-2">
                 {!userHasJoined ? 
-                    <Button onClick={joinChallenge}>JOIN</Button> 
+                    <Button disabled={!isAllowed} onClick={joinChallenge}>JOIN</Button> 
                 :
-                    <Button onClick={withdrawFromChallenge}>LEAVE</Button>
+                    <Button disabled={!isAllowed} onClick={withdrawFromChallenge}>LEAVE</Button>
                 }
-                {/* <CurrentTransaction hash={hash} isConfirming={isConfirming} isSuccess={isSuccess} errorConfirmation={errorConfirmation} error={error ?? null} /> */}
             </div>
             <div className="p-10">
                 <div>Current players :</div>
@@ -232,7 +291,8 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                         return (
                             <Joined address={addr} key={crypto.randomUUID()} />
                         )
-                    }) : <div className="italic">(none yet)</div>
+                        })
+                        : <div className="italic">(none yet)</div>
                     }
                 </div>
             </div>

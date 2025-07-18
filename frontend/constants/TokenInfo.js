@@ -438,3 +438,6 @@ export const tokenAbi=[
       "type": "function"
     }
   ]
+export const feeTierBronzeCap = 10000n;
+export const feeTierSilverCap = 40000n;
+export const feeTierGoldCap = 100000n;

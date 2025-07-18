@@ -2,7 +2,6 @@
 import ChallengePage from '@/components/shared/ChallengePage'
 import { useParams } from 'next/navigation'
 import React from 'react'
-import { Address } from 'viem'
 
 
 function page() {

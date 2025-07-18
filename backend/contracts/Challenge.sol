@@ -40,7 +40,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     uint256 public maxPlayers;
     uint256 public bid;
     string public description;
-    bool private groupMode;
+    bool public groupMode;
 
     DareWin private dareWinToken;
 
@@ -57,7 +57,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     address[] public challengeWinners;
     uint256 public highestVotes;
     
-    mapping (address => bool) isAllowed;
+    mapping (address => bool) public isAllowed;
     mapping (address => bool) hasJoined;
     mapping (address => bool) hasVoted;
     Player[] public players;
@@ -103,7 +103,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
                 "The predefined group of players is too small. There should be a minimum of 2 players per challenge"
             );
             for (uint i; i < _group.length; i++) {
-                players.push(Player(_group[i], 0));
+                // players.push(Player(_group[i], 0));
                 isAllowed[_group[i]] = true;
             }
         }

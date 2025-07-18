@@ -2,7 +2,7 @@ import React, { useContext } from 'react'
 
 import { useAccount } from 'wagmi'
 
-import { DurationContext } from '../Challenge'
+import { DurationContext } from '../ChallengePage'
 import { ChallengeTimer } from './ChallengeTimer'
 
 const OngoingChallenge = ({

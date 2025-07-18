@@ -54,6 +54,12 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
         </span>
       </div>
 
+      {/* Mode */}
+      <div className="flex flex-col">
+        <span className="text-sm text-gray-500">Mode </span>
+        <span className="font-medium">{challenge.groupMode ? "Friend Group" : "Public"}</span>
+      </div>
+
     </div>
   )
 }

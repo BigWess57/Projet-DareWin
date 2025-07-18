@@ -8,7 +8,7 @@
 }
 
 .navbar {
-  @apply flex-between p-10;
+  @apply flex-between gap-4 p-10;
 }
 
 .main {

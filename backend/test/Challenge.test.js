@@ -315,7 +315,11 @@ describe("tests Challenge contract", function () {
         });
 
         it('FOR GROUP MODE : the stored array of players should be correct', async function() {
-
+            await challenge.connect(signers[0]).joinChallenge()
+            await challenge.connect(signers[1]).joinChallenge()
+            await challenge.connect(signers[2]).joinChallenge()
+            await challenge.connect(signers[3]).joinChallenge()
+            
             const player1 = await challenge.players(0);
             expect(player1[0]).to.equal(signers[0].address);
 

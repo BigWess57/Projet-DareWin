@@ -12,7 +12,7 @@ import { toast } from "sonner";
 
 import { parseAbiItem } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
-import { DurationContext } from "./Challenge";
+import { DurationContext } from "./ChallengePage";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
 import { ContractAddressContext } from "./ChallengePage";
@@ -139,7 +139,7 @@ const ChallengeState = () => {
         <>
         <div>Challenge State : <span className="font-bold">{displayState}</span></div>
 
-        <div className="p-5">
+        <div className="p-5 border">
             {!IsPending && currentDisplayStatus === WorkflowStatus.GatheringPlayers && (
                 <div>
                     <JoiningChallenge refetchStatus={refetchStatus}/>

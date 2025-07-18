@@ -20,6 +20,7 @@ export type Challenge = {
     bid : string,
     maxPlayers : string,
     timestampOfCreation : bigint
+    groupMode: boolean
 }
 
 const ChallengeList = () => {
@@ -87,10 +88,15 @@ const ChallengeList = () => {
                         abi: contractAbi,
                         functionName: 'description',
                     },
+                    {
+                        address: challenge.address,
+                        abi: contractAbi,
+                        functionName: 'groupMode',
+                    },
                 ],
             })
 
-            const [duration, bid, maxPlayers, description] = result.map((r) => r.result!)
+            const [duration, bid, maxPlayers, description, groupMode] = result.map((r) => r.result!)
             
 
             challengesCreatedInfo.push({
@@ -100,7 +106,8 @@ const ChallengeList = () => {
                 bid: formatEther(bid as bigint),
                 maxPlayers: maxPlayers as string,
                 description: description as string,
-                timestampOfCreation: challenge.blockNumber
+                timestampOfCreation: challenge.blockNumber,
+                groupMode: groupMode as boolean,
             })
         }
 
@@ -176,10 +183,15 @@ const ChallengeList = () => {
                             abi: contractAbi,
                             functionName: 'description',
                         },
+                        {
+                            address: challenge.address,
+                            abi: contractAbi,
+                            functionName: 'groupMode',
+                        },
                     ],
                 })
 
-                const [duration, bid, maxPlayers, description] = result.map((r) => r.result!)
+                const [duration, bid, maxPlayers, description, groupMode] = result.map((r) => r.result!)
                 
                 challengesJoinedInfo.push({
                     creator: address,
@@ -188,7 +200,8 @@ const ChallengeList = () => {
                     bid: formatEther(bid as bigint),
                     maxPlayers: maxPlayers as string,
                     description: description as string,
-                    timestampOfCreation: challenge.blockNumber
+                    timestampOfCreation: challenge.blockNumber,
+                    groupMode: groupMode as boolean,
                 })
 
             }
