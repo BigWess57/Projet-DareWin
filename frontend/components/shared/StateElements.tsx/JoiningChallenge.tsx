@@ -1,14 +1,13 @@
-import { useContext, useEffect, useState } from "react";
+import { act, useContext, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
-import { Abi, Address, isAddressEqual, parseAbiItem } from "viem"
+import { Abi, Address, isAddressEqual, parseAbi, parseAbiItem } from "viem"
 import { useAccount, useReadContract, useSimulateContract, useWaitForTransactionReceipt, useWriteContract, WagmiConfig } from "wagmi"
 
 import { contractAbi, fromBlock } from "@/constants/ChallengeInfo"
 import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
-import Event from "../Miscellaneous/Event";
 
 import { publicClient } from '@/utils/client';
 
@@ -18,6 +17,7 @@ import { ReadContractErrorType, waitForTransactionReceipt, writeContract } from 
 import { config } from "@/app/RainbowKitAndWagmiProvider";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 import { ContractAddressContext } from "../ChallengePage";
+import Joined from "../Miscellaneous/Joined";
 
 
 const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
@@ -27,6 +27,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const {address} = useAccount()
 
+    const [userHasJoined, setUserHasJoined] = useState<boolean>(false)
 
     /***************** 
  * Functions for interaction with the blokchain 
@@ -47,6 +48,11 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         account: address as `0x${string}` | undefined
     })
 
+    // type Event = {
+    //     eventType : string,
+    //     playerAddress : Number
+    // }
+
     //Events
     const [events, setEvents] = useState<(Address | undefined)[]>([]);
   
@@ -54,32 +60,50 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
         const Logs = await publicClient.getLogs({
             address: contractAddress,
-            event: parseAbiItem("event PlayerJoined(address player)"),
-            // du premier bloc
+            events: parseAbi([
+                "event PlayerJoined(address player)",
+                "event PlayerWithdrawn(address player)",
+            ]),
             fromBlock: BigInt(fromBlock),
-            // jusqu'au dernier
-            toBlock: 'latest' // Pas besoin valeur par défaut
+            toBlock: 'latest'
         })
-        console.log("Player joined events :",Logs)
+        // console.log("Player joined/Withdrawn events :",Logs)
 
-        setEvents(Logs.map(
-            log => (log.args.player)
-        ))
+        const playerStates = new Map();
+
+        for (const log of Logs) {
+            const player = log.args.player;
+            if (log.eventName === "PlayerJoined") {
+                playerStates.set(player, true); // true = currently joined
+            } else if (log.eventName === "PlayerWithdrawn") {
+                playerStates.set(player, false); // false = withdrawn
+            }
+        }
+        // Filter players who are still joined (value = true)
+        const activePlayers = Array.from(playerStates.entries())
+            .filter(([_, isJoined]) => isJoined)
+            .map(([player]) => player);
+
+        // console.log("🟢 Active players in challenge:", activePlayers);
+
+        setEvents(activePlayers)
+
+        //Check if the current user has joined
+        for(const player of activePlayers){
+            if(address === player){
+                setUserHasJoined(true)
+                return
+            }
+        }
+        setUserHasJoined(false)
     }
 
 
     const refetchAll = async () => {
-        await refetchAllowance()
-        await getEvents()
-        await refetchStatus()
-        refetchOwner().then(() => {
-            console.log("refreshing owner of challenge :", challengeOwner)
-            console.log('curretn user address :',address)
-            console.log("contract address :", contractAddress)
-            console.log('allowance :',allowance)
-        })
-        if(errorOwner) console.log("error owner :", errorOwner)
-        if(IsPendingOwner) console.log("is Pending owner :", IsPendingOwner)
+        refetchAllowance()
+        getEvents()
+        refetchStatus()
+        refetchOwner()
     }
 
     const joinChallenge = async () => {
@@ -112,7 +136,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             toast.success("Success", {
                 description: "You successfully joined the challenge!",
             })
-            await refetchAll();
+            refetchAll();
         } catch (err) {
             console.error('Transaction failed ', err)
             toast.error("Error : Could not join challenge", {
@@ -121,6 +145,31 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             });
         }
         
+    }
+
+    const withdrawFromChallenge = async () => {
+        try{
+            //Ask user to joinChallenge
+            const startHash = await writeContract(config, {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'withdrawFromChallenge',
+                account: address as `0x${string}`,
+            })
+            await waitForTransactionReceipt(config, { hash: startHash, confirmations: 1 })
+
+            console.log('You left the challenge succesfully')
+            toast.success("Success", {
+                description: "You left the challenge",
+            })
+            await refetchAll();
+        } catch (err) {
+            console.error('Transaction failed ', err)
+            toast.error("Error : Could not leave the challenge", {
+                duration: 3000,
+                // isClosable: true,
+            });
+        }
     }
 
 
@@ -156,10 +205,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         refetchAll();
     }, [address])
 
-
-    useEffect(() => {
-        console.log("Challegne owner fetched!! :", challengeOwner);
-    }, [challengeOwner])
 /************
  * Display
  *************/
@@ -173,7 +218,11 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 
             </div>
             <div className="flex gap-2">
-                <Button onClick={joinChallenge}>JOIN</Button>
+                {!userHasJoined ? 
+                    <Button onClick={joinChallenge}>JOIN</Button> 
+                :
+                    <Button onClick={withdrawFromChallenge}>LEAVE</Button>
+                }
                 {/* <CurrentTransaction hash={hash} isConfirming={isConfirming} isSuccess={isSuccess} errorConfirmation={errorConfirmation} error={error ?? null} /> */}
             </div>
             <div className="p-10">
@@ -181,7 +230,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 <div className="mt-4 flex flex-col">
                     {events?.length > 0 ? [...events].reverse().map((addr) => {
                         return (
-                            <Event address={addr} key={crypto.randomUUID()} />
+                            <Joined address={addr} key={crypto.randomUUID()} />
                         )
                     }) : <div className="italic">(none yet)</div>
                     }

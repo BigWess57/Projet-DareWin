@@ -3,7 +3,7 @@ import {
 } from "@/components/ui/card"
 import { Address } from "viem"
 
-const Event = ({ address } : {address: Address|undefined}) => {
+const Joined = ({ address } : {address: Address|undefined}) => {
   return (
     <Card className="p-4 mb-2 bg-lime-200">
         <div className="flex items-center">
@@ -16,4 +16,4 @@ const Event = ({ address } : {address: Address|undefined}) => {
   )
 }
 
-export default Event
+export default Joined

@@ -67,6 +67,21 @@ const ChallengeForm = ({
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6 w-full max-w-[1000px] p-6 bg-white rounded-lg shadow"
             >
+                {/* Description */}
+                <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Description</FormLabel>
+                                <FormControl>
+                                    <Textarea placeholder="A short description..." {...field} />
+                                </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
                 {/* Duration */}
                 <FormField
                     control={form.control}
@@ -136,21 +151,6 @@ const ChallengeForm = ({
                                             }
                                         }}
                                         {...field} />
-                                </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                {/* Description */}
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Description</FormLabel>
-                                <FormControl>
-                                    <Textarea placeholder="A short description..." {...field} />
                                 </FormControl>
                             <FormMessage />
                         </FormItem>

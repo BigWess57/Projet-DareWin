@@ -245,6 +245,14 @@ describe("tests Challenge contract", function () {
             ).to.be.revertedWith("You are not in players list");
         })
 
+        it('should allow a player to join, withdraw and then join again the challenge', async function() {
+            await challenge.joinChallenge();
+            await challenge.withdrawFromChallenge();
+            await expect(
+               challenge.joinChallenge()
+            ).to.not.be.reverted
+        })
+
         it('should not allow to start the challenge if there is less than 2 players', async function() {
             challenge.joinChallenge();
             await expect(

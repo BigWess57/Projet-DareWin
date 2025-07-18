@@ -147,12 +147,14 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     }
 
     function joinChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {
-        require(currentPlayerNumber < maxPlayers, "This challenge is already full");
-        require(!hasJoined[msg.sender], "You already joined"); 
         //If in group mode, dont allow a non authorized player to join
         if(groupMode){
             require(isAllowed[msg.sender] == true, "You are not allowed to join this challenge.");
+        }else{
+            //else, just check the maximum amount of players
+            require(currentPlayerNumber < maxPlayers, "This challenge is already full");
         }
+        require(!hasJoined[msg.sender], "You already joined"); 
 
         //Check allowance of player
         require(dareWinToken.allowance(msg.sender, address(this)) >= bid, "Need prior approval for token spending");
@@ -172,7 +174,10 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
                 // Remove player from array by swapping with last and popping
                 players[i] = players[players.length - 1];
                 players.pop();
-                
+
+                hasJoined[msg.sender] = false;
+                currentPlayerNumber--;
+
                 emit PlayerWithdrawn(msg.sender);
                 return;
             }

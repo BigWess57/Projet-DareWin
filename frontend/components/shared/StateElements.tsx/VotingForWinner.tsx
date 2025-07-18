@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button'
 import { contractAbi, fromBlock } from '@/constants/ChallengeInfo'
 import { publicClient } from '@/utils/client'
 
-import Event from "../Miscellaneous/Event";
+import Event from "../Miscellaneous/Joined";
 
-import { Address, isAddressEqual, parseAbiItem, ReadContractErrorType } from 'viem'
+import { Address, isAddressEqual, parseAbi, parseAbiItem, ReadContractErrorType } from 'viem'
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
@@ -104,28 +104,39 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
         const Logs = await publicClient.getLogs({
             address: contractAddress,
-            event: parseAbiItem("event PlayerJoined(address player)"),
-            // du premier bloc
+            events: parseAbi([
+                "event PlayerJoined(address player)",
+                "event PlayerWithdrawn(address player)",
+            ]),
             fromBlock: BigInt(fromBlock),
-            // jusqu'au dernier
-            toBlock: 'latest' // Pas besoin valeur par défaut
+            toBlock: 'latest'
         })
-        console.log("players : ",Logs)
+        // console.log("Player joined/Withdrawn events :",Logs)
 
-        const players = Logs.map(
-            log => (log.args.player)
-        )
+        const playerStates = new Map();
+
+        for (const log of Logs) {
+            const player = log.args.player;
+            if (log.eventName === "PlayerJoined") {
+                playerStates.set(player, true); // true = currently joined
+            } else if (log.eventName === "PlayerWithdrawn") {
+                playerStates.set(player, false); // false = withdrawn
+            }
+        }
+        // Filter players who are still joined (value = true)
+        const players = Array.from(playerStates.entries())
+            .filter(([_, isJoined]) => isJoined)
+            .map(([player]) => player);
 
         setPlayers(players)
 
         //If current user is a player, set isPlayer to true
-        for (const log of Logs) {
-            const { args } = log;
-            if(args.player == undefined){
+        for (const player of players) {
+            if(player == undefined){
                 console.error("player could not be retrieved");
                 continue;
             }
-            if (args && address && isAddressEqual(args.player, address)) {
+            if (address && isAddressEqual(player, address)) {
                 setIsPlayer(true);
                 break;
             }

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { factoryAddress } from '@/constants/ChallengeFactoryInfo';
 import { publicClient } from '@/utils/client';
 
-import { Address, formatEther, isAddressEqual, parseAbiItem } from 'viem';
+import { Address, formatEther, isAddressEqual, parseAbi, parseAbiItem } from 'viem';
 import { useAccount } from 'wagmi';
 import { contractAbi, fromBlock } from '@/constants/ChallengeInfo';
 import { readContracts } from 'wagmi/actions';
@@ -121,17 +121,36 @@ const ChallengeList = () => {
 
         //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
         for(const challenge of challengeJoinedAddresses){
-
-            const joinedEvents = await publicClient.getLogs({
+            
+            const Logs = await publicClient.getLogs({
                 address: challenge.address,
-                event: parseAbiItem("event PlayerJoined(address player)"),
+                events: parseAbi([
+                    "event PlayerJoined(address player)",
+                    "event PlayerWithdrawn(address player)",
+                ]),
                 fromBlock: BigInt(fromBlock),
                 toBlock: 'latest'
             })
-            console.log("Players that joined challenge at " + challenge.address + " :", joinedEvents)
+            // console.log("Player joined/Withdrawn events :",Logs)
+    
+            const playerStates = new Map();
+    
+            for (const log of Logs) {
+                const player = log.args.player;
+                if (log.eventName === "PlayerJoined") {
+                    playerStates.set(player, true); // true = currently joined
+                } else if (log.eventName === "PlayerWithdrawn") {
+                    playerStates.set(player, false); // false = withdrawn
+                }
+            }
+            // Filter players who are still joined (value = true)
+            const activePlayers = Array.from(playerStates.entries())
+                .filter(([_, isJoined]) => isJoined)
+                .map(([player]) => player);
 
-            for(const log of joinedEvents){
-                if(log.args?.player !== address){
+
+            for(const player of activePlayers){
+                if(player !== address){
                     continue
                 }
 
