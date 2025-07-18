@@ -79,6 +79,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     // mapping (address => uint256) public pendingWithdrawals;
 
     event PlayerJoined(address player);
+    event PlayerWithdrawn(address player);
     event ChallengeStarted(uint256 startingTime);
     event ChallengeEnded(uint256 endTime);
     event PlayerVoted(address voter, address votedFor);
@@ -164,6 +165,21 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
         players.push(Player(msg.sender, 0));
         emit PlayerJoined(msg.sender);
     }
+
+    function withdrawFromChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {
+        for (uint i; i < players.length; i++) {
+            if (players[i].playerAddress == msg.sender) {
+                // Remove player from array by swapping with last and popping
+                players[i] = players[players.length - 1];
+                players.pop();
+                
+                emit PlayerWithdrawn(msg.sender);
+                return;
+            }
+        }
+        revert("You are not in players list");
+    }
+
 
     function startChallenge() external onlyOwner isCorrectState(ChallengeStatus.GatheringPlayers) {
         require(players.length > 1, "Not enough players to start the challenge");

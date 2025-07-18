@@ -202,6 +202,49 @@ describe("tests Challenge contract", function () {
             ).to.be.revertedWith("Need prior approval for token spending");
         })
 
+        it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues', async function() {
+            //5 players join
+            await challenge.joinChallenge();
+            await challenge.connect(signers[1]).joinChallenge();
+            await challenge.connect(signers[2]).joinChallenge();
+            await challenge.connect(signers[3]).joinChallenge();
+            await challenge.connect(signers[4]).joinChallenge();
+
+            //one player withdraws from challenge
+            await challenge.connect(signers[2]).withdrawFromChallenge();
+
+            const player1 = await challenge.players(0);
+            expect(player1[0]).to.equal(signers[0].address);
+
+            const player2 = await challenge.players(1);
+            expect(player2[0]).to.equal(signers[1].address);
+
+            const player3 = await challenge.players(2);
+            expect(player3[0]).to.equal(signers[4].address);
+
+            const player4 = await challenge.players(3);
+            expect(player4[0]).to.equal(signers[3].address);
+
+            //the 3rd player should not be in the array anymore, this should revert
+            await expect(
+                challenge.players(4)
+            ).to.be.reverted;
+
+            //Admin successfully starts challenge
+            await challenge.startChallenge();
+
+            expect(
+               await challenge.currentStatus()
+            ).to.equal(ChallengeStatus.OngoingChallenge);
+        })
+
+        it('should not allow a player to withdraw from the challenge if he hasnt joined', async function() {
+            //try to withdraw without having joined, reverts
+            await expect(
+               challenge.withdrawFromChallenge()
+            ).to.be.revertedWith("You are not in players list");
+        })
+
         it('should not allow to start the challenge if there is less than 2 players', async function() {
             challenge.joinChallenge();
             await expect(
@@ -597,6 +640,11 @@ describe("tests Challenge contract", function () {
                     challenge.joinChallenge()
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
+            it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawFromChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
             it('should not allow startChallenge() in OngoingChallenge state', async function() {
                 await expect(
                     challenge.startChallenge()
@@ -641,6 +689,11 @@ describe("tests Challenge contract", function () {
                     challenge.joinChallenge()
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
+            it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawFromChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
             it('should not allow startChallenge() in VotingForWinner state', async function() {
                 await expect(
                     challenge.startChallenge()
@@ -661,6 +714,11 @@ describe("tests Challenge contract", function () {
             it('should not allow joinChallenge() in ChallengeWon state', async function() {
                 await expect(
                     challenge.joinChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawFromChallenge()
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
             it('should not allow startChallenge() in ChallengeWon state', async function() {
@@ -690,6 +748,14 @@ describe("tests Challenge contract", function () {
             const {challenge, signers, bid} = await loadFixture(deployedChallengeFixtureBase)
             await expect(challenge.joinChallenge())
                 .to.emit(challenge, "PlayerJoined")
+                .withArgs(signers[0].address); 
+        })
+
+        it("should emit an event when a Player Withdraws from challenge", async function() {
+            const {challenge, signers, bid} = await loadFixture(deployedChallengeFixtureBase)
+            await challenge.joinChallenge();
+            await expect(challenge.withdrawFromChallenge())
+                .to.emit(challenge, "PlayerWithdrawn")
                 .withArgs(signers[0].address); 
         })
 
@@ -746,5 +812,4 @@ describe("tests Challenge contract", function () {
                 .withArgs(signers[1].address, expectedPrize)
         })
     })
-
 })

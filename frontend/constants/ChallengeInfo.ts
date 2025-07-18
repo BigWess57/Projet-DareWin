@@ -157,6 +157,19 @@ export const contractAbi=[
         {
           "indexed": false,
           "internalType": "address",
+          "name": "player",
+          "type": "address"
+        }
+      ],
+      "name": "PlayerWithdrawn",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
           "name": "winnerAddress",
           "type": "address"
         },
@@ -380,6 +393,13 @@ export const contractAbi=[
         }
       ],
       "name": "voteForWinner",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "withdrawFromChallenge",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

@@ -15,10 +15,6 @@ import { _toLowerCase } from 'zod/v4/core'
 
 
 
-
-
-
-
 const ChallengeFactory = () => {
 
     const {address} = useAccount()
