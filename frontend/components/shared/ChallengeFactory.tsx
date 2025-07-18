@@ -48,12 +48,14 @@ const ChallengeFactory = () => {
         const maxPlayers = BigInt(data.maxPlayers);
         const bid = parseEther(data.bid);
         const description = data.description;
+        const isGroup = data.isGroup;
+        const groupAddresses = data.groupAddresses.map((elem: { address: any }) => elem.address);
 
         writeContract({
             address: factoryAddress,
             abi: factoryAbi,
             functionName: 'createChallenge',
-            args: [duration, maxPlayers, bid, description, false, []],
+            args: [duration, maxPlayers, bid, description, isGroup, groupAddresses],
         })
     }
 

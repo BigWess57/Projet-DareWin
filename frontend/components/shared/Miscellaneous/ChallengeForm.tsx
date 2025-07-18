@@ -1,6 +1,6 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
+import { Controller, useFieldArray, useForm, useFormContext } from 'react-hook-form'
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -14,22 +14,36 @@ import {
 import { Input } from '@/components/ui/input'           // :contentReference[oaicite:3]{index=3}
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 
 import z from 'zod'
 
 
+
 export const formSchema = z.object({
+    description: z.string().min(3),
     hours: z.string().regex(/^\d+$/, 'Must be a number'),
     minutes: z.string().regex(/^[0-5]?\d$/, '0–59'),
     seconds: z.string().regex(/^[0-5]?\d$/, '0–59'),
-    maxPlayers: z.coerce.number().min(1),
     bid: z.string().regex(/^\d+(\.\d+)?$/, 'Must be a valid number'),
-    description: z.string().min(3),
-}).transform(({ hours, minutes, seconds, maxPlayers, bid, description }) => ({
+    maxPlayers: z.coerce.number().min(1),
+    isGroup: z.boolean(),
+    groupAddresses: z
+        .array(
+            z.object({
+                address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Must be a valid address (40 char)'),  // or `.regex(/^0x[a-fA-F0-9]{40}$/)`
+            })
+        )
+        // .refine((arr) => arr.length >= 2, {
+        //     message: "At least 2 addresses are required",
+        // }),
+}).transform(({ hours, minutes, seconds, maxPlayers, bid, description, isGroup, groupAddresses}) => ({
     duration: Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds),
     maxPlayers,
     bid,
     description,
+    isGroup,
+    groupAddresses,
 }))
 .superRefine((data, ctx) => {
     if (data.duration < 30) {
@@ -39,9 +53,29 @@ export const formSchema = z.object({
             path: ['total duration'], // attach error here
         })
     }
+    if(data.isGroup && data.groupAddresses.length < 2) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'At least 2 addresses should be added',
+            path: [`isGroup`], // attach error here
+        })
+    }
+    // Uniqueness check for groupAddresses
+    const seen = new Set<string>();
+    data.groupAddresses.forEach((item, index) => {
+        if (seen.has(item.address)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Duplicate address not allowed',
+            path: ["isGroup"],
+        });
+        } else {
+            seen.add(item.address);
+        }
+    });
 })
 
-export type ChallengeFormValues = z.input<typeof formSchema> | any | z.output<typeof formSchema>; 
+export type ChallengeFormValues = z.input<typeof formSchema> | any | z.output<typeof formSchema>;
 
 
 const ChallengeForm = ({
@@ -58,8 +92,14 @@ const ChallengeForm = ({
             maxPlayers: 5,
             bid: '',
             description: '',
+            isGroup: false,
+            groupAddresses: [],
         },
     })
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: 'groupAddresses',
+    });
 
     return (
         <Form {...form}>
@@ -111,22 +151,6 @@ const ChallengeForm = ({
                         </FormItem>
                     )}
                 />
-                
-
-                {/* Max Players */}
-                <FormField
-                    control={form.control}
-                    name="maxPlayers"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Max Players Allowed</FormLabel>
-                                <FormControl>
-                                    <Input type="number" {...field} />
-                                </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
 
                 {/* Bid */}
                 <FormField
@@ -136,9 +160,9 @@ const ChallengeForm = ({
                         <FormItem>
                             <FormLabel>Bid Amount (DARE)</FormLabel>
                                 <FormControl>
-                                    <Input 
-                                        placeholder="0.1" 
-                                        min={0} 
+                                    <Input
+                                        placeholder="0.1"
+                                        min={0}
                                         onKeyDown={(e) => {
                                             const allowedKeys = [
                                                 'Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', '.', // allow decimal point
@@ -156,6 +180,66 @@ const ChallengeForm = ({
                         </FormItem>
                     )}
                 />
+
+                {/* Mode switch */}
+                <FormField
+                    control={form.control}
+                    name="isGroup"
+                    render={({ field }) => (
+                        <FormItem className="flex items-center space-x-3">
+                            <FormControl>
+                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                            <FormLabel>Group Mode</FormLabel>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Conditional: Max players or group addresses */}
+                {!form.watch('isGroup') ? (
+                    <FormField
+                        control={form.control}
+                        name="maxPlayers"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Max Players Allowed</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                ) : (
+                    <FormItem>
+                        <FormLabel>Allowed Addresses (Group Mode)</FormLabel>
+                        {fields.map((item, index) => (
+                            <div key={item.id} className="flex items-center space-x-2 mb-2">
+                                <Controller
+                                    control={form.control}
+                                    name={`groupAddresses.${index}.address` as const}
+                                    render={({ field }) => (
+                                        <FormControl>
+                                            <Input
+                                                placeholder="0x..."
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                    )}
+                                />
+                                <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                                    Remove
+                                </Button>
+                            </div>
+                        ))}
+                        <div>
+                            <Button type="button" onClick={() => append({ address: '' })}>
+                                Add Address
+                            </Button>
+                        </div>
+                    </FormItem>
+                )}
 
                 {/* Submit Button */}
                 <Button type="submit" className="w-full">
