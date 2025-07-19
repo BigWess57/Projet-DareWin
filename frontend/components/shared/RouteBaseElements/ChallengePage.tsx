@@ -1,5 +1,6 @@
 'use client'
 import { createContext, ReactNode, useContext, useEffect, useState } from "react"
+import { Clipboard, StickyNote } from 'lucide-react'
 
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { Abi, Account, Address, formatEther, numberToBytes } from "viem"
@@ -102,6 +103,24 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
   })()
 
   
+  //icon pour copier contract address dans le press papier
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(contractAddress)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // handle error if needed
+    }
+  }
+
+
+
+  /******
+   * UseEffect**
+   * */
 
   useEffect(() => {
     if (!readData) {
@@ -125,6 +144,7 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
 
 
 
+
 /********* DISPLAY **********/
   return (
     <main className="flex flex-col min-h-screen text-white">
@@ -132,9 +152,27 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
       {/* Section infos challenge */}
       <div className="flex items-center justify-between p-6 m-4 bg-[#1F243A] border border-white/10 rounded-2xl shadow-lg">
         {/* Titre */}
-        <h1 className="text-2xl md:text-3xl font-bold text-white">
-          Challenge : <span className="text-cyan-400">{displayDesc as ReactNode}</span>
-        </h1>
+        <div className="flex items-center space-x-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-white">
+            Challenge : <span className="text-cyan-400">{displayDesc}</span>
+          </h1>
+          <button
+            onClick={handleCopy}
+            className="p-1 rounded-md hover:bg-white/10 transition-colors"
+            aria-label="Copier l'adresse du contrat"
+          >
+            <div className="flex items-center gap-2">
+              <StickyNote className="w-5 h-5 text-white/70" />
+              {copied ? (
+                <span className="text-sm text-green-400 animate-fade-in">
+                  Copié !
+                </span>
+                ) : (<span className="text-white/50">copier CA</span>)}
+            </div>
+            
+          </button>
+          
+        </div>
         
         {/* Stats */}
         <div className="flex space-x-8 text-sm md:text-base">

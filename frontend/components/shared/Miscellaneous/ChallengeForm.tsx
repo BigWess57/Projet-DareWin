@@ -14,7 +14,8 @@ import {
 import { Input } from '@/components/ui/input'           // :contentReference[oaicite:3]{index=3}
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
+// import { Switch } from '@/components/ui/switch'
+import * as RadixSwitch from '@radix-ui/react-switch'
 
 import z from 'zod'
 
@@ -146,7 +147,7 @@ const ChallengeForm = ({
                     name="total duration" // tie error to seconds
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Duration</FormLabel>
+                            <FormLabel>Durée</FormLabel>
                             <div className='flex gap-2 items-end'>
                                 {['hours', 'minutes', 'seconds'].map((name, i) => (
                                     <FormField
@@ -187,7 +188,7 @@ const ChallengeForm = ({
                     name="bid"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-medium">Bid Amount (DARE)</FormLabel>
+                            <FormLabel className="font-medium">Mise (DARE)</FormLabel>
                                 <FormControl>
                                     <Input
                                         placeholder="0.1"
@@ -223,17 +224,37 @@ const ChallengeForm = ({
                     render={({ field }) => (
                         <FormItem className="flex items-center space-x-3">
                             <FormControl>
-                                <Switch 
+                                {/* <Switch 
                                     checked={field.value} 
                                     onCheckedChange={field.onChange} 
                                     className="
-                                        bg-white/20 checked:bg-purple-500
+                                        bg-purple/20 checked:bg-purple-500
+                                        checked:bg-purple-500
                                         focus:ring-2 focus:ring-purple-500
                                         transition
                                     "
+                                /> */}
+                                <RadixSwitch.Root
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="
+                                    relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full
+                                    data-[state=unchecked]:bg-gradient-to-r data-[state=unchecked]:from-cyan-400 data-[state=unchecked]:to-purple-600 
+                                    data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-cyan-400 data-[state=checked]:to-purple-600
+                                    transition-colors duration-200 ease-in-out
+                                    focus:outline-none focus:ring-2 focus:ring-cyan-400
+                                "
+                                >
+                                <RadixSwitch.Thumb
+                                    className="
+                                        pointer-events-none block h-5 w-5 transform rounded-full bg-white shadow
+                                        transition-transform duration-200 ease-in-out
+                                        data-[state=checked]:translate-x-5
+                                    "
                                 />
+                                </RadixSwitch.Root>
                             </FormControl>
-                            <FormLabel>Group Mode</FormLabel>
+                            <FormLabel>Mode (public/groupe privé)</FormLabel>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -246,7 +267,7 @@ const ChallengeForm = ({
                         name="maxPlayers"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Max Players Allowed</FormLabel>
+                                <FormLabel>Mode PUBLIC : Nombre de joueurs max autorisés</FormLabel>
                                 <FormControl>
                                     <Input 
                                         type="number" 
@@ -265,7 +286,7 @@ const ChallengeForm = ({
                     />
                 ) : (
                     <FormItem>
-                        <FormLabel>Allowed Addresses (Group Mode)</FormLabel>
+                        <FormLabel>Mode GROUPE : Adresses autorisées :</FormLabel>
                         {fields.map((item, index) => (
                             <div key={item.id} className="flex items-center space-x-2 mb-2">
                                 <Controller
@@ -292,7 +313,7 @@ const ChallengeForm = ({
                                     onClick={() => remove(index)}
                                     className="px-3 py-1 bg-red-600 hover:bg-red-700 transition rounded-md text-white"
                                 >
-                                    Remove
+                                    Retirer
                                 </Button>
                             </div>
                         ))}
@@ -306,7 +327,7 @@ const ChallengeForm = ({
                                 "
                                 onClick={() => append({ address: '' })}
                             >
-                                Add Address
+                                Ajouter une Adresse
                             </Button>
                         </div>
                     </FormItem>
@@ -323,7 +344,7 @@ const ChallengeForm = ({
                         transition-transform duration-200
                     "
                 >
-                    Create Challenge
+                    Créer un Challenge
                 </Button>
             </form>
         </Form>

@@ -4,14 +4,17 @@ import { z } from 'zod'
 import { useAccount, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
 
 import ChallengeForm, { ChallengeFormValues } from "../Miscellaneous/ChallengeForm"
+import { CopyAction } from '../Miscellaneous/CopyAction'
 import { factoryAbi, factoryAddress } from '@/constants/ChallengeFactoryInfo'
 
 import { toast } from 'sonner'
-import { useEffect } from 'react'
-import { isAddressEqual, parseAbiItem, parseEther } from 'viem'
+import { useEffect, useState } from 'react'
+import { Address, isAddressEqual, parseAbiItem, parseEther } from 'viem'
 import { publicClient } from '@/utils/client'
 import { fromBlock } from '@/constants/ChallengeInfo'
 import { _toLowerCase } from 'zod/v4/core'
+import { Button } from '@/components/ui/button'
+
 
 
 
@@ -59,6 +62,8 @@ const ChallengeFactory = () => {
         })
     }
 
+
+
     const getChallengeEndedEvents = async() => {
     
         //Get the latest block - 100, to only get the few last blocks
@@ -102,8 +107,10 @@ const ChallengeFactory = () => {
                         description: "Challenge successfully created, but could not retrieve contract address. Check 'My challenges' tab",
                     })
                 }else{
-                    toast.success("Transaction Successful!", {
-                        description: "Challenge successfully created at " + challengeAddress,
+                    toast.info("Transaction Successful!", {
+                        description: "Challenge créé avec succes a l'adresse " + challengeAddress,
+                        action:<CopyAction address={challengeAddress}/>,
+                        duration: 6000,
                     })
                 }
             })
