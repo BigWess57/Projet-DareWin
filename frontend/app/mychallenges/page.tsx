@@ -6,7 +6,7 @@ export default function myChallenges() {
 
   return (
     <>
-      <div className='text-3xl flex justify-center'>My challenges :</div>
+      <div className='text-3xl font-bold flex justify-center'>Mes challenges :</div>
       <ChallengeList/>
     </>
   );

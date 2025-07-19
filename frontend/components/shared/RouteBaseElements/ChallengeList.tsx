@@ -226,7 +226,7 @@ const ChallengeList = () => {
     return (
         <div className='p-10'>
             <div className='mb-10'>
-                <div className='text-2xl mb-4'>Created by me : </div>
+                <div className='text-2xl font-bold mb-4'>Créés : </div>
                 <div>
                     {challengesCreated.length > 0 ? 
                         (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -242,13 +242,13 @@ const ChallengeList = () => {
                             )}
                         </div>
                         ) : (
-                            <div className='italic'>No challenges found.</div>
+                            <div className='text-xl italic'>Aucun challenge créé.</div>
                         )
                     }
                 </div>
             </div>
             <div>
-                <div className='text-2xl mb-4'>Joined : </div>
+                <div className='text-2xl font-bold mb-4'>Rejoints : </div>
                 <div>
                     {challengesjoined.length > 0 ? 
                         (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -265,7 +265,7 @@ const ChallengeList = () => {
                             )}
                         </div>
                         ) : (
-                            <div className='italic'>No challenges joined.</div>
+                            <div className='text-xl italic'>Aucun challenge rejoint.</div>
                         )
                     }
                 </div>

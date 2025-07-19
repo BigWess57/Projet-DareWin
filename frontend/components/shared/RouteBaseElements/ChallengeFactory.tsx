@@ -125,7 +125,7 @@ const ChallengeFactory = () => {
 
     return (
         <div className='flex-center flex-col gap-10 '>
-            <div className='text-3xl'>Create a new challenge and invite your friends !</div>
+            <div className='text-3xl font-bold'>Crée un nouveau challenge et invite tes amis !</div>
 
             <ChallengeForm onSubmit={handleCreateChallenge} />
         </div>

@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import Link from "next/link";
 
-import { tokenAbi, tokenAddress, feeTierBronzeCap, feeTierSilverCap, feeTierGoldCap} from "@/constants/TokenInfo";
+import { tokenAbi, tokenAddress, feeTierBronzeCap, feeTierSilverCap, feeTierGoldCap, TierBronzeFee, TierSilverFee, TierGoldFee, TierPlatinumFee} from "@/constants/TokenInfo";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { formatEther } from "viem";
@@ -10,6 +10,7 @@ import { useAccount, useReadContract } from "wagmi";
 import { usePathname, useRouter } from 'next/navigation';
 
 import { Home, Zap, User, ClipboardList, PencilRuler } from 'lucide-react'
+import { FeeTierExplanation } from '../Miscellaneous/FeeTierExplanation';
 
 const Header = (/*{ activePage }: { activePage: 'home' | 'create' | 'profile' | 'brands' }*/) => {
 
@@ -39,15 +40,16 @@ const Header = (/*{ activePage }: { activePage: 'home' | 'create' | 'profile' | 
         if (!isConnected) return "-"
         if (IsPending) return null;
         if (error) return null;
-        
-        if(balance as bigint < feeTierBronzeCap){
-            return <span className='text-orange-500 font-bold'>BRONZE</span>
-        }else if(balance as bigint < feeTierSilverCap){
-            return <span className='text-slate-500 font-bold'>SILVER</span>
-        }else if(balance as bigint < feeTierGoldCap){
-            return <span className='text-yellow-500 font-bold'>GOLD</span>
+
+        const balanceFormated = Number(formatEther(balance as bigint))
+        if(balanceFormated < feeTierBronzeCap){
+            return <span className='text-[#CE8946] font-bold'>BRONZE - {TierBronzeFee} de frais</span>
+        }else if(balanceFormated < feeTierSilverCap){
+            return <span className='text-slate-400 font-bold'>SILVER - {TierSilverFee} de frais</span>
+        }else if(balanceFormated < feeTierGoldCap){
+            return <span className='text-yellow-400 font-bold'>GOLD - {TierGoldFee} de frais</span>
         }else {
-            return <span className='text-cyan-500 font-bold'>PLATINUM</span>
+            return <span className='text-cyan-400 font-bold'>PLATINUM - {TierPlatinumFee} de frais</span>
         }
     })()
 
@@ -115,9 +117,18 @@ const Header = (/*{ activePage }: { activePage: 'home' | 'create' | 'profile' | 
 
                 <div className="px-4 py-3 rounded-xl bg-[#1F243A] border border-white/10 text-sm text-white shadow-sm">
                     <div className="text-white/90 text-lg mb-1">
-                        Balance : <span className="font-bold text-purple-600 ml-1">{displayBalance} DARE</span>
+                        Balance : <span className="ml-2 font-semibold text-white-400 text-xl font-mono tracking-wide">
+                            {Number(displayBalance).toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 6,
+                            })} DARE
+                        </span>
                     </div>
-                    <div className="text-white/60">Fee tier : <span className="text-white/80">{displayFeeTier}</span></div>
+                    <div className='flex items-center'>
+                        <div className="text-white/60">Palier de frais : <span className="text-white/80">{displayFeeTier}</span></div>
+                        <FeeTierExplanation displayFeeTier={displayFeeTier} />
+                    </div>
+                    
                 </div>
 
                 <ConnectButton.Custom>
