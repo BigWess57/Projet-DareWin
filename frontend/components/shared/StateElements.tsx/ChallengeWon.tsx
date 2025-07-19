@@ -4,7 +4,8 @@ import { log } from 'console'
 import React, { useContext, useEffect, useState } from 'react'
 import { Address, formatEther, parseAbiItem, } from 'viem'
 import { useAccount } from 'wagmi'
-import { ContractAddressContext } from '../ChallengePage'
+import { ContractAddressContext } from '../RouteBaseElements/ChallengePage'
+import { Trophy } from 'lucide-react'
 
 const ChallengeWon = () => {
 
@@ -46,7 +47,7 @@ const ChallengeWon = () => {
 
   return (
     <>
-        <div className='p-10 flex flex-center flex-col gap-10 text-2xl'>
+        {/* <div className='p-10 flex flex-center flex-col gap-10 text-2xl'>
             <h1>🎉 The vote has concluded. A winner has been declared!</h1>
             {winners.length > 0 && (
               <div>
@@ -65,8 +66,61 @@ const ChallengeWon = () => {
                 <div className='flex-center mt-3'>Received a prize of {formatEther(winners[0].prizeReceived)} DARE!</div>
               </div>
             )}
-            
-        </div>
+        </div> */}
+      <div className="
+        p-10 bg-gradient-to-br from-[#1F243A] to-[#151A2A] 
+        border border-white/10 rounded-2xl shadow-xl 
+        text-white flex flex-col items-center space-y-6
+      ">
+        {/* Titre */}
+        <h1 className="flex items-center gap-3 text-2xl font-bold">
+          🎉 Le vote est terminé !
+        </h1>
+
+        {/* Message et liste des gagnants */}
+        {winners.length > 0 && (
+          <div className="w-full max-w-md space-y-4 text-center">
+            {winners.length === 1 ? (
+              <div className="space-y-2">
+                <div className="flex items-center text-lg">
+                  <div>Gagnant :</div>
+                  <div><Trophy className="ml-3 w-5 h-5 text-yellow-400" /></div>
+                  <span className="ml-2 font-mono font-semibold text-cyan-400">
+                    {winners[0].winnerAddress}
+                  </span>
+                </div>
+                <div className="text-white/80">
+                  Prix reçu :
+                  <span className="ml-2 font-semibold text-yellow-300">
+                    {formatEther(winners[0].prizeReceived)} DARE
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-lg font-semibold">Gagnants :</div>
+                <ul className="space-y-1">
+                  {winners.map((winner, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-center justify-center gap-2 text-white"
+                    >
+                      <Trophy className="w-5 h-5 text-yellow-400" />
+                      <span className="font-mono">{winner.winnerAddress}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="text-white/80">
+                  Chaque joueur reçoit :
+                  <span className="ml-2 font-semibold text-yellow-300">
+                    {formatEther(winners[0].prizeReceived)} DARE
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </>
   )
 }

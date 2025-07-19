@@ -1,3 +1,4 @@
+import { Clock, Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12 } from 'lucide-react'
 import { useState, useEffect, useContext } from 'react'
 // import { RefreshDisplayContext } from '../ChallengeState';
 
@@ -44,9 +45,31 @@ export function ChallengeTimer({
         .padStart(2, '0')
     const seconds = (timeLeft % 60).toString().padStart(2, '0')
 
+
+    //For displaying spinning clock
+    const [idx, setIdx] = useState(0)
+    const clockIcons = [Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12]
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+        setIdx((i) => (i + 1) % clockIcons.length)
+        }, 250)
+        return () => clearInterval(interval)
+    }, []);
+
+    const Icon = clockIcons[idx]
+
     return (
-        <div className="text-lg font-mono">
-        ⏳ {hours}:{minutes}:{seconds}
+        // <div className="text-lg font-mono">
+        // ⏳ {hours}:{minutes}:{seconds}
+        // </div>
+        <div className="space-y-2">
+            <div className="text-white text-base">
+                Temps restant : 
+            </div>
+            <div className="flex items-center text-xl font-mono text-cyan-400">
+                <Icon className="mr-5 w-8 h-8 text-cyan-400 animate-pulse" /> {hours}:{minutes}:{seconds}
+            </div>
         </div>
     )
 }

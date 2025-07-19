@@ -3,7 +3,7 @@ import { z } from 'zod'
 
 import { useAccount, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
 
-import ChallengeForm, { ChallengeFormValues } from "./Miscellaneous/ChallengeForm"
+import ChallengeForm, { ChallengeFormValues } from "../Miscellaneous/ChallengeForm"
 import { factoryAbi, factoryAddress } from '@/constants/ChallengeFactoryInfo'
 
 import { toast } from 'sonner'

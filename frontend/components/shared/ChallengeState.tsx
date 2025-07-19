@@ -12,10 +12,10 @@ import { toast } from "sonner";
 
 import { parseAbiItem } from "viem";
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
-import { DurationContext } from "./ChallengePage";
+import { DurationContext } from "./RouteBaseElements/ChallengePage";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
-import { ContractAddressContext } from "./ChallengePage";
+import { ContractAddressContext } from "./RouteBaseElements/ChallengePage";
 
 
 // export const RefreshDisplayContext = createContext<(() => Promise<void>)>(async () => {});
@@ -31,10 +31,10 @@ enum WorkflowStatus {
 }
 //To display state names
 const stateLabels = {
-    [WorkflowStatus.GatheringPlayers]: "Gathering Players",
-    [WorkflowStatus.OngoingChallenge]: "Ongoing Challenge",
-    [WorkflowStatus.VotingForWinner]: "Voting For Winner",
-    [WorkflowStatus.ChallengeWon]: "Challenge Won",
+    [WorkflowStatus.GatheringPlayers]: "Regroupement des joueurs",
+    [WorkflowStatus.OngoingChallenge]: "Challenge en cours",
+    [WorkflowStatus.VotingForWinner]: "Vote pour élire le gagnant",
+    [WorkflowStatus.ChallengeWon]: "Challenge terminé",
 };
 
 
@@ -137,36 +137,39 @@ const ChallengeState = () => {
 
     return (
         <>
-        <div>Challenge State : <span className="font-bold">{displayState}</span></div>
+            {/* <div>Challenge State : <span className="font-bold">{displayState}</span></div> */}
 
-        <div className="p-5 border">
-            {!IsPending && currentDisplayStatus === WorkflowStatus.GatheringPlayers && (
-                <div>
-                    <JoiningChallenge refetchStatus={refetchStatus}/>
-                </div>
-            )}
+            <h1 className="text-xl font-bold m-5">
+                Etat du Challenge: <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{displayState}</span>
+            </h1>
+            <div /*className="p-5 border"*/>
+                {!IsPending && currentDisplayStatus === WorkflowStatus.GatheringPlayers && (
+                    <div>
+                        <JoiningChallenge refetchStatus={refetchStatus}/>
+                    </div>
+                )}
 
-            {currentDisplayStatus === WorkflowStatus.OngoingChallenge && (
-                // <RefreshDisplayContext value={refreshDisplayStatus} >
-                    <OngoingChallenge challengeStart={challengeStart} refreshDisplay={refreshDisplayStatus} />
-                // </RefreshDisplayContext>
-            )}
+                {currentDisplayStatus === WorkflowStatus.OngoingChallenge && (
+                    // <RefreshDisplayContext value={refreshDisplayStatus} >
+                        <OngoingChallenge challengeStart={challengeStart} refreshDisplay={refreshDisplayStatus} />
+                    // </RefreshDisplayContext>
+                )}
 
-            {currentDisplayStatus === WorkflowStatus.VotingForWinner && (
-                <>
-                    <VotingForWinner refetchStatus={refetchStatus}/>
-                </>
-            )}
+                {currentDisplayStatus === WorkflowStatus.VotingForWinner && (
+                    <>
+                        <VotingForWinner refetchStatus={refetchStatus}/>
+                    </>
+                )}
 
-            {currentDisplayStatus === WorkflowStatus.ChallengeWon && (
-                <ChallengeWon></ChallengeWon>
-            )}
-            {/* Fallback if none of the above matched */}
-            {!IsPending &&
-            !Object.values(WorkflowStatus).includes(currentDisplayStatus) && (
-                <p className="text-red-500">❌ Error displaying state</p>
-            )}
-        </div>
+                {currentDisplayStatus === WorkflowStatus.ChallengeWon && (
+                    <ChallengeWon></ChallengeWon>
+                )}
+                {/* Fallback if none of the above matched */}
+                {!IsPending &&
+                !Object.values(WorkflowStatus).includes(currentDisplayStatus) && (
+                    <p className="text-red-500">❌ Error displaying state</p>
+                )}
+            </div>
         
         </>
     )

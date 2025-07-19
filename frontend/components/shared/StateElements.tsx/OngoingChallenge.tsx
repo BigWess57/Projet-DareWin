@@ -2,7 +2,7 @@ import React, { useContext } from 'react'
 
 import { useAccount } from 'wagmi'
 
-import { DurationContext } from '../ChallengePage'
+import { DurationContext } from '../RouteBaseElements/ChallengePage'
 import { ChallengeTimer } from './ChallengeTimer'
 
 const OngoingChallenge = ({
@@ -33,7 +33,7 @@ const OngoingChallenge = ({
 
     return (
       <div>
-        <strong>Started at:</strong>{' '}
+        <strong>Début :</strong>{' '}
         <time dateTime={date.toISOString()}>
           {formatted}
         </time>
@@ -51,18 +51,25 @@ const OngoingChallenge = ({
 
 
   return (
-    <div>
-        <h1 className='text-2xl'>🏁 Challenge is currently in progress!</h1>
-        <div className='p-10'>
+    <div className="space-y-6 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl">
+      {/* Header */}
+      <h1 className="flex items-center gap-2 text-2xl font-bold text-white">
+        🎮 Défi en cours! A vous de jouer!
+      </h1>
+
+      {/* Content */}
+      <div className="p-8 bg-[#0B1126] border border-cyan-500/20 rounded-lg space-y-4">
+        {/* Start time */}
+        <div className="text-white/80 text-sm">
           {startTimestampDisplay}
-          <div className='mt-4'>Temps restant : 
-            <ChallengeTimer
-              startingTime={challengeStart}
-              duration={duration}
-              refreshDisplay={refreshDisplay}
-            />
-          </div>
         </div>
+
+        <ChallengeTimer
+          startingTime={challengeStart}
+          duration={duration}
+          refreshDisplay={refreshDisplay}/>
+
+      </div>
     </div>
   )
 }

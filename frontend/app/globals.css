@@ -16,7 +16,7 @@
 }
 
 .footer {
-  @apply w-full flex-center p-10;
+  @apply bg-[#0F1221] text-white/70 w-full flex-center p-10;
 }
 
 @utility flex-between {

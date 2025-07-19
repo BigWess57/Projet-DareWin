@@ -8,7 +8,7 @@ import { useAccount } from 'wagmi';
 import { contractAbi, fromBlock } from '@/constants/ChallengeInfo';
 import { readContracts } from 'wagmi/actions';
 import { config } from '@/app/RainbowKitAndWagmiProvider';
-import ChallengePreview from './ChallengePreview';
+import ChallengePreview from '../ChallengePreview';
 import { useRouter } from 'next/navigation';
 
 

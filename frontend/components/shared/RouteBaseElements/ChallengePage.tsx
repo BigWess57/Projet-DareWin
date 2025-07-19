@@ -5,7 +5,7 @@ import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { Abi, Account, Address, formatEther, numberToBytes } from "viem"
 
 import { contractAbi } from "@/constants/ChallengeInfo"
-import ChallengeState from "./ChallengeState"
+import ChallengeState from "../ChallengeState"
 
 
 export const BidContext = createContext<bigint>(0n);
@@ -88,7 +88,17 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
     //   return duration;
     // }
     // return JSON.stringify(Number(duration))
-    return duration;
+    const durationAsNumber = Number(duration)
+    const hours = Math.floor(durationAsNumber / 3600);
+    const minutes = Math.floor((durationAsNumber % 3600) / 60);
+    const seconds = durationAsNumber % 60;
+
+    const parts = [];
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0 || hours > 0) parts.push(`${minutes}m`);
+    parts.push(`${seconds}s`);
+
+    return parts.join(" ");
   })()
 
   
@@ -117,31 +127,39 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
 
 /********* DISPLAY **********/
   return (
-    <>
-      <div className="flex-between m-4">
-        <div className="text-3xl gap-2">
-          Challenge : <span className="font-bold">{displayDesc as ReactNode}</span>
-        </div>
-        <div>
-          <div>
-            bid : <span className="font-bold">{displayBid} DARE</span>
+    <main className="flex flex-col min-h-screen text-white">
+      
+      {/* Section infos challenge */}
+      <div className="flex items-center justify-between p-6 m-4 bg-[#1F243A] border border-white/10 rounded-2xl shadow-lg">
+        {/* Titre */}
+        <h1 className="text-2xl md:text-3xl font-bold text-white">
+          Challenge : <span className="text-cyan-400">{displayDesc as ReactNode}</span>
+        </h1>
+        
+        {/* Stats */}
+        <div className="flex space-x-8 text-sm md:text-base">
+          <div className="flex flex-col">
+            <span className="text-white/60 uppercase tracking-wide">Mise</span>
+            <span className="font-semibold text-cyan-400">{displayBid} DARE</span>
           </div>
-          <div>
-            duration : <span className="font-bold">{displayDuration} s</span>
+          <div className="flex flex-col">
+            <span className="text-white/60 uppercase tracking-wide">Durée</span>
+            <span className="font-semibold text-white">{displayDuration}</span>
           </div>
         </div>
       </div>
 
-      <div className="m-4 mt-10">
+      {/* Conteneur principal */}
+      <div className="flex-1 p-4 m-4 bg-[#1A1F33] border border-white/10 rounded-2xl shadow-inner overflow-auto">
         <ContractAddressContext value={contractAddress}>
           <BidContext value={bid}>
             <DurationContext value={duration}>
-              <ChallengeState/>
+              <ChallengeState />
             </DurationContext>
           </BidContext>
         </ContractAddressContext>
       </div>
-    </>
+    </main>
     
   )
 }

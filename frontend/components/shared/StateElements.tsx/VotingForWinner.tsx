@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
 
 import { ChallengeTimer } from './ChallengeTimer';
-import { ContractAddressContext } from '../ChallengePage';
+import { ContractAddressContext } from '../RouteBaseElements/ChallengePage';
 
 const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
 
@@ -131,16 +131,19 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         setPlayers(players)
 
         //If current user is a player, set isPlayer to true
+        let found = false;
         for (const player of players) {
             if(player == undefined){
                 console.error("player could not be retrieved");
                 continue;
             }
             if (address && isAddressEqual(player, address)) {
-                setIsPlayer(true);
+                found = true;
                 break;
             }
         }
+        setIsPlayer(found);
+
         return players
     }
 
@@ -314,81 +317,188 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
 /****** Display *******/
     return (
-        <div>
+        // <div>
+        //     {hasEveryoneVoted ? (
+        //         <div className='p-10 flex-center'>
+        //             <div className='flex flex-col gap-8'>
+        //                 <h1 className='text-2xl'>Voted Ended ! Everyone has voted !</h1>
+        //                 <Button onClick={endWinnerVote}>Reveal Winner(s)</Button>
+        //             </div>
+        //         </div>
+        //     ) : (
+        //         <div>
+        //             <div className='flex-between'>
+        //                 <div>
+        //                     <p className='mb-3'>🗳️ Time to vote for the winner!</p>
+        //                     <Button disabled={!selectedPlayer || hasVoted || !isPlayer} onClick={voteForWinner}>
+        //                         {hasVoted && <div>You have already voted</div>}
+        //                         {!isPlayer && <div>You are not a player</div>}
+        //                         {!hasVoted && isPlayer && <div>Vote</div>}
+        //                     </Button>
+        //                 </div>
+
+        //                 {playersVoted.length > 0 ? 
+        //                     (<div>
+        //                         {!votingDurationEnded ? 
+        //                             (votingStarted > 0n ? (
+        //                                 <div>
+        //                                     <div className="mb-2">Time remaining for vote :</div>
+        //                                     <ChallengeTimer
+        //                                         startingTime={votingStarted}
+        //                                         duration={durationVote as bigint}
+        //                                         refreshDisplay={endVoteTimerDisplay}
+        //                                     />
+        //                                 </div>
+        //                                 ) : (
+        //                                     <div>Initializing timer…</div>
+        //                                 )
+        //                             ) : (
+        //                             <div>
+        //                                 <div>Vote ended (You can still vote if you didn't do it!)</div>
+        //                                 <Button onClick={endWinnerVote}>Reveal Winner(s)</Button>
+        //                             </div>)
+        //                         }
+        //                     </div>)
+        //                     : 
+        //                     (<div>
+        //                         <div className='text-xl'>Waiting for the first player to vote...</div>
+        //                     </div>
+        //                 )}
+        //             </div>
+
+        //             <div className="p-10">
+        //                 <div>Players :</div>
+        //                 <div className="mt-4 flex flex-col">
+        //                     {players?.length > 0 ? players.map((addr) => {
+        //                         return (
+        //                             <div className='flex-between gap-2'  key={crypto.randomUUID()}>
+        //                                 <Checkbox
+        //                                     disabled={hasVoted || !isPlayer}
+        //                                     id={`select-${addr}`}
+        //                                     checked={selectedPlayer == addr}
+        //                                     onCheckedChange={(checked) => {
+        //                                         setSelectedPlayer( (checked && addr != undefined) ? addr : null)
+        //                                     }}
+        //                                 />
+        //                                 <div className='w-full'>
+        //                                     <Event address={addr} />
+        //                                 </div>
+        //                             </div>
+        //                         )
+        //                     }) : <div className="italic">(No player found)</div>
+        //                     }
+        //                 </div>
+        //             </div>
+        //         </div>
+        //     )}
+        // </div>
+
+        <div className="space-y-8 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl text-white">
             {hasEveryoneVoted ? (
-                <div className='p-10 flex-center'>
-                    <div className='flex flex-col gap-8'>
-                        <h1 className='text-2xl'>Voted Ended ! Everyone has voted !</h1>
-                        <Button onClick={endWinnerVote}>Reveal Winner(s)</Button>
-                    </div>
+                // 🎉 All voted
+                <div className="flex flex-col items-center justify-center p-10 space-y-6">
+                <h1 className="text-3xl font-bold">Vote terminé ! Tout le monde a voté</h1>
+                <button
+                    onClick={endWinnerVote}
+                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-semibold hover:brightness-110 transition"
+                >
+                    Révéler le(s) gagnant(s)
+                </button>
                 </div>
             ) : (
-                <div>
-                    <div className='flex-between'>
-                        <div>
-                            <p className='mb-3'>🗳️ Time to vote for the winner!</p>
-                            <Button disabled={!selectedPlayer || hasVoted || !isPlayer} onClick={voteForWinner}>
-                                {hasVoted && <div>You have already voted</div>}
-                                {!isPlayer && <div>You are not a player</div>}
-                                {!hasVoted && isPlayer && <div>Vote</div>}
-                            </Button>
-                        </div>
-
-                        {playersVoted.length > 0 ? 
-                            (<div>
-                                {!votingDurationEnded ? 
-                                    (votingStarted > 0n ? (
-                                        <div>
-                                            <div className="mb-2">Time remaining for vote :</div>
-                                            <ChallengeTimer
-                                                startingTime={votingStarted}
-                                                duration={durationVote as bigint}
-                                                refreshDisplay={endVoteTimerDisplay}
-                                            />
-                                        </div>
-                                        ) : (
-                                            <div>Initializing timer…</div>
-                                        )
-                                    ) : (
-                                    <div>
-                                        <div>Vote ended (You can still vote if you didn't do it!)</div>
-                                        <Button onClick={endWinnerVote}>Reveal Winner(s)</Button>
-                                    </div>)
-                                }
-                            </div>)
-                            : 
-                            (<div>
-                                <div className='text-xl'>Waiting for the first player to vote...</div>
-                            </div>
-                        )}
+                <>
+                {/* Top bar: prompt + vote button + timer/status */}
+                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                    {/* Prompt & Vote */}
+                    <div className="space-y-4">
+                    <p className="text-2xl font-semibold flex items-center gap-2">
+                        🗳️ C’est l’heure de voter !
+                    </p>
+                    <Button
+                        disabled={!selectedPlayer || hasVoted || !isPlayer}
+                        onClick={voteForWinner}
+                        className={`px-5 py-2 rounded-lg font-medium transition
+                        ${!isPlayer
+                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                            : hasVoted
+                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
+                        `}
+                    >
+                        {hasVoted
+                        ? "Vous avez déjà voté"
+                        : !isPlayer
+                            ? "Vous n'êtes pas un joueur"
+                            : "Voter"}
+                    </Button>
                     </div>
 
-                    <div className="p-10">
-                        <div>Players :</div>
-                        <div className="mt-4 flex flex-col">
-                            {players?.length > 0 ? players.map((addr) => {
-                                return (
-                                    <div className='flex-between gap-2'  key={crypto.randomUUID()}>
-                                        <Checkbox
-                                            disabled={hasVoted || !isPlayer}
-                                            id={`select-${addr}`}
-                                            checked={selectedPlayer == addr}
-                                            onCheckedChange={(checked) => {
-                                                setSelectedPlayer( (checked && addr != undefined) ? addr : null)
-                                            }}
-                                        />
-                                        <div className='w-full'>
-                                            <Event address={addr} />
-                                        </div>
-                                    </div>
-                                )
-                            }) : <div className="italic">(No player found)</div>
-                            }
+                    {/* Timer / Status */}
+                    <div className="text-center space-y-2">
+                    {playersVoted.length > 0 ? (
+                        !votingDurationEnded ? (
+                        votingStarted > 0n ? (
+                            <div className="space-y-1">
+                            {/* <div className="text-white/70">Temps restant pour le vote :</div> */}
+                            <ChallengeTimer
+                                startingTime={votingStarted}
+                                duration={durationVote as bigint}
+                                refreshDisplay={endVoteTimerDisplay}
+                            />
+                            </div>
+                        ) : (
+                            <div className="italic text-white/50">Initialisation du timer…</div>
+                        )
+                        ) : (
+                        <div className="space-y-2">
+                            <div className="text-white/80">Vote terminé ! (vous pouvez toujours voter si ce n'est pas fait)</div>
+                            <button
+                            onClick={endWinnerVote}
+                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-medium hover:brightness-110 transition"
+                            >
+                            Révéler le(s) gagnant(s)
+                            </button>
                         </div>
+                        )
+                    ) : (
+                        <div className="text-xl italic text-white/60">En attente du premier vote…</div>
+                    )}
                     </div>
                 </div>
+
+                {/* Players list with checkboxes */}
+                <div className="p-6 bg-[#0B1126] border border-white/10 rounded-lg space-y-4">
+                    <h2 className="text-lg font-semibold text-white/80">Joueurs :</h2>
+                    <div className="flex flex-col gap-3">
+                    {players?.length > 0 ? (
+                        players.map((addr) => (
+                        <label
+                            key={addr}
+                            htmlFor={`select-${addr}`}
+                            className="flex items-center gap-3 p-2 bg-[#1A1F33] rounded-lg hover:bg-[#22283F] transition"
+                        >
+                            <Checkbox
+                                disabled={hasVoted || !isPlayer}
+                                id={`select-${addr}`}
+                                checked={selectedPlayer == addr}
+                                onCheckedChange={(checked) => {
+                                    setSelectedPlayer( (checked && addr != undefined) ? addr : null)
+                                }}
+                                className="h-5 w-5 text-cyan-400 bg-[#0B1126] border border-white/20 rounded transition"
+                            />
+                            <div className="flex-1 text-sm font-mono text-white truncate">
+                            <Event address={addr} />
+                            </div>
+                        </label>
+                        ))
+                    ) : (
+                        <div className="italic text-white/50">(Aucun joueur trouvé)</div>
+                    )}
+                    </div>
+                </div>
+                </>
             )}
-        </div>
+            </div>
     )
 }
 

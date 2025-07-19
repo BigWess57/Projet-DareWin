@@ -1,65 +1,78 @@
 import React from 'react'
-import { Challenge } from './ChallengeList'
+import { Challenge } from './RouteBaseElements/ChallengeList'
 
 
 
 const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-md grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      
+    <div
+      className="
+        p-6 bg-gradient-to-br from-[#1F243A] to-[#0F1221]
+        border border-white/10 rounded-2xl 
+        shadow-lg transition-transform duration-200 hover:scale-105 hover:shadow-2xl
+        grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
+      "
+    >
       {/* Full‑width header */}
       <div className="col-span-full">
-        <h2 className="text-2xl font-extrabold truncate max-w-full">
-          Challenge: {challenge.description}
+        <h2 className="text-2xl font-extrabold text-white truncate max-w-full">
+          Challenge : {challenge.description}
         </h2>
       </div>
 
       {/* Creator */}
       <div className="flex flex-col">
-        <span className="text-sm text-gray-500">Creator</span>
-        <span className="font-medium truncate max-w-full">{challenge.creator}</span>
+        <span className="text-sm text-white/60">Créateur</span>
+        <span className="font-medium text-white truncate max-w-full">
+          {challenge.creator}
+        </span>
       </div>
 
       {/* Bid */}
       <div className="flex flex-col">
-        <span className="text-sm text-gray-500">Bid</span>
-        <span className="font-medium">{challenge.bid} DARE</span>
+        <span className="text-sm text-white/60">Mise</span>
+        <span className="font-medium text-cyan-400">
+          {challenge.bid} DARE
+        </span>
       </div>
 
       {/* Duration */}
       <div className="flex flex-col">
-        <span className="text-sm text-gray-500">Duration</span>
-        <span className="font-medium">
-            {(() => {
-                const totalSeconds = Number(challenge.duration);
-                const hours = Math.floor(totalSeconds / 3600);
-                const minutes = Math.floor((totalSeconds % 3600) / 60);
-                const seconds = totalSeconds % 60;
-                return `${hours}h ${minutes}m ${seconds}s`;
-            })()}
+        <span className="text-sm text-white/60">Durée</span>
+        <span className="font-medium text-white">
+          {(() => {
+            const total = Number(challenge.duration)
+            const h = Math.floor(total / 3600)
+            const m = Math.floor((total % 3600) / 60)
+            const s = total % 60
+            return `${h}h ${m}m ${s}s`
+          })()}
         </span>
       </div>
 
       {/* Max Players */}
       <div className="flex flex-col">
-        <span className="text-sm text-gray-500">Max Players</span>
-        <span className="font-medium">{challenge.maxPlayers}</span>
+        <span className="text-sm text-white/60">Max Joueurs</span>
+        <span className="font-medium text-white">
+          {challenge.maxPlayers}
+        </span>
       </div>
 
       {/* Time of Creation */}
       <div className="flex flex-col">
-        <span className="text-sm text-gray-500">Created on </span>
-        <span className="font-medium">
-            {new Date(Number(challenge.timestampOfCreation) * 1000).toLocaleString()}
+        <span className="text-sm text-white/60">Créé le</span>
+        <span className="font-medium text-white">
+          {new Date(Number(challenge.timestampOfCreation) * 1000).toLocaleString()}
         </span>
       </div>
 
       {/* Mode */}
       <div className="flex flex-col">
-        <span className="text-sm text-gray-500">Mode </span>
-        <span className="font-medium">{challenge.groupMode ? "Friend Group" : "Public"}</span>
+        <span className="text-sm text-white/60">Mode</span>
+        <span className="font-medium text-white">
+          {challenge.groupMode ? 'Groupe privé' : 'Public'}
+        </span>
       </div>
-
     </div>
   )
 }

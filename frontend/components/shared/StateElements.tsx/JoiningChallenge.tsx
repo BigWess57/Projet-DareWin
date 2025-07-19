@@ -11,11 +11,11 @@ import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
 
 import { publicClient } from '@/utils/client';
 
-import { BidContext } from "../ChallengePage";
+import { BidContext } from "../RouteBaseElements/ChallengePage";
 import { ReadContractErrorType, waitForTransactionReceipt, writeContract } from "wagmi/actions";
 import { config } from "@/app/RainbowKitAndWagmiProvider";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
-import { ContractAddressContext } from "../ChallengePage";
+import { ContractAddressContext } from "../RouteBaseElements/ChallengePage";
 import Joined from "../Miscellaneous/Joined";
 
 
@@ -253,51 +253,148 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     //     refetchAll();
     // }, [address])
 
+    //For displaying moving dots
+    const [dots, setDots] = useState(".");
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+        setDots((prev) => {
+            if (prev === "...") return ".";
+            return prev + ".";
+        });
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, []);
+
 /************
  * Display
  *************/
     return (
-        <div>
-            <div className="flex-between">
-                <p>🚀 Waiting for players to join...</p>
-                <div className="flex flex-col items-center">
-                    <div>Mode : <span className="font-bold">{groupMode ? "Friend Group" : "Public"}</span></div>
-                    {groupMode && 
-                        <div className="text-xl">
-                            {isAllowed ?
-                                <div>You are allowed to participate in this challenge</div> 
-                                : <div>You are not allowed to participate in this challenge</div>
-                            }
-                        </div>
-                    }
+        // <div>
+        //     <div className="flex-between">
+        //         <p>🚀 Waiting for players to join...</p>
+        //         <div className="flex flex-col items-center">
+        //             <div>Mode : <span className="font-bold">{groupMode ? "Friend Group" : "Public"}</span></div>
+        //             {groupMode && 
+        //                 <div className="text-xl">
+        //                     {isAllowed ?
+        //                         <div>You are allowed to participate in this challenge</div> 
+        //                         : <div>You are not allowed to participate in this challenge</div>
+        //                     }
+        //                 </div>
+        //             }
+        //         </div>
+                
+        //         {challengeOwner && address && isAddressEqual(challengeOwner, address) &&
+        //             <Button disabled={events.length < 2} onClick={startChallenge}>Start Challenge</Button>
+        //         }
+                
+        //     </div>
+        //     <div className="flex gap-2">
+        //         {!userHasJoined ? 
+        //             <Button disabled={!isAllowed} onClick={joinChallenge}>JOIN</Button> 
+        //         :
+        //             <Button disabled={!isAllowed} onClick={withdrawFromChallenge}>LEAVE</Button>
+        //         }
+        //     </div>
+        //     <div className="p-10">
+        //         <div>Current players :</div>
+        //         <div className="mt-4 flex flex-col">
+        //             {events?.length > 0 ? [...events].reverse().map((addr) => {
+        //                 return (
+        //                     <Joined address={addr} key={crypto.randomUUID()} />
+        //                 )
+        //                 })
+        //                 : <div className="italic">(none yet)</div>
+        //             }
+        //         </div>
+        //     </div>
+
+        // </div>
+        <div className="space-y-6 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl">
+
+            {/* Statut d’attente */}
+            <div className="flex items-center justify-between bg-[#0B1126] p-4 rounded-lg border border-cyan-500/20">
+                <p className="flex items-center gap-2 text-xl font-semibold text-white/90">
+                🚀 En attente de joueurs{dots}
+                </p>
+                <div className="flex flex-col items-end space-y-1 text-sm">
+                <div className="text-white/60">
+                    Mode : <span className="font-semibold text-cyan-400">{groupMode ? 'Friend Group' : 'Public'}</span>
                 </div>
-                
-                {challengeOwner && address && isAddressEqual(challengeOwner, address) &&
-                    <Button disabled={events.length < 2} onClick={startChallenge}>Start Challenge</Button>
-                }
-                
-            </div>
-            <div className="flex gap-2">
-                {!userHasJoined ? 
-                    <Button disabled={!isAllowed} onClick={joinChallenge}>JOIN</Button> 
-                :
-                    <Button disabled={!isAllowed} onClick={withdrawFromChallenge}>LEAVE</Button>
-                }
-            </div>
-            <div className="p-10">
-                <div>Current players :</div>
-                <div className="mt-4 flex flex-col">
-                    {events?.length > 0 ? [...events].reverse().map((addr) => {
-                        return (
-                            <Joined address={addr} key={crypto.randomUUID()} />
-                        )
-                        })
-                        : <div className="italic">(none yet)</div>
-                    }
+                {groupMode && (
+                    <div className={`text-sm ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
+                    {isAllowed
+                        ? 'You are allowed to participate'
+                        : 'You are not allowed to participate'}
+                    </div>
+                )}
                 </div>
             </div>
 
-        </div>
+            {/* Header d’état + Actions */}
+            <div className="flex items-center justify-between space-x-4">
+                {/* Boutons JOIN / LEAVE */}
+                {!userHasJoined ? (
+                    <button
+                    onClick={joinChallenge}
+                    disabled={groupMode && !isAllowed}
+                    className={`
+                        w-1/3 px-4 py-3 rounded-lg font-medium transition
+                        ${groupMode && !isAllowed
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
+                    `}
+                    >
+                    REJOINDRE
+                    </button>
+                ) : (
+                    <button
+                    onClick={withdrawFromChallenge}
+                    disabled={groupMode && !isAllowed}
+                    className={`
+                        w-1/3 px-4 py-3 rounded-lg font-medium transition
+                        ${groupMode && !isAllowed
+                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:brightness-110'}
+                    `}
+                    >
+                    QUITTER
+                    </button>
+                )}
+
+                {/* Bouton Start Challenge (propriétaire uniquement) */}
+                {challengeOwner && address && isAddressEqual(challengeOwner, address) && (
+                    <button
+                    onClick={startChallenge}
+                    disabled={events.length < 2}
+                    className={`
+                        px-4 py-2 rounded-lg font-semibold transition
+                        ${events.length < 2
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
+                    `}
+                    >
+                        Démarrer le défi
+                    </button>
+                )}
+            </div>
+
+            {/* Liste des joueurs */}
+            <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
+                <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
+                <div className="flex flex-col gap-2 text-white">
+                {events?.length > 0 ? (
+                    [...events].reverse().map((addr) => (
+                        <Joined address={addr} key={addr} />
+                    ))
+                ) : (
+                    <div className="italic text-white/50">(none yet)</div>
+                )}
+                </div>
+            </div>
+            </div>
     )
 }
 

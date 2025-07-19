@@ -1,5 +1,5 @@
 'use client'
-import ChallengePage from '@/components/shared/ChallengePage'
+import ChallengePage from '@/components/shared/RouteBaseElements/ChallengePage'
 import { useParams } from 'next/navigation'
 import React from 'react'
 

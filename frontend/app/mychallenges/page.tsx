@@ -1,6 +1,6 @@
 'use client'
 
-import ChallengeList from "@/components/shared/ChallengeList"
+import ChallengeList from "@/components/shared/RouteBaseElements/ChallengeList"
 
 export default function myChallenges() {
 

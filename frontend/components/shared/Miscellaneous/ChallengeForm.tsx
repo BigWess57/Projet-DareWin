@@ -105,17 +105,35 @@ const ChallengeForm = ({
         <Form {...form}>
             <form
                 onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6 w-full max-w-[1000px] p-6 bg-white rounded-lg shadow"
+                className="
+                    relative space-y-8 w-full max-w-[1000px] p-10 
+                    bg-gradient-to-br from-[#1A1F33] to-[#151A2A] 
+                    border-1 border-white/20 
+                    rounded-2xl shadow-2xl
+                    before:absolute before:inset-0
+                    before:rounded-2xl
+                    before:bg-gradient-to-r before:from-cyan-500 before:to-purple-500
+                    before:opacity-50 before:-z-10
+                "
             >
                 {/* Description */}
                 <FormField
                     control={form.control}
                     name="description"
                     render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="space-y-2">
                             <FormLabel>Description</FormLabel>
                                 <FormControl>
-                                    <Textarea placeholder="A short description..." {...field} />
+                                    <Textarea 
+                                        placeholder="A short description..." 
+                                        {...field} 
+                                        className="
+                                            w-full bg-[#0A0F1E] border border-white/20 rounded-lg
+                                            px-4 py-3 text-white placeholder:text-white/50
+                                            focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400
+                                            transition duration-200
+                                        "
+                                    />
                                 </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -138,7 +156,18 @@ const ChallengeForm = ({
                                         render={({ field }) => (
                                         <FormItem className="w-30 flex">
                                             <FormControl>
-                                                <Input type="number" min={0} max={name !== 'hours' ? 59 : undefined} {...field} />
+                                                <Input 
+                                                    type="number" 
+                                                    min={0} 
+                                                    max={name !== 'hours' ? 59 : undefined} 
+                                                    {...field} 
+                                                    className="
+                                                        w-24 bg-[#0A0F1E] border border-white/20 rounded-md
+                                                        px-3 py-2 text-white placeholder:text-white/50
+                                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                                                        transition duration-200
+                                                    "
+                                                />
                                             </FormControl>
                                             <FormLabel className="text-xs">{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel>
                                             <FormMessage />
@@ -158,7 +187,7 @@ const ChallengeForm = ({
                     name="bid"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Bid Amount (DARE)</FormLabel>
+                            <FormLabel className="font-medium">Bid Amount (DARE)</FormLabel>
                                 <FormControl>
                                     <Input
                                         placeholder="0.1"
@@ -174,7 +203,13 @@ const ChallengeForm = ({
                                                 e.preventDefault();
                                             }
                                         }}
-                                        {...field} />
+                                        {...field} 
+                                        className="
+                                            w-full bg-[#0A0F1E] border border-white/20 rounded-lg
+                                            px-4 py-2 text-white placeholder:text-white/50
+                                            focus:border-purple-500 focus:ring-2 focus:ring-purple-500
+                                            transition duration-200
+                                        "/>
                                 </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -188,7 +223,15 @@ const ChallengeForm = ({
                     render={({ field }) => (
                         <FormItem className="flex items-center space-x-3">
                             <FormControl>
-                                <Switch checked={field.value} onCheckedChange={field.onChange} />
+                                <Switch 
+                                    checked={field.value} 
+                                    onCheckedChange={field.onChange} 
+                                    className="
+                                        bg-white/20 checked:bg-purple-500
+                                        focus:ring-2 focus:ring-purple-500
+                                        transition
+                                    "
+                                />
                             </FormControl>
                             <FormLabel>Group Mode</FormLabel>
                             <FormMessage />
@@ -205,7 +248,16 @@ const ChallengeForm = ({
                             <FormItem>
                                 <FormLabel>Max Players Allowed</FormLabel>
                                 <FormControl>
-                                    <Input type="number" {...field} />
+                                    <Input 
+                                        type="number" 
+                                        {...field}
+                                        className="
+                                            w-full bg-[#0A0F1E] border border-white/20 rounded-lg
+                                            px-4 py-2 text-white placeholder:text-white/50
+                                            focus:border-green-500 focus:ring-2 focus:ring-green-500
+                                            transition duration-200
+                                        "
+                                    />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -224,17 +276,36 @@ const ChallengeForm = ({
                                             <Input
                                                 placeholder="0x..."
                                                 {...field}
+                                                className="
+                                                    w-full bg-[#0A0F1E] border border-white/20 rounded-lg
+                                                    px-4 py-2 text-white placeholder:text-white/50
+                                                    focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500
+                                                    transition duration-200
+                                                "
                                             />
                                         </FormControl>
                                     )}
                                 />
-                                <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                                <Button 
+                                    type="button" 
+                                    variant="destructive" 
+                                    onClick={() => remove(index)}
+                                    className="px-3 py-1 bg-red-600 hover:bg-red-700 transition rounded-md text-white"
+                                >
                                     Remove
                                 </Button>
                             </div>
                         ))}
                         <div>
-                            <Button type="button" onClick={() => append({ address: '' })}>
+                            <Button 
+                                type="button" 
+                                className="
+                                    bg-gradient-to-r from-green-500 to-cyan-500
+                                    text-white px-4 py-2 rounded-lg shadow hover:brightness-110
+                                    transition duration-200
+                                "
+                                onClick={() => append({ address: '' })}
+                            >
                                 Add Address
                             </Button>
                         </div>
@@ -242,11 +313,21 @@ const ChallengeForm = ({
                 )}
 
                 {/* Submit Button */}
-                <Button type="submit" className="w-full">
+                <Button
+                    type="submit" 
+                    className="
+                        w-full px-6 py-3
+                        bg-gradient-to-r from-purple-500 to-blue-500
+                        text-white font-semibold rounded-2xl shadow-2xl
+                        hover:scale-105 hover:brightness-110
+                        transition-transform duration-200
+                    "
+                >
                     Create Challenge
                 </Button>
             </form>
         </Form>
+
     )
 }
 
