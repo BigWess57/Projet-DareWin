@@ -8,8 +8,6 @@ DareWin – Plateforme de challenge décentralisée sur Ethereum
 
 🛠 [Architecture](#architecture)
 
-📂 [Structure des dossiers](#structure-des-dossiers)
-
 📖 [Usage](#usage)
 
 🧪 [Tests & CI](#tests-&-ci)
