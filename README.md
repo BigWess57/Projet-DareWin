@@ -4,7 +4,7 @@ L'appli de défis entre amis!
 DareWin – Plateforme de challenge décentralisée sur Ethereum
 
 ## Table des matières
-🚀 ##Installation & setup
+🚀 [Installation](#installation)
 
 🛠 ##Architecture
 
@@ -14,9 +14,9 @@ DareWin – Plateforme de challenge décentralisée sur Ethereum
 
 🧪 ##Tests & CI
 
-🔗 ##Liens utiles
+🔗 [Liens utiles](#liens-utiles)
 
-## Installation & setup
+## Installation
 ```
 git clone https://github.com/BigWess57/Projet-DareWin.git
 ```
