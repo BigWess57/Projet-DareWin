@@ -17,6 +17,7 @@ import { config } from "@/app/RainbowKitAndWagmiProvider";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 import { ContractAddressContext } from "../RouteBaseElements/ChallengePage";
 import Joined from "../Miscellaneous/Joined";
+import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToast";
 
 
 const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
@@ -32,20 +33,29 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
  * Functions for interaction with the blokchain 
  * **************/
 
-    // const { data: allowance, error: errorAllowance, isPending: IsPendingAllowance, refetch: refetchAllowance } = useReadContract({
-    //     address: tokenAddress,
-    //     abi: tokenAbi,
-    //     functionName: 'allowance',
-    //     args: [address, contractAddress],
-    //     account: address as `0x${string}` | undefined
-    // })
+    //For withdraw transaction
+    const { data: withdrawHash, isPending: isWithdrawing, writeContract: withdrawContract, } = useWriteContract({
+        mutation: {
+            onError: (err) => toast.error("withdraw failed: " + err.message),
+        },
+    })
+    //Used to check the current transaction state
+    const { isLoading: withdrawConfirming, isSuccess: withdrawSuccess, error: withdrawReceiptError, } = useWaitForTransactionReceipt({
+        hash: withdrawHash
+    }) 
 
-    // const { data: challengeOwner, error: errorOwner, isPending: IsPendingOwner, refetch: refetchOwner } = useReadContract({
-    //     address: contractAddress,
-    //     abi: contractAbi,
-    //     functionName: 'owner',
-    //     account: address as `0x${string}` | undefined
-    // })
+    //For start challenge transaction
+    const { data: startHash, isPending: isStarting, writeContract: startContract, } = useWriteContract({
+        mutation: {
+            onError: (err) => toast.error("start failed: " + err.message),
+        },
+    })
+    //Used to check the current transaction state
+    const { isLoading: startConfirming, isSuccess: startSuccess, error: startReceiptError, } = useWaitForTransactionReceipt({
+        hash: startHash
+    })
+
+
     const { data: readData, error: error, isPending: IsPending, refetch: refetch } = useReadContracts({
         contracts: [
             {
@@ -173,59 +183,58 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         
     }
 
-    const withdrawFromChallenge = async () => {
-        try{
-            //Ask user to joinChallenge
-            const startHash = await writeContract(config, {
-                address: contractAddress,
-                abi: contractAbi,
-                functionName: 'withdrawFromChallenge',
-                account: address as `0x${string}`,
-            })
-            await waitForTransactionReceipt(config, { hash: startHash, confirmations: 1 })
-
-            console.log('You left the challenge succesfully')
-            toast.success("Success", {
-                description: "You left the challenge",
-            })
-            await refetchAll();
-        } catch (err) {
-            console.error('Transaction failed ', err)
-            toast.error("Error : Could not leave the challenge", {
-                duration: 3000,
-                // isClosable: true,
-            });
-        }
+    const withdrawFromChallenge = () => {
+        withdrawContract({
+            address: contractAddress,
+            abi: contractAbi,
+            functionName: 'withdrawFromChallenge',
+            account: address as `0x${string}`,
+        })
     }
 
 
-    const startChallenge = async () => {
-        try{
-            //Ask user to joinChallenge
-            const startHash = await writeContract(config, {
-                address: contractAddress,
-                abi: contractAbi,
-                functionName: 'startChallenge',
-                account: address as `0x${string}`,
-            })
-            await waitForTransactionReceipt(config, { hash: startHash, confirmations: 1 })
-
-            console.log('Challenge started successfully!')
-            toast.success("Success", {
-                description: "Challenge started successfully",
-            })
-            await refetchAll();
-        } catch (err) {
-            console.error('Transaction failed ', err)
-            toast.error("Error : Could not start the challenge", {
-                duration: 3000,
-                // isClosable: true,
-            });
-        }
+    const startChallenge = () => {
+        startContract({
+            address: contractAddress,
+            abi: contractAbi,
+            functionName: 'startChallenge',
+            account: address as `0x${string}`,
+        })
     }
     
 
  /********** Use effects *************/
+
+    //Lorsqu'une transaction est effectuée, informer l'utilisateur de l'outcome
+    //For withdraw
+        useEffect(() => {
+            if(withdrawSuccess) {
+                refetchAll()
+            }
+            if(withdrawReceiptError) {
+                console.error('Transaction failed ', withdrawReceiptError.message)
+                toast.error("Error : Could not leave the challenge", {
+                    duration: 3000,
+                    // isClosable: true,
+                });
+            }
+        }, [withdrawSuccess, withdrawReceiptError])
+    
+    //For start challenge
+        useEffect(() => {
+            if(startSuccess) {
+                refetchAll()
+            }
+            if(startReceiptError) {
+                console.error('Transaction failed ', startReceiptError.message)
+                toast.error("Error : Could not start the challenge", {
+                    duration: 3000,
+                    // isClosable: true,
+                });
+            }
+        }, [startSuccess, startReceiptError])
+
+
 
     useEffect(() => {
         if (!readData) return
@@ -271,47 +280,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
  * Display
  *************/
     return (
-        // <div>
-        //     <div className="flex-between">
-        //         <p>🚀 Waiting for players to join...</p>
-        //         <div className="flex flex-col items-center">
-        //             <div>Mode : <span className="font-bold">{groupMode ? "Friend Group" : "Public"}</span></div>
-        //             {groupMode && 
-        //                 <div className="text-xl">
-        //                     {isAllowed ?
-        //                         <div>You are allowed to participate in this challenge</div> 
-        //                         : <div>You are not allowed to participate in this challenge</div>
-        //                     }
-        //                 </div>
-        //             }
-        //         </div>
-                
-        //         {challengeOwner && address && isAddressEqual(challengeOwner, address) &&
-        //             <Button disabled={events.length < 2} onClick={startChallenge}>Start Challenge</Button>
-        //         }
-                
-        //     </div>
-        //     <div className="flex gap-2">
-        //         {!userHasJoined ? 
-        //             <Button disabled={!isAllowed} onClick={joinChallenge}>JOIN</Button> 
-        //         :
-        //             <Button disabled={!isAllowed} onClick={withdrawFromChallenge}>LEAVE</Button>
-        //         }
-        //     </div>
-        //     <div className="p-10">
-        //         <div>Current players :</div>
-        //         <div className="mt-4 flex flex-col">
-        //             {events?.length > 0 ? [...events].reverse().map((addr) => {
-        //                 return (
-        //                     <Joined address={addr} key={crypto.randomUUID()} />
-        //                 )
-        //                 })
-        //                 : <div className="italic">(none yet)</div>
-        //             }
-        //         </div>
-        //     </div>
-
-        // </div>
         <div className="space-y-6 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl">
 
             {/* Statut d’attente */}
@@ -394,7 +362,9 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 )}
                 </div>
             </div>
-            </div>
+            <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Challenge started successfully!" />
+            <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage="You left the challenge" />
+        </div>
     )
 }
 

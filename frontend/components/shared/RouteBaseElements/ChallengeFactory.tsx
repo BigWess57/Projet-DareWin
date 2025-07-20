@@ -8,12 +8,15 @@ import { CopyAction } from '../Miscellaneous/CopyAction'
 import { factoryAbi, factoryAddress } from '@/constants/ChallengeFactoryInfo'
 
 import { toast } from 'sonner'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Address, isAddressEqual, parseAbiItem, parseEther } from 'viem'
 import { publicClient } from '@/utils/client'
 import { fromBlock } from '@/constants/ChallengeInfo'
 import { _toLowerCase } from 'zod/v4/core'
 import { Button } from '@/components/ui/button'
+import { CurrentTransactionToast } from '../Miscellaneous/CurrentTransactionToast'
+import { waitForCallsStatus } from 'viem/actions'
+import { RotateCw } from 'lucide-react'
 
 
 
@@ -65,7 +68,6 @@ const ChallengeFactory = () => {
 
 
     const getChallengeEndedEvents = async() => {
-    
         //Get the latest block - 100, to only get the few last blocks
         const latest = await publicClient.getBlockNumber();
         const from = latest > 100n ? latest - 100n : 0n;
@@ -98,19 +100,30 @@ const ChallengeFactory = () => {
         }
     }
 
-
     useEffect(() => {
-        if(isSuccess) {
+        if (isConfirming) {
+            // Affiche le toast "loading" et garde son ID
+            toast.loading('Pending...', {
+                id: 1,
+                description: 'Creating Challenge...',
+                action: null,
+            })
+        }
+        if (isSuccess) {
+            // Remplace toast "loading" by toast success with same ID
             getChallengeEndedEvents().then((challengeAddress) => {
                 if(challengeAddress == null){
                     toast.warning("Warning!", {
+                        id: 1,
                         description: "Challenge successfully created, but could not retrieve contract address. Check 'My challenges' tab",
+                        duration: 3000,
                     })
                 }else{
-                    toast.info("Transaction Successful!", {
+                    toast.success("Transaction Successful!", {
+                        id: 1,
                         description: "Challenge créé avec succes a l'adresse " + challengeAddress,
                         action:<CopyAction address={challengeAddress}/>,
-                        duration: 6000,
+                        duration: 5000,
                     })
                 }
             })
@@ -126,7 +139,7 @@ const ChallengeFactory = () => {
                 duration: 3000,
             });
         }
-    }, [isSuccess, errorConfirmation])
+    }, [isSuccess, isConfirming,  errorConfirmation])
 
 
 
@@ -136,6 +149,7 @@ const ChallengeFactory = () => {
 
             <ChallengeForm onSubmit={handleCreateChallenge} />
         </div>
+        
     )
 }
 

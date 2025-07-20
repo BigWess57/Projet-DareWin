@@ -14,6 +14,7 @@ import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
 
 import { ChallengeTimer } from './ChallengeTimer';
 import { ContractAddressContext } from '../RouteBaseElements/ChallengePage';
+import { CurrentTransactionToast } from '../Miscellaneous/CurrentTransactionToast';
 
 const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
 
@@ -45,7 +46,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     const { data: durationVote, error: error, isPending: IsPending, refetch: refetchVotingDuration } = useReadContract({
         address: contractAddress,
         abi: contractAbi,
-        functionName: 'minimumDelayBeforeEndingVote',
+        functionName: 'MINIMUM_DELAY_BEFORE_ENDING_VOTE',
         account: address as `0x${string}` | undefined,
     })
 
@@ -288,9 +289,9 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         if(voteSuccess) {
             getPlayersVotedEvents(players);
             getChallengeEndedEvents();
-            toast.success("Success!", {
-                description: "You have successfully voted",
-            })
+            // toast.success("Success!", {
+            //     description: "You have successfully voted",
+            // })
         }
         if(voteReceiptError) {
             toast.error(voteReceiptError.message, {
@@ -303,9 +304,9 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     useEffect(() => {
         if(voteEndSuccess) {
             refetchStatus()
-            toast.success("Success!", {
-                description: "Winner revealed!",
-            })
+            // toast.success("Success!", {
+            //     description: "Winner revealed!",
+            // })
         }
         if(voteEndReceiptError) {
             toast.error(voteEndReceiptError.message, {
@@ -317,81 +318,6 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
 /****** Display *******/
     return (
-        // <div>
-        //     {hasEveryoneVoted ? (
-        //         <div className='p-10 flex-center'>
-        //             <div className='flex flex-col gap-8'>
-        //                 <h1 className='text-2xl'>Voted Ended ! Everyone has voted !</h1>
-        //                 <Button onClick={endWinnerVote}>Reveal Winner(s)</Button>
-        //             </div>
-        //         </div>
-        //     ) : (
-        //         <div>
-        //             <div className='flex-between'>
-        //                 <div>
-        //                     <p className='mb-3'>🗳️ Time to vote for the winner!</p>
-        //                     <Button disabled={!selectedPlayer || hasVoted || !isPlayer} onClick={voteForWinner}>
-        //                         {hasVoted && <div>You have already voted</div>}
-        //                         {!isPlayer && <div>You are not a player</div>}
-        //                         {!hasVoted && isPlayer && <div>Vote</div>}
-        //                     </Button>
-        //                 </div>
-
-        //                 {playersVoted.length > 0 ? 
-        //                     (<div>
-        //                         {!votingDurationEnded ? 
-        //                             (votingStarted > 0n ? (
-        //                                 <div>
-        //                                     <div className="mb-2">Time remaining for vote :</div>
-        //                                     <ChallengeTimer
-        //                                         startingTime={votingStarted}
-        //                                         duration={durationVote as bigint}
-        //                                         refreshDisplay={endVoteTimerDisplay}
-        //                                     />
-        //                                 </div>
-        //                                 ) : (
-        //                                     <div>Initializing timer…</div>
-        //                                 )
-        //                             ) : (
-        //                             <div>
-        //                                 <div>Vote ended (You can still vote if you didn't do it!)</div>
-        //                                 <Button onClick={endWinnerVote}>Reveal Winner(s)</Button>
-        //                             </div>)
-        //                         }
-        //                     </div>)
-        //                     : 
-        //                     (<div>
-        //                         <div className='text-xl'>Waiting for the first player to vote...</div>
-        //                     </div>
-        //                 )}
-        //             </div>
-
-        //             <div className="p-10">
-        //                 <div>Players :</div>
-        //                 <div className="mt-4 flex flex-col">
-        //                     {players?.length > 0 ? players.map((addr) => {
-        //                         return (
-        //                             <div className='flex-between gap-2'  key={crypto.randomUUID()}>
-        //                                 <Checkbox
-        //                                     disabled={hasVoted || !isPlayer}
-        //                                     id={`select-${addr}`}
-        //                                     checked={selectedPlayer == addr}
-        //                                     onCheckedChange={(checked) => {
-        //                                         setSelectedPlayer( (checked && addr != undefined) ? addr : null)
-        //                                     }}
-        //                                 />
-        //                                 <div className='w-full'>
-        //                                     <Event address={addr} />
-        //                                 </div>
-        //                             </div>
-        //                         )
-        //                     }) : <div className="italic">(No player found)</div>
-        //                     }
-        //                 </div>
-        //             </div>
-        //         </div>
-        //     )}
-        // </div>
 
         <div className="space-y-8 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl text-white">
             {hasEveryoneVoted ? (
@@ -498,6 +424,8 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
                 </div>
                 </>
             )}
+            <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage="You successfully voted!" />
+            <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage="You successfully reveiled the winner!" />
             </div>
     )
 }

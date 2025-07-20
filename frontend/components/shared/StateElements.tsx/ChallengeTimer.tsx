@@ -1,4 +1,4 @@
-import { Clock, Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12 } from 'lucide-react'
+import { Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12 } from 'lucide-react'
 import { useState, useEffect, useContext } from 'react'
 // import { RefreshDisplayContext } from '../ChallengeState';
 
@@ -20,6 +20,7 @@ export function ChallengeTimer({
     const calculateTimeLeft = () => {
         const now = Math.floor(Date.now() / 1000)
         return Math.max(start + dur - now, 0)
+       
     }
 
     const [timeLeft, setTimeLeft] = useState<number>(calculateTimeLeft)

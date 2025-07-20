@@ -29,7 +29,7 @@ contract DareWin is ERC20, ERC20Burnable, Ownable {
     uint256 public immutable MAX_SUPPLY;
 
     constructor(address initialOwner/*, address _uniswapV2Router02, address _uniswapV2Factory*/) ERC20("DareWin", "DARE") Ownable(initialOwner) {
-        _mint(initialOwner, 350000000 * 10 ** decimals());
+        _mint(initialOwner, 1000000000 * 10 ** decimals());
 
         // //Max supply 1B
         MAX_SUPPLY = 1000000000 * 10 ** decimals();

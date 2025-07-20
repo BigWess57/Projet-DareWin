@@ -198,6 +198,19 @@ export const contractAbi=[
     },
     {
       "inputs": [],
+      "name": "MINIMUM_DELAY_BEFORE_ENDING_VOTE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "bid",
       "outputs": [
         {
@@ -341,19 +354,6 @@ export const contractAbi=[
     },
     {
       "inputs": [],
-      "name": "minimumDelayBeforeEndingVote",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
       "name": "owner",
       "outputs": [
         {
@@ -420,7 +420,7 @@ export const contractAbi=[
       "inputs": [
         {
           "internalType": "address",
-          "name": "_playerAddress",
+          "name": "playerAddress",
           "type": "address"
         }
       ],
