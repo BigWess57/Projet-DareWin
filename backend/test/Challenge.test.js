@@ -36,8 +36,7 @@ describe("tests Challenge contract", function () {
         //Token deployment + Funding players (for setup)^
         const DareWinToken = await ethers.getContractFactory('DareWin');
         const token = await DareWinToken.deploy(signers[0].address);
-        // const totalMinted = await dareWinToken.balanceOf(signers[0].address);
-        // console.log(ethers.formatUnits(totalMinted, await dareWinToken.decimals()))
+
         //send 1000 tokens to 4 signers
         const amountToDistribute = ethers.parseUnits("1000", await token.decimals());
         for (let i = 1; i < 6; i++) {
@@ -134,6 +133,52 @@ describe("tests Challenge contract", function () {
 
 /**************  TESTS ****************/
 
+    describe('deployment', function() { 
+        let challenge;
+        let signers;
+        let bid;
+        let token;
+        beforeEach(async function () {
+            signers = await ethers.getSigners();
+
+            //Token deployment
+            const DareWinToken = await ethers.getContractFactory('DareWin');
+            token = await DareWinToken.deploy(signers[0].address);
+
+            bid = ethers.parseUnits("1000", await token.decimals());
+        });
+
+        it('should juste deploy the contract', async function() { 
+            
+            //Challenge Deployment
+            const Challenge = await ethers.getContractFactory('Challenge'); 
+
+            await expect(
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, [])
+            ).to.not.be.reverted
+        })
+
+        it('should not be possible to deploy with a feeReceiver address to 0', async function() { 
+            //Challenge Deployment
+            const Challenge = await ethers.getContractFactory('Challenge'); 
+
+            await expect(
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, "0x0000000000000000000000000000000000000000", false, [])
+            ).to.be.revertedWith("the feeReceiver cannot be address 0!")
+        })
+
+        it('GROUP MODE : should not be possible to deploy if one player in the array is address 0', async function() { 
+            //Challenge Deployment
+            const Challenge = await ethers.getContractFactory('Challenge'); 
+
+            const playersArray = [signers[0].address, signers[1].address, "0x0000000000000000000000000000000000000000"]
+            await expect(
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, playersArray)
+            ).to.be.revertedWith("address 0 cannot be a player!")
+        })
+
+    })
+
     //state gathering players
     describe('gathering players state', function() { 
         let challenge;
@@ -143,9 +188,6 @@ describe("tests Challenge contract", function () {
         beforeEach(async function () {
             ({challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase));
         });
-
-        it('should juste deploy the contract', async function() { 
-        })
 
         it('should store a player in the players array (sending enough money)', async function() {
  

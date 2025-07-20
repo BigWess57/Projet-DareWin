@@ -1,13 +1,38 @@
-# Smart contracts (Hardhat project)
+## Smart contracts (Hardhat project)
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+# Description
+Smart contracts Solidity (ChallengeFactory, Challenge, DareWinToken)
 
-Try running some of the following tasks:
+Utilisation de Hardhat, OpenZeppelin
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+# Prérequis
+
+Hardhat CLI
+
+Un RPC local ou remote
+
+# Installation
+npm ci
+
+# Configuration réseau
+.env avec :
+
+MAINNET_RPC_URL=…
+PRIVATE_KEY=…
+ETHERSCAN_API=
+
+
+# Scripts utiles
+npx hardhat node → lance réseau local
+
+npx hardhat compile → compile les contrats
+
+npx hardhat test → exécute les tests
+
+npx hardhat coverage → exécute les tests + checker le coverage
+
+npx hardhat run scripts/deployChallengeFactory.js --network <network> → déploiement
+
+# Tests
+Unitaires : test/*.test.js
+

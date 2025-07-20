@@ -326,8 +326,8 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 {groupMode && (
                     <div className={`text-sm ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
                     {isAllowed
-                        ? 'You are allowed to participate'
-                        : 'You are not allowed to participate'}
+                        ? 'Vous etes autorisé a participer au challenge'
+                        : "Vous n'etes pas autorisé a participer au challenge"}
                     </div>
                 )}
                 </div>
@@ -390,7 +390,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                         <Joined address={addr} key={addr} />
                     ))
                 ) : (
-                    <div className="italic text-white/50">(none yet)</div>
+                    <div className="italic text-white/50">(aucun pour l'instant)</div>
                 )}
                 </div>
             </div>

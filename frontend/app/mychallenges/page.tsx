@@ -33,13 +33,13 @@ export default function myChallenges() {
       <div className='text-3xl font-bold flex justify-center'>Mes challenges :</div>
       {/* <div className="flex flex-col space-y-2"> */}
         <div className="text-white font-medium mb-3">
-          Lien pour rejoindre un challenge :
+          Rejoindre un challenge par adresse :
         </div>
         <div className="flex">
           <Input
             id="challenge-link"
             type="text"
-            placeholder="Entrez l'URL du challenge"
+            placeholder="Entrez l'adresse du challenge"
             value={challengeAddress}
             onChange={(e) => setChallengeAddress(e.target.value)}
             className="

@@ -7,25 +7,15 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-// import "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
-
 import "./DareWinTokenERC20.sol";
 
 contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
 
     // Énumération qui définit tous les états possibles du processus de défi
     enum ChallengeStatus {
-        // État initial : enregistrement des joueurs
         GatheringPlayers,
-        // État 
-        // WaitingForChallenge,
-        // État 
         OngoingChallenge,
-        // État
-        // WaitingForVote,
-        // État de vote
         VotingForWinner,
-        // État final 
         ChallengeWon
     }
 
@@ -36,21 +26,21 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
         uint voteCount;
     }
 
-    uint256 public duration;
-    uint256 public maxPlayers;
-    uint256 public bid;
+    uint256 public immutable duration;
+    uint256 public immutable maxPlayers;
+    uint256 public immutable bid;
     string public description;
-    bool public groupMode;
+    bool public immutable groupMode;
 
-    DareWin private dareWinToken;
+    DareWin private immutable dareWinToken;
 
-    address private feeReceiver;
+    address private immutable feeReceiver;
 
     uint256 private currentPlayerNumber;
 
     uint256 private challengeStartTimestamp;
     uint256 private voteForWinnerStarted;
-    uint256 public minimumDelayBeforeEndingVote = 1 hours;
+    uint256 public constant MINIMUM_DELAY_BEFORE_ENDING_VOTE = 1 hours;
 
     ChallengeStatus public currentStatus;
 
@@ -64,15 +54,15 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
 
 //Hardcoded FOR NOW
 //Fee tier caps
-    uint256 private feeTierBronzeCap;
-    uint256 private feeTierSilverCap;
-    uint256 private feeTierGoldCap;
+    uint256 private immutable feeTierBronzeCap;
+    uint256 private immutable feeTierSilverCap;
+    uint256 private immutable feeTierGoldCap;
 
 //% of fee
-    uint256 private feeTierBronze = 5;
-    uint256 private feeTierSilver = 4;
-    uint256 private feeTierGold = 3;
-    uint256 private feeTierPlatinum = 2;
+    uint256 constant private FEE_TIER_BRONZE = 5;
+    uint256 constant private FEE_TIER_SILVER = 4;
+    uint256 constant private FEE_TIER_GOLD = 3;
+    uint256 constant private FEE_TIER_PLATINUM = 2;
 
     uint256 private totalFee;
 
@@ -88,6 +78,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
 
 
     constructor(address initialOwner, DareWin _tokenAddress, uint256 _duration, uint256 _maxPlayers, uint256 _bid, string memory _description, address _feeReceiver, bool _groupMode, address[] memory _group) Ownable(initialOwner) {
+        require(_feeReceiver != address(0), "the feeReceiver cannot be address 0!");
         dareWinToken=_tokenAddress;
         duration=_duration;
         maxPlayers=_maxPlayers;
@@ -103,7 +94,7 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
                 "The predefined group of players is too small. There should be a minimum of 2 players per challenge"
             );
             for (uint i; i < _group.length; i++) {
-                // players.push(Player(_group[i], 0));
+                require(_group[i] != address(0), "address 0 cannot be a player!");
                 isAllowed[_group[i]] = true;
             }
         }
@@ -136,20 +127,20 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     function calculateFee() view internal returns(uint256){
         uint256 balance = dareWinToken.balanceOf(msg.sender);
         if (balance <= feeTierBronzeCap) {
-            return bid/100*feeTierBronze;
+            return bid*FEE_TIER_BRONZE/100;
         } else if (balance <= feeTierSilverCap) {
-            return bid/100*feeTierSilver;
+            return bid*FEE_TIER_SILVER/100;
         } else if (balance <= feeTierGoldCap) {
-            return bid/100*feeTierGold;
+            return bid*FEE_TIER_GOLD/100;
         } else {
-            return bid/100*feeTierPlatinum;
+            return bid*FEE_TIER_PLATINUM/100;
         }
     }
 
     function joinChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {
         //If in group mode, dont allow a non authorized player to join
         if(groupMode){
-            require(isAllowed[msg.sender] == true, "You are not allowed to join this challenge.");
+            require(isAllowed[msg.sender], "You are not allowed to join this challenge.");
         }else{
             //else, just check the maximum amount of players
             require(currentPlayerNumber < maxPlayers, "This challenge is already full");
@@ -189,6 +180,10 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     function startChallenge() external onlyOwner isCorrectState(ChallengeStatus.GatheringPlayers) {
         require(players.length > 1, "Not enough players to start the challenge");
 
+        currentStatus = ChallengeStatus.OngoingChallenge;
+        challengeStartTimestamp = block.timestamp;
+        emit ChallengeStarted(challengeStartTimestamp);
+
         //transfers tokens from all players to this contract
         for (uint i; i < players.length; i++) {
             require(
@@ -197,19 +192,17 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
             );
         }
 
-        currentStatus = ChallengeStatus.OngoingChallenge;
-        challengeStartTimestamp = block.timestamp;
-        emit ChallengeStarted(challengeStartTimestamp);
     }
 
 
-    function voteForWinner(address _playerAddress) external isChallengeOver isCorrectState(ChallengeStatus.VotingForWinner) {
+    function voteForWinner(address playerAddress) external isChallengeOver isCorrectState(ChallengeStatus.VotingForWinner) {
         require(!hasVoted[msg.sender], "You have already voted.");
         require(hasJoined[msg.sender], "You are not a player. You cannot vote for winner.");
         // require(hasJoined[_playerAddress], "You cannot vote for a player that has not joined the challenge.");
 
-        for(uint i = 0; i < players.length; i++){
-            if(_playerAddress == players[i].playerAddress){
+        uint players_length = players.length;
+        for(uint i = 0; i < players_length; i++){
+            if(playerAddress == players[i].playerAddress){
                 players[i].voteCount++;
                 hasVoted[msg.sender] = true;
 
@@ -219,16 +212,16 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
                 // update winner if needed
                 // If there is a tie, add value to array
                 if (players[i].voteCount == highestVotes) {
-                    challengeWinners.push(_playerAddress);
+                    challengeWinners.push(playerAddress);
                 }
                 //If there is a clear winner, delete array and update winner
                 if (players[i].voteCount > highestVotes) {
                     highestVotes = players[i].voteCount;
                     delete challengeWinners;
-                    challengeWinners.push(_playerAddress);
+                    challengeWinners.push(playerAddress);
                 }
 
-                emit PlayerVoted(msg.sender ,_playerAddress);
+                emit PlayerVoted(msg.sender ,playerAddress);
 
                 return; // get out after player found
             }
@@ -236,9 +229,11 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
     }
 
     function endWinnerVote() public isCorrectState(ChallengeStatus.VotingForWinner) {
-        require(currentPlayerNumber==0 || (voteForWinnerStarted + minimumDelayBeforeEndingVote <= block.timestamp), "Not all player have voted for a winner yet (and minimum delay has not passed)");
+        require(currentPlayerNumber==0 || (voteForWinnerStarted + MINIMUM_DELAY_BEFORE_ENDING_VOTE <= block.timestamp), "Not all player have voted for a winner yet (and minimum delay has not passed)");
         uint winnerCount = challengeWinners.length;
         require(winnerCount > 0, "Winner not set");
+
+        currentStatus = ChallengeStatus.ChallengeWon;
 
         //prize set to withdrawal for winner
         uint256 totalPrize = dareWinToken.balanceOf(address(this));
@@ -255,11 +250,11 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
         for (uint i = 0; i < winnerCount; i++) {
             address winner = challengeWinners[i];
             // pendingWithdrawals[winner] += share;
+            emit PrizeSent(winner, share);
             require(
                 dareWinToken.transfer(winner, share),
                 "Token transfer failed"
             );
-            emit PrizeSent(winner, share);
         }
 
         // Send half of balance remaining (fee) to team
@@ -271,33 +266,6 @@ contract Challenge is Ownable/*, AutomationCompatibleInterface*/{
         //BURN the rest
         dareWinToken.burn(dareWinToken.balanceOf(address(this)));
 
-
-        // emit VoteEnded(challengeWinners);
-         
-
-        currentStatus = ChallengeStatus.ChallengeWon;
     }
-
-
-    ///Chainlink automation functions
-    // function checkUpkeep(bytes calldata)
-    //     external
-    //     view
-    //     override
-    //     returns (bool upkeepNeeded, bytes memory)
-    // {
-    //     upkeepNeeded = (
-    //       currentStatus == ChallengeStatus.VotingForWinner && 
-    //       (currentPlayerNumber == 0 || (voteForWinnerStarted + minimumDelayBeforeEndingVote <= block.timestamp))
-    //     );
-    // }
-
-    // function performUpkeep(bytes calldata) external override {
-    //     require(
-    //       currentPlayerNumber == 0 || (voteForWinnerStarted + minimumDelayBeforeEndingVote <= block.timestamp),
-    //       "Upkeep conditions not met"
-    //     );
-    //     endWinnerVote(); // ta logique de clôture
-    // }
 
 }

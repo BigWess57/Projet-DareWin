@@ -15,9 +15,6 @@ describe("tests ChallengeFactory contract", function () {
     const bid = ethers.parseEther("1");
     const description = "test";
 
-    // const LINK = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
-    // const REGISTRAR = "0x6B0B234fB2f380309D47A7E9391E29E9a179395a";
-
     //Just deployment (base state)
     async function deployedChallengeFactoryFixtureBase() {
         const signers = await ethers.getSigners();
@@ -26,49 +23,28 @@ describe("tests ChallengeFactory contract", function () {
         //Token deployment + Funding players (for setup)^
         const DareWinToken = await ethers.getContractFactory('DareWin');
         const token = await DareWinToken.deploy(signers[0].address);
-        
-        //  // Impersonate un compte riche en LINK via le fork
-        // const richHolder = "0x841ed663F2636863D40be4EE76243377dff13a34"; // adresse connue avec LINK
-        // await network.provider.request({
-        //     method: "hardhat_impersonateAccount",
-        //     params: [richHolder],
-        // });
-        // const richSigner = await ethers.getSigner(richHolder);
 
 
-        const challengeFactory = await ChallengeFactory.deploy(token.target, signers[0].address/*, LINK, REGISTRAR*/);
-       // await challengeFactory.waitForDeployment(); 
+        const challengeFactory = await ChallengeFactory.deploy(token.target, signers[0].address);
 
-        // Le richHolder approuve le registrar  our LINK
-        // const linkContract = await ethers.getContractAt("IERC20", LINK);
-        // await linkContract.connect(richSigner).approve(REGISTRAR, ethers.parseUnits("0.1"));
-
-        // const approved = await linkContract.allowance(richSigner, REGISTRAR)
-        // console.log("Allowance before:", ethers.formatEther(approved));
-
-        // const code = await ethers.provider.getCode(REGISTRAR);
-        // console.log("Registrar code:", code.length);
-        // expect(code).to.not.equal("0x");
 
         await challengeFactory.createChallenge(duration, maxPlayers, bid, description, 0, []);
-
-        // Log pour vérifier
-// console.log("Factory deployed at:", challengeFactory.target);
-// console.log("Rich signer address:", richSigner.address);
-
-        // await expect(
-            // await challengeFactory
-            //     .connect(richSigner).createChallenge.staticCall(duration, maxPlayers, bid, description, 0, [])
-        // ).to.be.revertedWith("You must fund the registrar"); 
         
-        return { challengeFactory, signers };
+        return { challengeFactory, signers, token };
     }
 
     beforeEach(async function () {
-        ({challengeFactory, signers } = await loadFixture(deployedChallengeFactoryFixtureBase));
+        ({challengeFactory, signers, token } = await loadFixture(deployedChallengeFactoryFixtureBase));
     });
 
     it('should just deploy the challenge factory, and create a challenge', async function() {
+    })
+
+    it('should should not be possible to deploy with a feeReceiver address to 0', async function() {
+        const ChallengeFactory = await ethers.getContractFactory('ChallengeFactory');
+        await expect(
+            ChallengeFactory.deploy(token.target, "0x0000000000000000000000000000000000000000")
+        ).to.be.revertedWith("the feeReceiver cannot be address 0!")
     })
 
     it('should emit an event on new challenge deployment', async function() {
@@ -81,8 +57,6 @@ describe("tests ChallengeFactory contract", function () {
 
         const args = event.args
         expect(args.admin).to.equal(signers[0].address)
-        // expect(args.to).to.equal(receiver.address)
-        // expect(args.value).to.equal(amount)
     })
 
     it('should allow to deploy a new challenge contract', async function() {
@@ -152,40 +126,6 @@ describe("tests ChallengeFactory contract", function () {
         }
     })
 
-    //Automation tests
-    // it('should verify that the registration of the upkeep has been done', async function() {
-    //     // Vérifie dans les logs que l’enregistrement s’est bien fait
-    //     const log = receipt.logs.find(l => l.address.toLowerCase() === REGISTRAR.toLowerCase());
-    //     expect(log).to.not.be.undefined;
-    // })
-
-    // it('should be able to create a challenge successfully, and automatically end it when all the users have voted (with chainlink)', async function() {
-    //     //Players approve the right for the contract to use their tokens
-    //     await token.approve(challenge.target, bid);
-    //     await token.connect(signers[1]).approve(challenge.target, bid);
-    //     await token.connect(signers[2]).approve(challenge.target, bid);
-    //     await token.connect(signers[3]).approve(challenge.target, bid);
-    //     await token.connect(signers[4]).approve(challenge.target, bid);
-
-    //     //5 players join
-    //     await challenge.joinChallenge();
-    //     await challenge.connect(signers[1]).joinChallenge();
-    //     await challenge.connect(signers[2]).joinChallenge();
-    //     await challenge.connect(signers[3]).joinChallenge();
-    //     await challenge.connect(signers[4]).joinChallenge();
-
-    //     //Admin starts the challenge
-    //     await challenge.startChallenge();
-
-    //     //Pass enough time
-    //     await time.increase(duration)
-
-    //     //Everyone votes
-    //     await challenge.voteForWinner(signers[1].address)
-    //     await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
-    //     await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
-    //     await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
-    //     await challenge.connect(signers[4]).voteForWinner(signers[2].address)
-    // })
+    
 
 })
