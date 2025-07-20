@@ -12,7 +12,9 @@ Hardhat CLI
 Un RPC local ou remote
 
 # Installation
+```
 npm ci
+```
 
 # Configuration réseau
 .env avec :
