@@ -21,6 +21,14 @@ module.exports = {
   gasReporter: {
     enabled: false
   },
+  mocha: {
+    reporter: "mochawesome",
+    reporterOptions: {
+      reportDir: "test-report",
+      reportFilename: "report",
+      quiet: true
+    }
+  }
   // defaultNetwork: "hardhat",
   // networks: {
   //   hardhat: {
