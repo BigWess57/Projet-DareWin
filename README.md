@@ -6,13 +6,13 @@ DareWin – Plateforme de challenge décentralisée sur Ethereum
 ## Table des matières
 🚀 [Installation](#installation)
 
-🛠 ##Architecture
+🛠 [Architecture](#architecture)
 
-📂 ##Structure des dossiers
+📂 [Structure des dossiers](#structure-des-dossiers)
 
-📖 ##Usage
+📖 [Usage](#usage)
 
-🧪 ##Tests & CI
+🧪 [Tests & CI](#tests-&-ci)
 
 🔗 [Liens utiles](#liens-utiles)
 
@@ -59,6 +59,6 @@ npx hardhat test
 Github workflow : backend tests executés on commit
 
 ## Liens utiles
-Documentation Hardhat
+Documentation Hardhat : https://hardhat.org/hardhat-runner/docs/getting-started
 
-Docs OpenZeppelin
+Docs OpenZeppelin : https://docs.openzeppelin.com/
