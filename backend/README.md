@@ -18,11 +18,11 @@ npm ci
 
 # Configuration réseau
 .env avec :
-
+```
 MAINNET_RPC_URL=…
 PRIVATE_KEY=…
 ETHERSCAN_API=
-
+```
 
 # Scripts utiles
 npx hardhat node → lance réseau local
