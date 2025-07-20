@@ -1,22 +1,22 @@
-## Smart contracts (Hardhat project)
+# Smart contracts (Hardhat project)
 
-# Description
+## Description
 Smart contracts Solidity (ChallengeFactory, Challenge, DareWinToken)
 
 Utilisation de Hardhat, OpenZeppelin
 
-# Prérequis
+## Prérequis
 
 Hardhat CLI
 
 Un RPC local ou remote
 
-# Installation
+## Installation
 ```
 npm ci
 ```
 
-# Configuration réseau
+## Configuration réseau
 .env avec :
 ```
 MAINNET_RPC_URL=…
@@ -24,7 +24,7 @@ PRIVATE_KEY=…
 ETHERSCAN_API=
 ```
 
-# Scripts utiles
+## Scripts utiles
 npx hardhat node → lance réseau local
 
 npx hardhat compile → compile les contrats
@@ -35,7 +35,7 @@ npx hardhat coverage → exécute les tests + checker le coverage
 
 npx hardhat run scripts/deployChallengeFactory.js --network <network> → déploiement
 
-# Tests
+## Tests
 Unitaires : test/*.test.js
 
 
