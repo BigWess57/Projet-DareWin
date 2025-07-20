@@ -38,3 +38,8 @@ npx hardhat run scripts/deployChallengeFactory.js --network <network> → déplo
 # Tests
 Unitaires : test/*.test.js
 
+
+Resultats des tests + coverage :
+Voir test-report/:
+- Un fichier report.html → rapport lisible en navigateur
+- Un report.json → données brutes au format JSON
