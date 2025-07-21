@@ -44,19 +44,19 @@ export const factoryAbi=[
     {
       "inputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint64",
           "name": "duration",
-          "type": "uint256"
+          "type": "uint64"
         },
         {
-          "internalType": "uint256",
+          "internalType": "uint8",
           "name": "maxPlayers",
-          "type": "uint256"
+          "type": "uint8"
         },
         {
-          "internalType": "uint256",
+          "internalType": "uint128",
           "name": "bid",
-          "type": "uint256"
+          "type": "uint128"
         },
         {
           "internalType": "string",
@@ -65,12 +65,12 @@ export const factoryAbi=[
         },
         {
           "internalType": "bool",
-          "name": "_groupMode",
+          "name": "groupMode",
           "type": "bool"
         },
         {
           "internalType": "address[]",
-          "name": "_group",
+          "name": "group",
           "type": "address[]"
         }
       ],

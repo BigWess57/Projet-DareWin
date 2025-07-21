@@ -14,19 +14,19 @@ export const contractAbi=[
           "type": "address"
         },
         {
-          "internalType": "uint256",
+          "internalType": "uint64",
           "name": "_duration",
-          "type": "uint256"
+          "type": "uint64"
         },
         {
-          "internalType": "uint256",
+          "internalType": "uint8",
           "name": "_maxPlayers",
-          "type": "uint256"
+          "type": "uint8"
         },
         {
-          "internalType": "uint256",
+          "internalType": "uint128",
           "name": "_bid",
-          "type": "uint256"
+          "type": "uint128"
         },
         {
           "internalType": "string",
@@ -201,9 +201,9 @@ export const contractAbi=[
       "name": "MINIMUM_DELAY_BEFORE_ENDING_VOTE",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint24",
           "name": "",
-          "type": "uint256"
+          "type": "uint24"
         }
       ],
       "stateMutability": "view",
@@ -214,9 +214,9 @@ export const contractAbi=[
       "name": "bid",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint128",
           "name": "",
-          "type": "uint256"
+          "type": "uint128"
         }
       ],
       "stateMutability": "view",
@@ -272,9 +272,9 @@ export const contractAbi=[
       "name": "duration",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint64",
           "name": "",
-          "type": "uint256"
+          "type": "uint64"
         }
       ],
       "stateMutability": "view",
@@ -305,9 +305,9 @@ export const contractAbi=[
       "name": "highestVotes",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint8",
           "name": "",
-          "type": "uint256"
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",
@@ -344,9 +344,9 @@ export const contractAbi=[
       "name": "maxPlayers",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "uint8",
           "name": "",
-          "type": "uint256"
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",
@@ -381,9 +381,9 @@ export const contractAbi=[
           "type": "address"
         },
         {
-          "internalType": "uint256",
+          "internalType": "uint8",
           "name": "voteCount",
-          "type": "uint256"
+          "type": "uint8"
         }
       ],
       "stateMutability": "view",
@@ -437,5 +437,6 @@ export const contractAbi=[
       "type": "function"
     }
   ] as const
-export const fromBlock=0;
-// export const fromBlock=8635160;
+// export const fromBlock=0;
+// export const fromBlock=8807578;//Sepolia
+export const fromBlock=4199464;//Holesky

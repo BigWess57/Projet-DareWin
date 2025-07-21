@@ -50,8 +50,8 @@ const ChallengeFactory = () => {
     const handleCreateChallenge = (data: ChallengeFormValues) => {
         console.log('Creating new challenge', data);
         
-        const duration = BigInt(data.duration);
-        const maxPlayers = BigInt(data.maxPlayers);
+        const duration = data.duration;
+        const maxPlayers = data.maxPlayers;
         const bid = parseEther(data.bid);
         const description = data.description;
         const isGroup = data.isGroup;
