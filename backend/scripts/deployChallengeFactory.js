@@ -7,7 +7,7 @@ async function main() {
 
     //Get DARE token first
     const DareWin = await ethers.getContractFactory("DareWin");
-    const DareWinToken = DareWin.attach("0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512")
+    const DareWinToken = DareWin.attach("0x7f0f1C236e8000A752FbbCF371031B0A7b0cD604")
 
     const isLocalhost = network.name.includes('localhost');
 
@@ -33,7 +33,7 @@ async function main() {
 
     if(!isLocalhost){
         console.log('Attente de quelques blocs avant verification');
-        await ChallengeFactory.deploymentTransaction()?.wait(5);
+        await ChallengeFactory.deploymentTransaction()?.wait(3);
     }
     console.log(`ChallengeFactory deployed to ${ChallengeFactory.target}`)
 

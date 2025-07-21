@@ -13,7 +13,7 @@ export const publicClient = createPublicClient({
 
 export const wagmiEventRefreshConfig = createConfig({
   syncConnectedChain: true,
-  chains: [holesky],
+  chains: [holesky],//sepolia, //hardhat
   transports: {
     [holesky.id]: http(HoleskyRPC),
   },
