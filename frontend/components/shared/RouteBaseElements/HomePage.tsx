@@ -16,8 +16,8 @@ const HomePage = () => {
         "
       >
         {/* Main content */}
-        <h1 className="relative text-5xl md:text-6xl font-extrabold pb-5 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-pink-500 to-purple-500 animate-text">
-          Défie - Prouve - Gagne
+        <h1 className="relative text-6xl md:text-6xl font-extrabold pb-5 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-pink-500 to-purple-500 animate-text">
+          Play - Dare - Win
         </h1>
         <p className="relative text-lg md:text-xl mb-8 max-w-2xl text-white-200 animate-fade-in">
           Rejoins la communauté qui transforme chaque défi en aventure blockchain{" "}
