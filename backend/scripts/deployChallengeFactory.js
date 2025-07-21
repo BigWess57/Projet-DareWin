@@ -5,24 +5,11 @@ const {verify} = require("../utils/verify");
 async function main() {
     const signers = await ethers.getSigners()
 
-    //Deploy DARE token first
-    // const DareWinToken = await ethers.deployContract("DareWin", [signers[0].address]);
+    //Get DARE token first
+    const DareWin = await ethers.getContractFactory("DareWin");
+    const DareWinToken = DareWin.attach("0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512")
 
-    // console.log('deploiement du token DARE en cours...');
     const isLocalhost = network.name.includes('localhost');
-
-    // if(!isLocalhost){
-    //     console.log('Attente de quelques blocs avant verification');
-    //     await DareWinToken.deploymentTransaction()?.wait(5);
-    // }
-    // console.log(`DARE Token deployed to ${DareWinToken.target}`)
-
-    // if(!isLocalhost) {
-    //     console.log( 'Vérification du contrat intelligent du Token...' )
-    //     // await verify(DareWinToken.target.toString(), [signers[0].address])
-    //     await verify("0xb5a0677a34644026269d7bAcFE7606ff5dc5148C", [signers[0].address])
-    //     console.log( 'Contrat vérifié!' )
-    // }
 
     //Send tokens to other signers (if localhost)
     if(isLocalhost){
@@ -38,10 +25,9 @@ async function main() {
             console.log("user " + signers[i].address + " has been sent a total of " + ethers.formatUnits(bal, await DareWinToken.decimals()) + " DARE")
         }
     }
-        
 
     //Deploy the challenge factory
-    const ChallengeFactory = await ethers.deployContract("ChallengeFactory", ["0xb5a0677a34644026269d7bAcFE7606ff5dc5148C", signers[0].address]);
+    const ChallengeFactory = await ethers.deployContract("ChallengeFactory", [DareWinToken.target, signers[0].address]);
 
     console.log('deploiement de la Challenge Factory en cours...');
 
@@ -53,7 +39,7 @@ async function main() {
 
     if(!isLocalhost) {
         console.log( 'Vérification du contrat intelligent ChallengeFactory...' )
-        await verify(ChallengeFactory.target.toString(), ["0xb5a0677a34644026269d7bAcFE7606ff5dc5148C", signers[0].address])
+        await verify(ChallengeFactory.target.toString(), [DareWinToken.target, signers[0].address])
         console.log( 'Contrat vérifié!' )
     }
 
