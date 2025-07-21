@@ -10,13 +10,11 @@ function page() {
     const addr = params.challengeAddress as `0x${string}`
 
     if (!addr) {
-        // While waiting for params, you can show a loading indicator or return null
         return <div>Loading...</div>
     }
 
     return (
         <ChallengePage contractAddress={addr} />
-        // <div>Address : {challengeAddress}</div>
     )
 }
 

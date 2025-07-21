@@ -1,17 +1,16 @@
 'use client'
-import { createContext, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
-import { contractAbi, fromBlock } from "@/constants/ChallengeInfo"
-import { publicClient } from "@/utils/client";
+import { contractAbi } from "@/constants/ChallengeInfo"
+import { retriveEventsFromBlock } from "@/utils/client";
 
 import JoiningChallenge from "./StateElements.tsx/JoiningChallenge";
 import OngoingChallenge from "./StateElements.tsx/OngoingChallenge";
 
-import { Button } from "../ui/button";
 import { toast } from "sonner";
 
-import { parseAbiItem } from "viem";
-import { useAccount, useReadContract, useReadContracts } from "wagmi"
+import { GetLogsReturnType, parseAbiItem } from "viem";
+import { useAccount, useReadContract } from "wagmi"
 import { DurationContext } from "./RouteBaseElements/ChallengePage";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
@@ -63,16 +62,14 @@ const ChallengeState = () => {
     //Get the challenge start event
     const [challengeStart, setChallengeStart] = useState<bigint>(0n);
 
+    //ABI types for events
+    const CHALLENGE_STARTED_ABI = parseAbiItem(
+        "event ChallengeStarted(uint256 startingTime)"
+    );
+
     const getChallengeStartEvents = async() => {
 
-        const Logs = await publicClient.getLogs({
-            address: contractAddress,
-            event: parseAbiItem("event ChallengeStarted(uint256 startingTime)"),
-            // du premier bloc
-            fromBlock: BigInt(fromBlock),
-            // jusqu'au dernier
-            toBlock: 'latest'
-        })
+        const Logs = await retriveEventsFromBlock(contractAddress, "event ChallengeStarted(uint256 startingTime)") as GetLogsReturnType<typeof CHALLENGE_STARTED_ABI>
         
         if (Logs.length === 0) {
             console.error("Could not get the start of the challenge")
@@ -93,16 +90,11 @@ const ChallengeState = () => {
 
     const calculateTimeLeft = (startingTime: bigint) => {
         const now = Math.floor(Date.now() / 1000)
-        // console.log(duration)
-        // console.log(Math.max(Number(startingTime) + Number(duration) - now, 0))
         return Math.max(Number(startingTime) + Number(duration) - now, 0)
     }
     const refreshDisplayStatus = async () => {
-        //Get current state
-        // console.log(status)
         //If current State is Ongoing challenge, get the start of the challenge. If the challenge is over, set the state to "Voting"
         if(status === WorkflowStatus.OngoingChallenge){
-            // console.log(status as WorkflowStatus)
             const startingTime = await getChallengeStartEvents();
             if(calculateTimeLeft(startingTime) == 0 && startingTime !== 0n){
                 setCurrentDisplayStatus(WorkflowStatus.VotingForWinner);
@@ -125,11 +117,6 @@ const ChallengeState = () => {
         if (IsPending) return 'Loading…';
         if (error) return 'Error fetching description';
 
-        // const currentState = status as WorkflowStatus | undefined;
-        // if(currentState !== undefined)
-        //     return stateLabels[currentState];
-        // else
-        //     return "Cannot display state"
         return stateLabels[currentDisplayStatus];
     })()
 
@@ -137,8 +124,6 @@ const ChallengeState = () => {
 
     return (
         <>
-            {/* <div>Challenge State : <span className="font-bold">{displayState}</span></div> */}
-
             <h1 className="text-xl font-bold m-5">
                 Etat du Challenge: <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{displayState}</span>
             </h1>
@@ -150,9 +135,7 @@ const ChallengeState = () => {
                 )}
 
                 {currentDisplayStatus === WorkflowStatus.OngoingChallenge && (
-                    // <RefreshDisplayContext value={refreshDisplayStatus} >
-                        <OngoingChallenge challengeStart={challengeStart} refreshDisplay={refreshDisplayStatus} />
-                    // </RefreshDisplayContext>
+                    <OngoingChallenge challengeStart={challengeStart} refreshDisplay={refreshDisplayStatus} />
                 )}
 
                 {currentDisplayStatus === WorkflowStatus.VotingForWinner && (

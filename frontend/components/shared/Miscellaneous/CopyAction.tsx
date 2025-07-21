@@ -6,13 +6,9 @@ export function CopyAction({ address }: { address: string }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(address)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // optional error handling
-    }
+    await navigator.clipboard.writeText(address)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   return (

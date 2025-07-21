@@ -1,22 +1,16 @@
 'use client'
-import { z } from 'zod'
 
-import { useAccount, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
 
 import ChallengeForm, { ChallengeFormValues } from "../Miscellaneous/ChallengeForm"
 import { CopyAction } from '../Miscellaneous/CopyAction'
 import { factoryAbi, factoryAddress } from '@/constants/ChallengeFactoryInfo'
 
 import { toast } from 'sonner'
-import { useEffect, useRef, useState } from 'react'
-import { Address, isAddressEqual, parseAbiItem, parseEther } from 'viem'
+import { useEffect } from 'react'
+import { isAddressEqual, parseAbiItem, parseEther } from 'viem'
 import { publicClient } from '@/utils/client'
-import { fromBlock } from '@/constants/ChallengeInfo'
 import { _toLowerCase } from 'zod/v4/core'
-import { Button } from '@/components/ui/button'
-import { CurrentTransactionToast } from '../Miscellaneous/CurrentTransactionToast'
-import { waitForCallsStatus } from 'viem/actions'
-import { RotateCw } from 'lucide-react'
 
 
 
@@ -68,19 +62,19 @@ const ChallengeFactory = () => {
 
 
     const getChallengeEndedEvents = async() => {
-        //Get the latest block - 100, to only get the few last blocks
-        const latest = await publicClient.getBlockNumber();
-        const from = latest > 100n ? latest - 100n : 0n;
+        
+        const latestBlockNumber = await publicClient.getBlockNumber();
+        const block500Before = latestBlockNumber > 499n ? latestBlockNumber - 499n : 0n;
 
         const Logs = await publicClient.getLogs({
             address: factoryAddress,
             event: parseAbiItem("event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber)"),
-            fromBlock: from,
+            fromBlock: block500Before,
             toBlock: 'latest'
         })
-        console.log("New Challenge creation event!", Logs)
+        
         if (Logs.length === 0) {
-            console.error("No recently created challenge has been found")
+            console.log("No recently created challenge has been found")
             return null;
         }else{
               // Loop through logs in reverse to find latest match
@@ -90,12 +84,11 @@ const ChallengeFactory = () => {
                 const challengeAddress = log.args?.challengeAddress;
 
                 if (logAdmin && address && isAddressEqual(logAdmin, address)) {
-                    console.log("Latest challenge created by user:", challengeAddress);
                     return challengeAddress;
                 }
             }
 
-            console.error("No challenge found created by current user");
+            console.log("No challenge found created by current user");
             return null;
         }
     }

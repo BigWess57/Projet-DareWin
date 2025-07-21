@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import {useRouter} from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Address, isAddress } from "viem";
+import { isAddress } from "viem";
 
 export default function myChallenges() {
 
@@ -31,7 +31,7 @@ export default function myChallenges() {
   return (
     <>
       <div className='text-3xl font-bold flex justify-center'>Mes challenges :</div>
-      {/* <div className="flex flex-col space-y-2"> */}
+      <div className="mt-5 ml-10">
         <div className="text-white font-medium mb-3">
           Rejoindre un challenge par adresse :
         </div>
@@ -60,7 +60,7 @@ export default function myChallenges() {
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>
-      {/* </div> */}
+      </div>
       <ChallengeList/>
     </>
   );

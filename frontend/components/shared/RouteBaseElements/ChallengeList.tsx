@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react'
 
 import { factoryAddress } from '@/constants/ChallengeFactoryInfo';
-import { publicClient } from '@/utils/client';
+import { retriveEventsFromBlock } from '@/utils/client';
 
-import { Address, formatEther, isAddressEqual, parseAbi, parseAbiItem } from 'viem';
+import { Address, formatEther, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem } from 'viem';
 import { useAccount } from 'wagmi';
 import { contractAbi, fromBlock } from '@/constants/ChallengeInfo';
 import { readContracts } from 'wagmi/actions';
@@ -34,15 +34,24 @@ const ChallengeList = () => {
     //Get challenges joined and display them
     const [challengesjoined, setChallengesJoined] = useState<(Challenge)[]>([])
 
+//ABI types for events
+    const CHALLENGE_CREATED_ABI = parseAbiItem(
+        'event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber)'
+    );
+    const PLAYER_JOINED_ABI = parseAbiItem(
+        'event PlayerJoined(address player)'
+    );
+    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
+        'event PlayerWithdrawn(address player)'
+    );
+    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
+
+
+
     const getChallengeEvents = async() => {
 
-        const Logs = await publicClient.getLogs({
-            address: factoryAddress,
-            event: parseAbiItem("event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber)"),
-            fromBlock: BigInt(fromBlock),
-            toBlock: 'latest'
-        })
-        console.log("Challenge creation events :", Logs)
+        const Logs = await retriveEventsFromBlock(factoryAddress, "event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber)")
+
         if (Logs.length === 0) {
             console.log("No challenge created have been found")
             return;
@@ -54,7 +63,7 @@ const ChallengeList = () => {
         
         //FOR CHALLENGES CREATED
         //keep only the addresses of the ones created by current user
-        const challengeCreatedAddresses = Logs
+        const challengeCreatedAddresses = (Logs as GetLogsReturnType<typeof CHALLENGE_CREATED_ABI>)
             .filter((log) => log.args?.admin && isAddressEqual(log.args?.admin, address))
             .map((log) => ({
                 address: log.args!.challengeAddress as Address,
@@ -112,13 +121,11 @@ const ChallengeList = () => {
         }
 
         setChallengesCreated(challengesCreatedInfo)
-        console.log("Stored Created challenges :", challengesCreatedInfo)
-
 
 
 
         //FOR CHALLENGES JOINED
-        const challengeJoinedAddresses = Logs
+        const challengeJoinedAddresses = (Logs as GetLogsReturnType<typeof CHALLENGE_CREATED_ABI>)
             .map((log) => ({
                 address: log.args!.challengeAddress as Address,
                 blockNumber: log.args!.blockNumber as bigint,
@@ -128,18 +135,9 @@ const ChallengeList = () => {
 
         //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
         for(const challenge of challengeJoinedAddresses){
-            
-            const Logs = await publicClient.getLogs({
-                address: challenge.address,
-                events: parseAbi([
-                    "event PlayerJoined(address player)",
-                    "event PlayerWithdrawn(address player)",
-                ]),
-                fromBlock: BigInt(fromBlock),
-                toBlock: 'latest'
-            })
-            // console.log("Player joined/Withdrawn events :",Logs)
     
+            const Logs = await retriveEventsFromBlock(challenge.address, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
+
             const playerStates = new Map();
     
             for (const log of Logs) {
@@ -209,13 +207,11 @@ const ChallengeList = () => {
         }
 
         setChallengesJoined(challengesJoinedInfo)
-        console.log("Stored Joined challenges :", challengesJoinedInfo)
     }
     
     
     function handleChallengeClick(challengeAddress: Address) {
         router.push(`/mychallenges/${challengeAddress}`);
-        console.log("Clicked challenge:", challengeAddress);
     }
 
 
@@ -231,7 +227,6 @@ const ChallengeList = () => {
                     {challengesCreated.length > 0 ? 
                         (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {challengesCreated.map((challenge) => 
-                                // <div key={crypto.randomUUID()}>{challenge.contractAddress.toString()}</div>
                                 <div 
                                     key={challenge.contractAddress}
                                     className='transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer'
@@ -253,7 +248,6 @@ const ChallengeList = () => {
                     {challengesjoined.length > 0 ? 
                         (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                             {challengesjoined.map((challenge) => 
-                                // <div key={crypto.randomUUID()}>{challenge.contractAddress.toString()}</div>
                                 <div 
                                     key={challenge.contractAddress}
                                     className='transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer'

@@ -1,15 +1,14 @@
-import { act, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
-import { Abi, Address, isAddressEqual, parseAbi, parseAbiItem } from "viem"
-import { useAccount, useReadContract, useReadContracts, useSimulateContract, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
+import { Address, GetLogsReturnType, isAddressEqual, parseAbiItem } from "viem"
+import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
 
-import { contractAbi, fromBlock } from "@/constants/ChallengeInfo"
+import { contractAbi } from "@/constants/ChallengeInfo"
 import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
 
-import { publicClient } from '@/utils/client';
+import { retriveEventsFromBlock } from '@/utils/client';
 
 import { BidContext } from "../RouteBaseElements/ChallengePage";
 import { ReadContractErrorType, waitForTransactionReceipt, writeContract } from "wagmi/actions";
@@ -36,7 +35,13 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     //For withdraw transaction
     const { data: withdrawHash, isPending: isWithdrawing, writeContract: withdrawContract, } = useWriteContract({
         mutation: {
-            onError: (err) => toast.error("withdraw failed: " + err.message),
+            onError: (err) => {
+                if(err.message.toLowerCase().includes("user rejected")){
+                    toast.error("withdrawal failed: Use rejected the request")
+                }else{
+                    toast.error("withdrawal failed: " + err.message)
+                }
+            },
         },
     })
     //Used to check the current transaction state
@@ -47,7 +52,13 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     //For start challenge transaction
     const { data: startHash, isPending: isStarting, writeContract: startContract, } = useWriteContract({
         mutation: {
-            onError: (err) => toast.error("start failed: " + err.message),
+            onError: (err) => {
+                if(err.message.toLowerCase().includes("user rejected")){
+                    toast.error("start failed: Use rejected the request")
+                }else{
+                    toast.error("start failed: " + err.message)
+                }
+            },
         },
     })
     //Used to check the current transaction state
@@ -93,19 +104,18 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     //Events
     const [events, setEvents] = useState<(Address | undefined)[]>([]);
   
+    const PLAYER_JOINED_ABI = parseAbiItem(
+                'event PlayerJoined(address player)'
+    );
+    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
+        'event PlayerWithdrawn(address player)'
+    );
+    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
+    
     const getEvents = async() => {
 
-        const Logs = await publicClient.getLogs({
-            address: contractAddress,
-            events: parseAbi([
-                "event PlayerJoined(address player)",
-                "event PlayerWithdrawn(address player)",
-            ]),
-            fromBlock: BigInt(fromBlock),
-            toBlock: 'latest'
-        })
-        // console.log("Player joined/Withdrawn events :",Logs)
-
+        const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
+        
         const playerStates = new Map();
 
         for (const log of Logs) {
@@ -120,8 +130,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         const activePlayers = Array.from(playerStates.entries())
             .filter(([_, isJoined]) => isJoined)
             .map(([player]) => player);
-
-        // console.log("🟢 Active players in challenge:", activePlayers);
 
         setEvents(activePlayers)
 
@@ -147,6 +155,11 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         try{
             //Check if allowance has already been set
             if(allowance as bigint < bid){
+                toast.loading('Pending...', {
+                    id: 1,
+                    description: "Autorisation de l'utilisation de vos tokens...",
+                    action:null,
+                })
                 //Approve the use of needed amount of tokens
                 const approveHash = await writeContract(config, {
                     address: tokenAddress,
@@ -157,7 +170,18 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 })
                 //Wait for approval of transaction
                 await waitForTransactionReceipt(config, { hash: approveHash, confirmations: 1  })
+
+                toast.success("Success", {
+                    id: 1,
+                    description: "Autorisation accordée ✅!",
+                    duration: 3000,
+                })
             }
+
+            toast.loading('Pending...', {
+                id: 2,
+                description: "En train de rejoindre...",
+            })
 
             //Ask user to joinChallenge
             const joinHash = await writeContract(config, {
@@ -168,14 +192,16 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             })
             await waitForTransactionReceipt(config, { hash: joinHash, confirmations: 1 })
 
-            console.log('✅ Joined successfully!')
             toast.success("Success", {
-                description: "You successfully joined the challenge!",
+                id: 2,
+                description: "Vous avez rejoint le challenge!",
+                duration: 3000,
             })
             refetchAll();
         } catch (err) {
             console.error('Transaction failed ', err)
-            toast.error("Error : Could not join challenge", {
+            toast.dismiss();
+            toast.error("Error : Erreur pour rejoindre le challenge", {
                 duration: 3000,
                 // isClosable: true,
             });
@@ -205,7 +231,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
  /********** Use effects *************/
 
-    //Lorsqu'une transaction est effectuée, informer l'utilisateur de l'outcome
     //For withdraw
         useEffect(() => {
             if(withdrawSuccess) {
@@ -215,7 +240,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 console.error('Transaction failed ', withdrawReceiptError.message)
                 toast.error("Error : Could not leave the challenge", {
                     duration: 3000,
-                    // isClosable: true,
                 });
             }
         }, [withdrawSuccess, withdrawReceiptError])
@@ -229,7 +253,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 console.error('Transaction failed ', startReceiptError.message)
                 toast.error("Error : Could not start the challenge", {
                     duration: 3000,
-                    // isClosable: true,
                 });
             }
         }, [startSuccess, startReceiptError])
@@ -257,10 +280,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
         refetchAll();
     }, [readData, address])
-
-    // useEffect(() => {
-    //     refetchAll();
-    // }, [address])
 
     //For displaying moving dots
     const [dots, setDots] = useState(".");
@@ -362,8 +381,8 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 )}
                 </div>
             </div>
-            <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Challenge started successfully!" />
-            <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage="You left the challenge" />
+            <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Le challenge a démarré avec succès!" />
+            <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage="Vous avez quitté le challenge" />
         </div>
     )
 }

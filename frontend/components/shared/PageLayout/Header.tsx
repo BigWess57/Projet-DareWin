@@ -7,12 +7,12 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { formatEther } from "viem";
 import { useAccount, useReadContract } from "wagmi";
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
-import { Home, Zap, User, ClipboardList, PencilRuler } from 'lucide-react'
+import { Home, Zap, PencilRuler } from 'lucide-react'
 import { FeeTierExplanation } from '../Miscellaneous/FeeTierExplanation';
 
-const Header = (/*{ activePage }: { activePage: 'home' | 'create' | 'profile' | 'brands' }*/) => {
+const Header = () => {
 
 /************
  * Blockchain interaction
@@ -24,16 +24,24 @@ const Header = (/*{ activePage }: { activePage: 'home' | 'create' | 'profile' | 
         abi: tokenAbi,
         functionName: 'balanceOf',
         args: [address],
-        account: address as `0x${string}` | undefined
+        account: address as `0x${string}` | undefined,
+        query: {
+            enabled: Boolean(address),
+            refetchInterval: 5_000,
+        },
     })
 
 /******Display ******/
     const displayBalance = (() => {
-        if (!isConnected) return "-"
-        if (IsPending) return 'Loading…';
-        if (error) return 'Error fetching balance';
+        if (!isConnected) return { success: false, message: "-" };
+        if (IsPending) return { success: false, message: "Chargement..." };
+        if (error) return { success: false, message: "Erreur lors du fetch du solde" };
         
-        return typeof balance === 'bigint' ? formatEther(balance) : "ERROR FETCHING BALANCE"
+        if (typeof balance === 'bigint') {
+            return { success: true, message: formatEther(balance) };
+        }
+
+        return { success: false, message: "Erreur inattendue" };
     })()
 
     const displayFeeTier = (() => {
@@ -89,7 +97,7 @@ const Header = (/*{ activePage }: { activePage: 'home' | 'create' | 'profile' | 
                     alt="Logo"
                     fill
                     style={{ objectFit: 'contain' }}
-                    priority // loads immediately
+                    priority
                 />
             </div>
 
@@ -118,15 +126,17 @@ const Header = (/*{ activePage }: { activePage: 'home' | 'create' | 'profile' | 
                 <div className="px-4 py-3 rounded-xl bg-[#1F243A] border border-white/10 text-sm text-white shadow-sm">
                     <div className="text-white/90 text-lg mb-1">
                         Balance : <span className="ml-2 font-semibold text-white-400 text-xl font-mono tracking-wide">
-                            {Number(displayBalance).toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 6,
-                            })} DARE
+                            { displayBalance.success ?
+                                <>{Number(displayBalance.message).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 6,
+                                })} DARE</> : displayBalance.message
+                            } 
                         </span>
                     </div>
                     <div className='flex items-center'>
                         <div className="text-white/60">Palier de frais : <span className="text-white/80">{displayFeeTier}</span></div>
-                        <FeeTierExplanation displayFeeTier={displayFeeTier} />
+                        <FeeTierExplanation/>
                     </div>
                     
                 </div>

@@ -5,10 +5,11 @@ import {
   getDefaultConfig,
   RainbowKitProvider,
 } from '@rainbow-me/rainbowkit';
-import { WagmiProvider } from 'wagmi';
+import { WagmiProvider, http } from 'wagmi';
 import {
   hardhat,
-  // sepolia
+  sepolia,
+  holesky
 } from 'wagmi/chains';
 import {
   QueryClientProvider,
@@ -18,7 +19,7 @@ import {
 export const config = getDefaultConfig({
   appName: 'My RainbowKit App',
   projectId: '379bb1169a4973f4461f7527282e40e1',
-  chains: [/*sepolia,*/hardhat ],
+  chains: [holesky/*, sepolia, hardhat*/],
   ssr: true, // If your dApp uses server side rendering (SSR)
 });
 
@@ -27,7 +28,7 @@ const queryClient = new QueryClient();
 const RainbowKitAndWagmiProvider = ({ children }) => {
   return (
     <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient} initialChain={holesky}>
         <RainbowKitProvider coolMode>
           {children}
         </RainbowKitProvider>

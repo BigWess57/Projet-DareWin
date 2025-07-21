@@ -1,5 +1,3 @@
-// export const contractAddress="0xc6D0F551813f93E76c37C45fcAd48271b8EDa1AD";
-// export const contractAddress="0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
 export const contractAbi=[
     {
       "inputs": [
@@ -439,4 +437,4 @@ export const contractAbi=[
   ] as const
 // export const fromBlock=0;
 // export const fromBlock=8807578;//Sepolia
-export const fromBlock=4199464;//Holesky
+export const fromBlock=4202000;//Holesky

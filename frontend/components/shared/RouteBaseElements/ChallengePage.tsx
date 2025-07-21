@@ -1,9 +1,9 @@
 'use client'
-import { createContext, ReactNode, useContext, useEffect, useState } from "react"
-import { Clipboard, StickyNote } from 'lucide-react'
+import { createContext, useEffect, useState } from "react"
+import { StickyNote } from 'lucide-react'
 
-import { useAccount, useReadContract, useReadContracts } from "wagmi"
-import { Abi, Account, Address, formatEther, numberToBytes } from "viem"
+import { useAccount, useReadContracts } from "wagmi"
+import { Address, formatEther } from "viem"
 
 import { contractAbi } from "@/constants/ChallengeInfo"
 import ChallengeState from "../ChallengeState"
@@ -57,25 +57,15 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
     if (IsPending) return 'Loading…';
     if (error) return 'Error fetching description';
 
-    // console.log(readData[0].result)
-    const description = readData[0].result;
-    // if (typeof description === 'string'){ 
-    //   return description;
-    // }
-    // return JSON.stringify(description)
-    return description;
+    const desc = description;
+
+    return desc;
   })()
 
   const displayBid = (() => {
     if (IsPending) return 'Loading…';
     if (error) return 'Error fetching description';
 
-    // console.log(readData[1].result)
-    // const bid = readData[1].result;
-    // if (typeof bid === 'bigint'){
-    //   return formatEther(bid);
-    // } 
-    // return JSON.stringify(Number(bid))
     return formatEther(bid)
   })()
 
@@ -83,12 +73,6 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
     if (IsPending) return 'Loading…';
     if (error) return 'Error fetching description';
 
-    // console.log(readData[2].result)
-    // const duration = readData[2].result;
-    // if (typeof duration === 'bigint') {
-    //   return duration;
-    // }
-    // return JSON.stringify(Number(duration))
     const durationAsNumber = Number(duration)
     const hours = Math.floor(durationAsNumber / 3600);
     const minutes = Math.floor((durationAsNumber % 3600) / 60);
@@ -103,17 +87,12 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
   })()
 
   
-  //icon pour copier contract address dans le press papier
   const [copied, setCopied] = useState(false)
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(contractAddress)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // handle error if needed
-    }
+    await navigator.clipboard.writeText(contractAddress)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
 

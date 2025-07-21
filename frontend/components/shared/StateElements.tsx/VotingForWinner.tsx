@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-import { contractAbi, fromBlock } from '@/constants/ChallengeInfo'
-import { publicClient } from '@/utils/client'
+import { contractAbi } from '@/constants/ChallengeInfo'
+import { retriveEventsFromBlock, wagmiEventRefreshConfig } from '@/utils/client'
 
 import Event from "../Miscellaneous/Joined";
 
-import { Address, isAddressEqual, parseAbi, parseAbiItem, ReadContractErrorType } from 'viem'
+import { Address, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem, ReadContractErrorType } from 'viem'
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
@@ -38,6 +38,22 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     //Has voting duration ended?
     const [votingDurationEnded, setVotingDurationEnded] = useState<boolean>(false);
 
+    //EVENTS ABI
+    const PLAYER_JOINED_ABI = parseAbiItem(
+            'event PlayerJoined(address player)'
+    );
+    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
+        'event PlayerWithdrawn(address player)'
+    );
+    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
+
+    const PLAYER_VOTED_ABI = parseAbiItem(
+        "event PlayerVoted(address voter, address votedFor)"
+    );
+    const CHALLENGE_ENDED_ABI = parseAbiItem(
+        "event ChallengeEnded(uint256 endTime)"
+    );
+
 /***************** 
  * Functions for interaction with the blokchain 
  * **************/   
@@ -51,11 +67,16 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     })
 
 
-
     ////// Vote transaction hooks //////
     const { data: voteHash, isPending: isVoting, writeContract: voteContract, } = useWriteContract({
         mutation: {
-            onError: (err) => toast.error("Vote failed: " + err.message),
+            onError: (err) => {
+                if(err.message.toLowerCase().includes("user rejected")){
+                    toast.error("Vote failed: Use rejected the request")
+                }else{
+                    toast.error("Vote failed: " + err.message)
+                }
+            },
         },
     })
     //Used to check the current transaction state
@@ -66,7 +87,13 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     ////// End Vote transaction hooks //////
     const { data: endVoteHash, isPending: isEndingVote, writeContract: endVoteContract } = useWriteContract({
         mutation: {
-            onError: (err) => toast.error("Vote failed: " + err.message),
+            onError: (err) => {
+                if(err.message.toLowerCase().includes("user rejected")){
+                    toast.error("End Vote failed: Use rejected the request")
+                }else{
+                    toast.error("End Vote failed: " + err.message)
+                }
+            },
         },
     })
     //Used to check the current transaction state
@@ -103,16 +130,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
     const getPlayersEvents = async() => {
 
-        const Logs = await publicClient.getLogs({
-            address: contractAddress,
-            events: parseAbi([
-                "event PlayerJoined(address player)",
-                "event PlayerWithdrawn(address player)",
-            ]),
-            fromBlock: BigInt(fromBlock),
-            toBlock: 'latest'
-        })
-        // console.log("Player joined/Withdrawn events :",Logs)
+        const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
 
         const playerStates = new Map();
 
@@ -163,15 +181,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     //Get players voted events
     const getPlayersVotedEvents = async(playersArray : (Address | undefined)[]) => {
 
-        const Logs = await publicClient.getLogs({
-            address: contractAddress,
-            event: parseAbiItem("event PlayerVoted(address voter, address votedFor)"),
-            // du premier bloc
-            fromBlock: BigInt(fromBlock),
-            // jusqu'au dernier
-            toBlock: 'latest' // Pas besoin valeur par défaut
-        })
-        console.log("getPlayersVotedEvents : ", Logs)
+        const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerVoted(address voter, address votedFor)") as GetLogsReturnType<typeof PLAYER_VOTED_ABI>
 
         const VotedPlayers = Logs.map(
             log => (log.args.voter)
@@ -207,8 +217,10 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
             ),
         ],
         eventName: 'PlayerVoted',
+        config: wagmiEventRefreshConfig,
+        poll: true,
+        pollingInterval: 5_000,
         onLogs(logs) {
-            console.log('New logs!', logs);
             logs.forEach((log) => {
                 const { voter } = log.args;
                 if(voter === undefined) return;
@@ -230,7 +242,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
             })
         },
         onError(error) {
-            console.error('Error watching PlayerVoted:', error)
+            console.log('Error watching PlayerVoted:', error)
         },
     })
 
@@ -240,20 +252,9 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
     const getChallengeEndedEvents = async() => {
 
-        const Logs = await publicClient.getLogs({
-            address: contractAddress,
-            event: parseAbiItem("event ChallengeEnded(uint256 endTime)"),
-            // du premier bloc
-            fromBlock: BigInt(fromBlock),
-            // jusqu'au dernier
-            toBlock: 'latest'
-        })
-        console.log("chellenge end events : ", Logs)
+        const Logs = await retriveEventsFromBlock(contractAddress, "event ChallengeEnded(uint256 endTime)") as GetLogsReturnType<typeof CHALLENGE_ENDED_ABI>
+
         if (Logs.length === 0) {
-            // console.error("Could not get the end of the challenge")
-            // toast.error("Error : Could not get the end of the challenge", {
-            //     duration: 3000,
-            // });
             setVotingStarted(0n);
             return 0n;
         }else{
@@ -289,9 +290,6 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         if(voteSuccess) {
             getPlayersVotedEvents(players);
             getChallengeEndedEvents();
-            // toast.success("Success!", {
-            //     description: "You have successfully voted",
-            // })
         }
         if(voteReceiptError) {
             toast.error(voteReceiptError.message, {
@@ -304,9 +302,6 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     useEffect(() => {
         if(voteEndSuccess) {
             refetchStatus()
-            // toast.success("Success!", {
-            //     description: "Winner revealed!",
-            // })
         }
         if(voteEndReceiptError) {
             toast.error(voteEndReceiptError.message, {
@@ -365,10 +360,9 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
                         !votingDurationEnded ? (
                         votingStarted > 0n ? (
                             <div className="space-y-1">
-                            {/* <div className="text-white/70">Temps restant pour le vote :</div> */}
                             <ChallengeTimer
                                 startingTime={votingStarted}
-                                duration={durationVote as bigint}
+                                duration={durationVote ? BigInt(durationVote) : 0n}
                                 refreshDisplay={endVoteTimerDisplay}
                             />
                             </div>
@@ -426,7 +420,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
             )}
             <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage="You successfully voted!" />
             <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage="You successfully reveiled the winner!" />
-            </div>
+        </div>
     )
 }
 

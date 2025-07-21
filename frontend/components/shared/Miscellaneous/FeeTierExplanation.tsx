@@ -9,7 +9,7 @@ import {
 import { TierBronzeFee, TierGoldFee, TierPlatinumFee, TierSilverFee } from '@/constants/TokenInfo'
 import { CircleQuestionMark } from 'lucide-react'
 
-export function FeeTierExplanation({ displayFeeTier }: { displayFeeTier: string | React.JSX.Element | null }) {
+export function FeeTierExplanation() {
   return (
     <TooltipProvider>
       <Tooltip>

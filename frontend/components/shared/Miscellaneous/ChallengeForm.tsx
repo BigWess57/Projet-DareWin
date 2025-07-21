@@ -11,10 +11,9 @@ import {
   FormControl,
   FormMessage,
 } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'           // :contentReference[oaicite:3]{index=3}
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-// import { Switch } from '@/components/ui/switch'
 import * as RadixSwitch from '@radix-ui/react-switch'
 
 import z from 'zod'
@@ -35,9 +34,6 @@ export const formSchema = z.object({
                 address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Must be a valid address (40 char)'),  // or `.regex(/^0x[a-fA-F0-9]{40}$/)`
             })
         )
-        // .refine((arr) => arr.length >= 2, {
-        //     message: "At least 2 addresses are required",
-        // }),
 }).transform(({ hours, minutes, seconds, maxPlayers, bid, description, isGroup, groupAddresses}) => ({
     duration: Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds),
     maxPlayers,
@@ -51,14 +47,14 @@ export const formSchema = z.object({
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Total duration must be at least 30 seconds',
-            path: ['total duration'], // attach error here
+            path: ['total duration'],
         })
     }
     if(data.isGroup && data.groupAddresses.length < 2) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'At least 2 addresses should be added',
-            path: [`isGroup`], // attach error here
+            path: [`isGroup`],
         })
     }
     // Uniqueness check for groupAddresses
@@ -93,7 +89,7 @@ const ChallengeForm = ({
             maxPlayers: 5,
             bid: '',
             description: '',
-            isGroup: false,
+            isGroup: true,
             groupAddresses: [],
         },
     })
@@ -144,7 +140,7 @@ const ChallengeForm = ({
                 {/* Duration */}
                 <FormField
                     control={form.control}
-                    name="total duration" // tie error to seconds
+                    name="total duration"
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>Durée</FormLabel>
@@ -224,16 +220,6 @@ const ChallengeForm = ({
                     render={({ field }) => (
                         <FormItem className="flex items-center space-x-3">
                             <FormControl>
-                                {/* <Switch 
-                                    checked={field.value} 
-                                    onCheckedChange={field.onChange} 
-                                    className="
-                                        bg-purple/20 checked:bg-purple-500
-                                        checked:bg-purple-500
-                                        focus:ring-2 focus:ring-purple-500
-                                        transition
-                                    "
-                                /> */}
                                 <RadixSwitch.Root
                                 checked={field.value}
                                 onCheckedChange={field.onChange}

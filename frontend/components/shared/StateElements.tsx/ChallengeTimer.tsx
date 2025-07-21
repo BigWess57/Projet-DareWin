@@ -1,6 +1,5 @@
 import { Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12 } from 'lucide-react'
-import { useState, useEffect, useContext } from 'react'
-// import { RefreshDisplayContext } from '../ChallengeState';
+import { useState, useEffect } from 'react'
 
 export function ChallengeTimer({
   startingTime,
@@ -11,8 +10,6 @@ export function ChallengeTimer({
   duration: bigint
   refreshDisplay?: () => Promise<void>
 }) {
-
-    // const refreshDisplay = useContext(RefreshDisplayContext);
 
     const start = Number(startingTime)
     const dur = Number(duration)
@@ -28,7 +25,6 @@ export function ChallengeTimer({
     useEffect(() => {
         const interval = setInterval(() => {
             const amountTimeLeft = calculateTimeLeft()
-            //If time left is 0, refresh the state display (go to voting/challengeWon)
             if(amountTimeLeft == 0){
                 refreshDisplay()
             }
@@ -61,9 +57,6 @@ export function ChallengeTimer({
     const Icon = clockIcons[idx]
 
     return (
-        // <div className="text-lg font-mono">
-        // ⏳ {hours}:{minutes}:{seconds}
-        // </div>
         <div className="space-y-2">
             <div className="text-white text-base">
                 Temps restant : 

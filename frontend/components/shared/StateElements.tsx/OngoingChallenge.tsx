@@ -1,7 +1,5 @@
 import React, { useContext } from 'react'
 
-import { useAccount } from 'wagmi'
-
 import { DurationContext } from '../RouteBaseElements/ChallengePage'
 import { ChallengeTimer } from './ChallengeTimer'
 
@@ -14,8 +12,6 @@ const OngoingChallenge = ({
 }) => {
 
   const duration = useContext(DurationContext)
-
-  const {address} = useAccount()
   
   
 /***************** 
@@ -40,13 +36,6 @@ const OngoingChallenge = ({
       </div>
     )
   })()
-
-  //********Use effects ********* */
-
-
-  // useEffect(() => {
-  //   getChallengeStartEvents();
-  // }, [address])
 
 
 
