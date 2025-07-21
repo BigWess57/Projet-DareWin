@@ -4,7 +4,7 @@ require("dotenv/config");
 
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
 const HOLESKY_RPC_URL = process.env.HOLESKY_RPC_URL || "";
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x0000000000000000000000000000000000000000";
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "0000000000000000000000000000000000000000";
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
 
 /** @type import('hardhat/config').HardhatUserConfig */
