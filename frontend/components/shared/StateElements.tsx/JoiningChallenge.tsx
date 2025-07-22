@@ -173,7 +173,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
                 toast.success("Success", {
                     id: 1,
-                    description: "Autorisation accordée ✅!",
+                    description: "Autorisation accordée !",
                     duration: 3000,
                 })
             }

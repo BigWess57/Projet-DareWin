@@ -5,11 +5,17 @@ const {verify} = require("../utils/verify");
 async function main() {
     const signers = await ethers.getSigners()
 
-    //Get DARE token first
+    const isLocalhost = network.name.includes('localhost');  
+   
+   //Get DARE token first
     const DareWin = await ethers.getContractFactory("DareWin");
-    const DareWinToken = DareWin.attach("0x7f0f1C236e8000A752FbbCF371031B0A7b0cD604")
-
-    const isLocalhost = network.name.includes('localhost');
+    let DareWinToken;
+    if(isLocalhost){
+        DareWinToken = DareWin.attach("0x5fbdb2315678afecb367f032d93f642f64180aa3")
+    }else {
+        //enter Right address DEPENDING ON NETWORK (SEPOLIA, HOLESKY...)
+        DareWinToken = DareWin.attach("0x7f0f1C236e8000A752FbbCF371031B0A7b0cD604")
+    }   
 
     //Send tokens to other signers (if localhost)
     if(isLocalhost){
@@ -28,12 +34,13 @@ async function main() {
 
     //Deploy the challenge factory
     const ChallengeFactory = await ethers.deployContract("ChallengeFactory", [DareWinToken.target, signers[0].address]);
-
+// const challengeFactory = await ethers.getContractFactory("ChallengeFactory");
+// const ChallengeFactory = challengeFactory.attach("0xF5b33B18eF224357aFB475Cbc75cae3084da46FA")
     console.log('deploiement de la Challenge Factory en cours...');
 
     if(!isLocalhost){
         console.log('Attente de quelques blocs avant verification');
-        await ChallengeFactory.deploymentTransaction()?.wait(3);
+        await ChallengeFactory.deploymentTransaction()?.wait(5);
     }
     console.log(`ChallengeFactory deployed to ${ChallengeFactory.target}`)
 

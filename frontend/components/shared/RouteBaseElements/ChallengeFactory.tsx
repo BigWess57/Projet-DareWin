@@ -42,7 +42,6 @@ const ChallengeFactory = () => {
 
 
     const handleCreateChallenge = (data: ChallengeFormValues) => {
-        console.log('Creating new challenge', data);
         
         const duration = data.duration;
         const maxPlayers = data.maxPlayers;

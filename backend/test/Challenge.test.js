@@ -20,10 +20,10 @@ describe("tests Challenge contract", function () {
 
     let totalFee;
     //Fee tier (used to divide)
-    const bronze = 0.05; //5 % (<10000 tokens)
-    const silver = 0.04; //4 % (>10000 and <40000 tokens)
-    const gold = 0.03; //3 % (>40000 and <100000 tokens)
-    const platinum = 0.02; //2 % (>100000 tokens)
+    const bronze = 5n; //5 % (<10000 tokens)
+    const silver = 4n; //4 % (>10000 and <40000 tokens)
+    const gold = 3n; //3 % (>40000 and <100000 tokens)
+    const platinum = 2n; //2 % (>100000 tokens)
 
 
 
@@ -47,9 +47,9 @@ describe("tests Challenge contract", function () {
         }
 
         //Send a bit more to 2nd signer
-        await token.transfer(signers[1].address, ethers.parseUnits("20000", await token.decimals()));
+        await token.transfer(signers[1].address, ethers.parseUnits("50000", await token.decimals()));
 
-        totalFee = (3*bronze + silver + platinum)/5;
+        // totalFee = (3*bronze + silver + platinum)/5;
 
         const bid = ethers.parseUnits("1000", await token.decimals());
 
@@ -537,9 +537,32 @@ describe("tests Challenge contract", function () {
         it('winner should receive prize when endWinnerVote() is triggered', async function(){
             //Players voting
             await challenge.voteForWinner(signers[1].address)
-            await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address) 
             await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
             await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //Check balance before
+            const balanceBefore = await token.balanceOf(signers[2].address);
+            //End vote
+            await challenge.endWinnerVote();
+
+            //Check balance after
+            const balanceAfter = await token.balanceOf(signers[2].address);
+
+            const diff = balanceAfter - balanceBefore;
+            const expectedDiff = bid*5n - 5n*bid*bronze/100n;
+
+            //Difference should be equal to cash prize won
+            expect(diff).to.equal(expectedDiff); // substract fees too
+        })
+
+        it('if more tokens (signers[1] gold tier here) winner should receive more tokens', async function(){
+            //Players voting
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[0].address) 
             await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
 
             //Check balance before
@@ -550,9 +573,8 @@ describe("tests Challenge contract", function () {
             //Check balance after
             const balanceAfter = await token.balanceOf(signers[1].address);
 
-            const diff = Number(balanceAfter - balanceBefore);
-            const numberBid = Number(bid);
-            const expectedDiff = numberBid*5 - 5*numberBid*totalFee;
+            const diff = balanceAfter - balanceBefore;
+            const expectedDiff = bid*5n - 5n*bid*gold/100n;
 
             //Difference should be equal to cash prize won
             expect(diff).to.equal(expectedDiff); // substract fees too
@@ -561,7 +583,7 @@ describe("tests Challenge contract", function () {
         it("fee receiver should receive half of the fees (the rest is burnt)", async function () {
             //Players voting
             await challenge.voteForWinner(signers[2].address)
-            await challenge.connect(signers[1]).voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address)
             await challenge.connect(signers[2]).voteForWinner(signers[2].address)
             await challenge.connect(signers[3]).voteForWinner(signers[1].address)
             await challenge.connect(signers[4]).voteForWinner(signers[4].address)
@@ -572,9 +594,8 @@ describe("tests Challenge contract", function () {
 
             const balanceAfter = await token.balanceOf(signers[0].address);
 
-            const diff = Number(balanceAfter - balanceBefore);
-            const numberBid = Number(bid);
-            const expectedFeesReceived = numberBid*5*totalFee/2;
+            const diff = balanceAfter - balanceBefore;
+            const expectedFeesReceived = 5n*bid/2n*bronze/100n;
             
             expect(
                 diff
@@ -583,8 +604,8 @@ describe("tests Challenge contract", function () {
 
         it("half of the fees should have been burnt", async function () {
             //Players voting
-            await challenge.voteForWinner(signers[2].address)
-            await challenge.connect(signers[1]).voteForWinner(signers[1].address)
+            await challenge.voteForWinner(signers[0].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[0].address)
             await challenge.connect(signers[2]).voteForWinner(signers[2].address)
             await challenge.connect(signers[3]).voteForWinner(signers[1].address)
             await challenge.connect(signers[4]).voteForWinner(signers[4].address)
@@ -595,9 +616,8 @@ describe("tests Challenge contract", function () {
 
             const finalTotalSupply = await token.totalSupply();
 
-            const diff = Number(initialTotalSupply - finalTotalSupply);
-            const numberBid = Number(bid);
-            const expectedBurntAmount = numberBid*5*totalFee/2;
+            const diff = initialTotalSupply - finalTotalSupply;
+            const expectedBurntAmount = bid*5n/2n*platinum/100n;
             
             expect(
                 diff
@@ -628,22 +648,23 @@ describe("tests Challenge contract", function () {
             //Check balance after (winner1)
             const balanceAfter1 = await token.balanceOf(signers[1].address);
 
-            const diff1 = Number(balanceAfter1 - balanceBefore1);
-            const numberBid = Number(bid);
-            const expectedDiff = numberBid*5/2 - 5*numberBid*totalFee/2;
+            const diff1 = balanceAfter1 - balanceBefore1;
+            const expectedDiff1 = bid*5n/2n - bid*5n/2n*gold/100n;
 
             expect(
                 diff1
-            ).to.equal(expectedDiff);
+            ).to.equal(expectedDiff1);
 
             //Check balance after (winner2)
             const balanceAfter2 = await token.balanceOf(signers[2].address);
 
-            const diff2 = Number(balanceAfter2 - balanceBefore2);
+            const diff2 = balanceAfter2 - balanceBefore2;
+
+            const expectedDiff2 = bid*5n/2n - bid*5n/2n*bronze/100n;
 
             expect(
                 diff2
-            ).to.equal(expectedDiff); //substract fees too
+            ).to.equal(expectedDiff2); //substract fees too
         });
     })
 
@@ -841,26 +862,10 @@ describe("tests Challenge contract", function () {
                 .withArgs(signers[0].address, signers[1].address)
         })
 
-        // it("should emit an event when VoteEnded", async function() {
-        //     const {challenge, signers} = await loadFixture(VotingForWinnerFixture)
-
-        //     await challenge.voteForWinner(signers[1].address)
-        //     await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
-        //     await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
-        //     await challenge.connect(signers[3]).voteForWinner(signers[2].address) 
-        //     await challenge.connect(signers[4]).voteForWinner(signers[4].address)
-
-        //     const winnersArray = [signers[1].address, signers[2].address];
-
-        //     await expect(challenge.endWinnerVote())
-        //         .to.emit(challenge, "VoteEnded")
-        //         .withArgs(winnersArray)
-        // })
-
         it("should emit an event when a prize is sent", async function() {
             const {challenge, signers, bid} = await loadFixture(EndingVoteFixture)
             
-            const expectedPrize = bid*5n - 5n*bid*BigInt(totalFee*1000)/1000n;
+            const expectedPrize = bid*5n - 5n*bid*BigInt(gold)/100n;
 
             await expect(await challenge.endWinnerVote())
                 .to.emit(challenge, "PrizeSent")

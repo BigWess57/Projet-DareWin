@@ -39,7 +39,6 @@ contract Challenge is Ownable{
     uint128 private immutable feeTierSilverCap;
     uint128 private immutable feeTierGoldCap;  
 
-    uint128 private totalFee;
     address private immutable feeReceiver;     
 
     uint8 constant private FEE_TIER_BRONZE = 5;
@@ -161,18 +160,19 @@ contract Challenge is Ownable{
         _;
     }
         
-    /// @notice Calculates the platform fee share based on bidder's token holdings
+    /// @notice Calculates the platform fee share based on winner's token holdings
     /// @return Fee amount in DARE tokens
-    function calculateFee() view internal returns(uint128){
-        uint256 balance = dareWinToken.balanceOf(msg.sender);
-        if (balance <= feeTierBronzeCap) {
-            return bid*FEE_TIER_BRONZE/100;
-        } else if (balance <= feeTierSilverCap) {
-            return bid*FEE_TIER_SILVER/100;
-        } else if (balance <= feeTierGoldCap) {
-            return bid*FEE_TIER_GOLD/100;
+    function calculateFee(address winner, uint256 share) view internal returns(uint256){
+
+        uint256 balanceWinner = dareWinToken.balanceOf(winner);
+        if (balanceWinner <= feeTierBronzeCap) {
+            return share*FEE_TIER_BRONZE/100;
+        } else if (balanceWinner <= feeTierSilverCap) {
+            return share*FEE_TIER_SILVER/100;
+        } else if (balanceWinner <= feeTierGoldCap) {
+            return share*FEE_TIER_GOLD/100;
         } else {
-            return bid*FEE_TIER_PLATINUM/100;
+            return share*FEE_TIER_PLATINUM/100;
         }
     }
 
@@ -189,8 +189,6 @@ contract Challenge is Ownable{
         
         hasJoined[msg.sender] = true;
         ++currentPlayerNumber;
-
-        totalFee += calculateFee();
         
         players.push(Player(msg.sender, 0));
         emit PlayerJoined(msg.sender);
@@ -269,16 +267,16 @@ contract Challenge is Ownable{
 
         uint256 totalPrize = dareWinToken.balanceOf(address(this));
 
-        uint256 remainingPrize = totalPrize - totalFee;
-
-        uint256 share = remainingPrize / winnerCount;
+        uint256 share = totalPrize / winnerCount;
         require(share > 0, "Prize too small to distribute");
 
         for (uint i = 0; i < winnerCount; i++) {
             address winner = challengeWinners[i];
-            emit PrizeSent(winner, share);
+            uint256 shareAfterFees = share - calculateFee(winner, share);
+
+            emit PrizeSent(winner, shareAfterFees);
             require(
-                dareWinToken.transfer(winner, share),
+                dareWinToken.transfer(winner, shareAfterFees),
                 "Token transfer failed"
             );
         }
