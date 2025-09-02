@@ -177,7 +177,7 @@ contract Challenge is Ownable{
     }
 
     /// @notice Join the challenge by approving the bid
-    function joinChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {
+    function joinChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {  
         if(groupMode){
             require(isAllowed[msg.sender], "You are not allowed to join this challenge.");
         }else{

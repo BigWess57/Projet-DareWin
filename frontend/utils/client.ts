@@ -1,8 +1,6 @@
 import { createConfig } from 'wagmi';
 import { AbiEvent, Address, createPublicClient, GetLogsReturnType, http, parseAbi, parseAbiItem } from "viem";
 import { hardhat, sepolia, holesky } from "viem/chains";
-import { fromBlock } from '@/constants/ChallengeInfo';
-
 export const SepoliaRPC = process.env.NEXT_PUBLIC_SEPOLIA_ALCHEMY_RPC || "";
 export const HoleskyRPC = process.env.NEXT_PUBLIC_HOLESKY_ALCHEMY_RPC || "";
 

@@ -50,7 +50,7 @@ async function main() {
         console.log( 'Contrat vérifié!' )
     }
 
-}
+}  
 
 main().catch((error) => {
     console.error(error)

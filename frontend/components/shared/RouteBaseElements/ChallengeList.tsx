@@ -5,7 +5,7 @@ import { retriveEventsFromBlock } from '@/utils/client';
 
 import { Address, formatEther, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem } from 'viem';
 import { useAccount } from 'wagmi';
-import { contractAbi, fromBlock } from '@/constants/ChallengeInfo';
+import { contractAbi } from '@/constants/ChallengeInfo';
 import { readContracts } from 'wagmi/actions';
 import { config } from '@/app/RainbowKitAndWagmiProvider';
 import ChallengePreview from '../ChallengePreview';

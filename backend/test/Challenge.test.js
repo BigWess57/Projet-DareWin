@@ -18,7 +18,6 @@ describe("tests Challenge contract", function () {
     const maxPlayers = 5n;
     const description = "test";
 
-    let totalFee;
     //Fee tier (used to divide)
     const bronze = 5n; //5 % (<10000 tokens)
     const silver = 4n; //4 % (>10000 and <40000 tokens)
@@ -317,6 +316,7 @@ describe("tests Challenge contract", function () {
         })
         it("should revert startChallenge() if a participant did not approve enough tokens", async function() {
             await challenge.joinChallenge()
+
             //signer 0 sends tokens to signer 6, but not enough
             await token.transfer(signers[6], bid);
             await token.connect(signers[6]).approve(challenge.target, bid);
