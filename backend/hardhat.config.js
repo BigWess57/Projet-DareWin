@@ -21,9 +21,9 @@ module.exports = {
       }
     ]
   },
-  // gasReporter: {
-  //   enabled: true
-  // },
+  gasReporter: {
+    enabled: false
+  },
   mocha: {
     reporter: "mochawesome",
     reporterOptions: {

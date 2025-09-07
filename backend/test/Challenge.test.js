@@ -2,7 +2,7 @@ const {
     time,
     loadFixture,
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
-const { assert, expect } = require("chai")
+const { expect } = require("chai")
 const { ethers } = require("hardhat")
 // const helpers = require("@nomicfoundation/hardhat-network-helpers")
 
