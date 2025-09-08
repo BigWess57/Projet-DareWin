@@ -1,15 +1,15 @@
 {
   "stats": {
-    "suites": 5,
-    "tests": 15,
+    "suites": 3,
+    "tests": 4,
     "passes": 4,
     "pending": 0,
-    "failures": 11,
-    "start": "2025-09-03T11:27:16.385Z",
-    "end": "2025-09-03T11:27:16.974Z",
-    "duration": 589,
-    "testsRegistered": 15,
-    "passPercent": 26.666666666666668,
+    "failures": 0,
+    "start": "2025-09-07T19:11:27.129Z",
+    "end": "2025-09-07T19:11:27.545Z",
+    "duration": 416,
+    "testsRegistered": 4,
+    "passPercent": 100,
     "pendingPercent": 0,
     "other": 0,
     "hasOther": false,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "80fa2f84-30ca-49f7-8793-bbf133f75ba6",
+      "uuid": "ec870ce1-a1f4-44b7-8625-1b0bcf1473ee",
       "title": "",
       "fullFile": "/home/ibuntu/BlockchainDev/Alyra/MyTests/PROJET_FINAL/backend/test/Challenge NEW.test.js",
       "file": "/test/Challenge NEW.test.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "7c94a856-759d-4e12-a6b2-97ef6bd733fb",
+          "uuid": "494bda44-926c-4d6f-9980-4f35ea8c77b0",
           "title": "tests Challenge contract",
           "fullFile": "/home/ibuntu/BlockchainDev/Alyra/MyTests/PROJET_FINAL/backend/test/Challenge NEW.test.js",
           "file": "/test/Challenge NEW.test.js",
@@ -36,7 +36,7 @@
           "tests": [],
           "suites": [
             {
-              "uuid": "e12acdec-62f5-4567-93ab-e4342b6775f6",
+              "uuid": "812ded7f-1ca0-404a-b90f-80501399410d",
               "title": "deployment",
               "fullFile": "/home/ibuntu/BlockchainDev/Alyra/MyTests/PROJET_FINAL/backend/test/Challenge NEW.test.js",
               "file": "/test/Challenge NEW.test.js",
@@ -45,7 +45,7 @@
                   "title": "\"before each\" hook in \"deployment\"",
                   "fullTitle": "tests Challenge contract deployment \"before each\" hook in \"deployment\"",
                   "timedOut": false,
-                  "duration": 8,
+                  "duration": 7,
                   "state": null,
                   "speed": null,
                   "pass": false,
@@ -54,8 +54,8 @@
                   "context": null,
                   "code": "signers = await ethers.getSigners();\n//Token deployment\nconst DareWinToken = await ethers.getContractFactory('DareWinNew');\ntoken = await DareWinToken.deploy(signers[0].address);\nbid = ethers.parseUnits(\"1000\", await token.decimals());",
                   "err": {},
-                  "uuid": "95c2f7c7-0a99-4e88-8693-15906a8dc386",
-                  "parentUUID": "e12acdec-62f5-4567-93ab-e4342b6775f6",
+                  "uuid": "dc42d407-c794-4c18-a78b-b45ec70aed14",
+                  "parentUUID": "812ded7f-1ca0-404a-b90f-80501399410d",
                   "isHook": true,
                   "skipped": false
                 }
@@ -66,7 +66,7 @@
                   "title": "should juste deploy the contract",
                   "fullTitle": "tests Challenge contract deployment should juste deploy the contract",
                   "timedOut": false,
-                  "duration": 8,
+                  "duration": 6,
                   "state": "passed",
                   "speed": "fast",
                   "pass": true,
@@ -75,8 +75,8 @@
                   "context": null,
                   "code": "//Challenge Deployment\nconst Challenge = await ethers.getContractFactory('ChallengeNew'); \nawait expect(\n    Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, [])\n).to.not.be.reverted",
                   "err": {},
-                  "uuid": "78de7d5f-5a6e-4498-9045-96947d585003",
-                  "parentUUID": "e12acdec-62f5-4567-93ab-e4342b6775f6",
+                  "uuid": "e41135bc-9b85-4b33-8fe9-df940eb4a2ff",
+                  "parentUUID": "812ded7f-1ca0-404a-b90f-80501399410d",
                   "isHook": false,
                   "skipped": false
                 },
@@ -93,8 +93,8 @@
                   "context": null,
                   "code": "//Challenge Deployment\nconst Challenge = await ethers.getContractFactory('ChallengeNew'); \nawait expect(\n    Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, \"0x0000000000000000000000000000000000000000\", false, [])\n).to.be.revertedWith(\"the feeReceiver cannot be address 0!\")",
                   "err": {},
-                  "uuid": "1b84e8eb-861d-4220-bb97-b9d173a7da63",
-                  "parentUUID": "e12acdec-62f5-4567-93ab-e4342b6775f6",
+                  "uuid": "09757f12-9e48-49b0-9c81-04177201347e",
+                  "parentUUID": "812ded7f-1ca0-404a-b90f-80501399410d",
                   "isHook": false,
                   "skipped": false
                 },
@@ -102,7 +102,7 @@
                   "title": "GROUP MODE : should not be possible to deploy if one player in the array is address 0",
                   "fullTitle": "tests Challenge contract deployment GROUP MODE : should not be possible to deploy if one player in the array is address 0",
                   "timedOut": false,
-                  "duration": 8,
+                  "duration": 5,
                   "state": "passed",
                   "speed": "fast",
                   "pass": true,
@@ -111,28 +111,28 @@
                   "context": null,
                   "code": "//Challenge Deployment\nconst Challenge = await ethers.getContractFactory('ChallengeNew'); \nconst playersArray = [signers[0].address, signers[1].address, \"0x0000000000000000000000000000000000000000\"]\nawait expect(\n    Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, playersArray)\n).to.be.revertedWith(\"address 0 cannot be a player!\")",
                   "err": {},
-                  "uuid": "48b8fa8a-2d4c-4f1c-8d90-ee8793add758",
-                  "parentUUID": "e12acdec-62f5-4567-93ab-e4342b6775f6",
+                  "uuid": "019a37ad-f355-4f34-b5f2-ba15ebc3cec1",
+                  "parentUUID": "812ded7f-1ca0-404a-b90f-80501399410d",
                   "isHook": false,
                   "skipped": false
                 }
               ],
               "suites": [],
               "passes": [
-                "78de7d5f-5a6e-4498-9045-96947d585003",
-                "1b84e8eb-861d-4220-bb97-b9d173a7da63",
-                "48b8fa8a-2d4c-4f1c-8d90-ee8793add758"
+                "e41135bc-9b85-4b33-8fe9-df940eb4a2ff",
+                "09757f12-9e48-49b0-9c81-04177201347e",
+                "019a37ad-f355-4f34-b5f2-ba15ebc3cec1"
               ],
               "failures": [],
               "pending": [],
               "skipped": [],
-              "duration": 26,
+              "duration": 21,
               "root": false,
               "rootEmpty": false,
               "_timeout": 40000
             },
             {
-              "uuid": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
+              "uuid": "47472237-1555-4ed7-95d6-778bff56050b",
               "title": "gathering players state",
               "fullFile": "/home/ibuntu/BlockchainDev/Alyra/MyTests/PROJET_FINAL/backend/test/Challenge NEW.test.js",
               "file": "/test/Challenge NEW.test.js",
@@ -141,7 +141,7 @@
                   "title": "\"before each\" hook in \"gathering players state\"",
                   "fullTitle": "tests Challenge contract gathering players state \"before each\" hook in \"gathering players state\"",
                   "timedOut": false,
-                  "duration": 1,
+                  "duration": 25,
                   "state": null,
                   "speed": null,
                   "pass": false,
@@ -150,8 +150,8 @@
                   "context": null,
                   "code": "({challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase));",
                   "err": {},
-                  "uuid": "b9e6e04d-6179-407e-91de-4d793af90c87",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
+                  "uuid": "74e6bdec-41a4-4eb9-8828-77017b484f45",
+                  "parentUUID": "47472237-1555-4ed7-95d6-778bff56050b",
                   "isHook": true,
                   "skipped": false
                 }
@@ -159,364 +159,32 @@
               "afterHooks": [],
               "tests": [
                 {
-                  "title": "should store a player in the players array (if sending enough money)",
-                  "fullTitle": "tests Challenge contract gathering players state should store a player in the players array (if sending enough money)",
-                  "timedOut": false,
-                  "duration": 5,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "await expect(challenge.joinChallenge())\n           .to.not.be.reverted;\n           await expect(challenge.connect(signers[1]).joinChallenge())\n           .to.not.be.reverted;\n           const player1 = await challenge.players(0);\n           expect(player1[0]).to.equal(signers[0].address);\n           const player2 = await challenge.players(1);\n           expect(player2[0]).to.equal(signers[1].address);",
-                  "err": {
-                    "message": "TypeError: challenge.players is not a function",
-                    "estack": "TypeError: challenge.players is not a function\n    at Context.<anonymous> (test/Challenge NEW.test.js:196:45)",
-                    "diff": null
-                  },
-                  "uuid": "1543bed4-7940-487f-831f-38c64a7cd5e4",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
                   "title": "should send the money to the challenge contract correctly",
                   "fullTitle": "tests Challenge contract gathering players state should send the money to the challenge contract correctly",
                   "timedOut": false,
-                  "duration": 2,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "await expect(challenge.joinChallenge())\n           .to.not.be.reverted;\n           \n           expect(\n               await token.balanceOf(challenge)\n           ).to.equal(bid*2n)",
-                  "err": {
-                    "message": "AssertionError: expected 0 to equal 2000000000000000000000.",
-                    "estack": "AssertionError: expected 0 to equal 2000000000000000000000.\n    at Context.<anonymous> (test/Challenge NEW.test.js:210:18)",
-                    "diff": "- 0\n+ 2000000000000000000000\n"
-                  },
-                  "uuid": "641d1edd-98c1-4fb8-a602-c89098a3d53f",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "FOR LINK MODE : should not allow any more participants to join if the max is already reached",
-                  "fullTitle": "tests Challenge contract gathering players state FOR LINK MODE : should not allow any more participants to join if the max is already reached",
-                  "timedOut": false,
-                  "duration": 6,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "await challenge.joinChallenge();\nawait challenge.connect(signers[1]).joinChallenge();\nawait challenge.connect(signers[2]).joinChallenge();\nawait challenge.connect(signers[3]).joinChallenge();\nawait challenge.connect(signers[4]).joinChallenge();\nconst player1 = await challenge.players(0);\nexpect(player1[0]).to.equal(signers[0].address);\nconst player2 = await challenge.players(1);\nexpect(player2[0]).to.equal(signers[1].address);\nconst player3 = await challenge.players(2);\nexpect(player3[0]).to.equal(signers[2].address);\nconst player4 = await challenge.players(3);\nexpect(player4[0]).to.equal(signers[3].address);\nconst player5 = await challenge.players(4);\nexpect(player5[0]).to.equal(signers[4].address);\nawait expect(challenge.connect(signers[5]).joinChallenge()).to.be.revertedWith(\"This challenge is already full\");",
-                  "err": {
-                    "message": "TypeError: challenge.players is not a function",
-                    "estack": "TypeError: challenge.players is not a function\n    at Context.<anonymous> (test/Challenge NEW.test.js:221:45)",
-                    "diff": null
-                  },
-                  "uuid": "04990c8c-269e-4854-aac9-da59d756dca5",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "should not allow a participant to join twice",
-                  "fullTitle": "tests Challenge contract gathering players state should not allow a participant to join twice",
-                  "timedOut": false,
-                  "duration": 2,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "await challenge.joinChallenge();\nawait expect(challenge.joinChallenge()).to.be.revertedWith(\"You already joined\");",
-                  "err": {
-                    "message": "AssertionError: Expected transaction to be reverted with reason 'You already joined', but it didn't revert",
-                    "estack": "AssertionError: Expected transaction to be reverted with reason 'You already joined', but it didn't revert\n    at Context.<anonymous> (test/Challenge NEW.test.js:243:13)",
-                    "diff": null
-                  },
-                  "uuid": "835bbb92-b32a-4574-861d-a8f29a968a39",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues",
-                  "fullTitle": "tests Challenge contract gathering players state should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues",
-                  "timedOut": false,
-                  "duration": 7,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "//5 players join\nawait challenge.joinChallenge();\nawait challenge.connect(signers[1]).joinChallenge();\nawait challenge.connect(signers[2]).joinChallenge();\nawait challenge.connect(signers[3]).joinChallenge();\nawait challenge.connect(signers[4]).joinChallenge();\n//one player withdraws from challenge\nawait challenge.connect(signers[2]).withdrawFromChallenge();\nconst player1 = await challenge.players(0);\nexpect(player1[0]).to.equal(signers[0].address);\nconst player2 = await challenge.players(1);\nexpect(player2[0]).to.equal(signers[1].address);\nconst player3 = await challenge.players(2);\nexpect(player3[0]).to.equal(signers[4].address);\nconst player4 = await challenge.players(3);\nexpect(player4[0]).to.equal(signers[3].address);\n//the 3rd player should not be in the array anymore, this should revert\nawait expect(\n    challenge.players(4)\n).to.be.reverted;\n//Admin successfully starts challenge\nawait challenge.startChallenge();\nexpect(\n   await challenge.currentStatus()\n).to.equal(ChallengeStatus.OngoingChallenge);",
-                  "err": {
-                    "message": "TypeError: challenge.players is not a function",
-                    "estack": "TypeError: challenge.players is not a function\n    at Context.<anonymous> (test/Challenge NEW.test.js:257:45)",
-                    "diff": null
-                  },
-                  "uuid": "d63f3ba6-b95f-42ec-8dfd-b48b5cd5f0d7",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "should not allow a player to withdraw from the challenge if he hasnt joined",
-                  "fullTitle": "tests Challenge contract gathering players state should not allow a player to withdraw from the challenge if he hasnt joined",
-                  "timedOut": false,
-                  "duration": 1,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "//try to withdraw without having joined, reverts\nawait expect(\n   challenge.withdrawFromChallenge()\n).to.be.revertedWith(\"You are not in players list\");",
-                  "err": {
-                    "message": "AssertionError: Expected transaction to be reverted with reason 'You are not in players list', but it didn't revert",
-                    "estack": "AssertionError: Expected transaction to be reverted with reason 'You are not in players list', but it didn't revert\n    at Context.<anonymous> (test/Challenge NEW.test.js:284:13)",
-                    "diff": null
-                  },
-                  "uuid": "1d41687b-b8bd-4d8f-817e-de925898334c",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "should allow a player to join, withdraw and then join again the challenge",
-                  "fullTitle": "tests Challenge contract gathering players state should allow a player to join, withdraw and then join again the challenge",
-                  "timedOut": false,
-                  "duration": 6,
+                  "duration": 29,
                   "state": "passed",
                   "speed": "fast",
                   "pass": true,
                   "fail": false,
                   "pending": false,
                   "context": null,
-                  "code": "await challenge.joinChallenge();\nawait challenge.withdrawFromChallenge();\nawait expect(\n   challenge.joinChallenge()\n).to.not.be.reverted",
+                  "code": "const {sig, deadline} = await GetRSVsig(signers[0], token, bid, challenge);\nconst v = sig.v ?? (27 + sig.yParity);\nconsole.log(sig)\nconsole.log(deadline)\nconsole.log(v)\nexpect(\n    await token.balanceOf(challenge)\n).to.equal(0)\nawait expect(challenge.joinChallenge(signers[0].address, challenge.target, bid, deadline, v, sig.r, sig.s))\n.to.not.be.reverted;\n\nexpect(\n    await token.balanceOf(challenge)\n).to.equal(bid)",
                   "err": {},
-                  "uuid": "052c0156-4aec-4083-a67e-c47e7ea6593e",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "should not allow to start the challenge if there is less than 2 players",
-                  "fullTitle": "tests Challenge contract gathering players state should not allow to start the challenge if there is less than 2 players",
-                  "timedOut": false,
-                  "duration": 2,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "challenge.joinChallenge();\nawait expect(\n    challenge.startChallenge()\n).to.be.revertedWith(\"Not enough players to start the challenge\")",
-                  "err": {
-                    "message": "AssertionError: Expected transaction to be reverted with reason 'Not enough players to start the challenge', but it didn't revert",
-                    "estack": "AssertionError: Expected transaction to be reverted with reason 'Not enough players to start the challenge', but it didn't revert\n    at Context.<anonymous> (test/Challenge NEW.test.js:299:13)",
-                    "diff": null
-                  },
-                  "uuid": "2571fa5c-2da3-4efd-bfad-03e9748ae4e0",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "should allow the admin to go to the next state",
-                  "fullTitle": "tests Challenge contract gathering players state should allow the admin to go to the next state",
-                  "timedOut": false,
-                  "duration": 5,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "await challenge.joinChallenge();\nawait challenge.connect(signers[1]).joinChallenge();\nawait challenge.startChallenge();\nexpect(\n   await challenge.currentStatus()\n).to.equal(ChallengeStatus.OngoingChallenge);",
-                  "err": {
-                    "message": "AssertionError: expected 0 to equal 1.",
-                    "estack": "AssertionError: expected 0 to equal 1.\n    at Context.<anonymous> (test/Challenge NEW.test.js:311:18)",
-                    "diff": "- 0\n+ 1\n"
-                  },
-                  "uuid": "cb01beb0-1f58-4258-a14d-6cdb044bdf6d",
-                  "parentUUID": "41f038b2-80e4-4658-aef5-f09971ac5f9f",
+                  "uuid": "7456fb87-758c-46be-8538-a68b2f4df45c",
+                  "parentUUID": "47472237-1555-4ed7-95d6-778bff56050b",
                   "isHook": false,
                   "skipped": false
                 }
               ],
               "suites": [],
               "passes": [
-                "052c0156-4aec-4083-a67e-c47e7ea6593e"
+                "7456fb87-758c-46be-8538-a68b2f4df45c"
               ],
-              "failures": [
-                "1543bed4-7940-487f-831f-38c64a7cd5e4",
-                "641d1edd-98c1-4fb8-a602-c89098a3d53f",
-                "04990c8c-269e-4854-aac9-da59d756dca5",
-                "835bbb92-b32a-4574-861d-a8f29a968a39",
-                "d63f3ba6-b95f-42ec-8dfd-b48b5cd5f0d7",
-                "1d41687b-b8bd-4d8f-817e-de925898334c",
-                "2571fa5c-2da3-4efd-bfad-03e9748ae4e0",
-                "cb01beb0-1f58-4258-a14d-6cdb044bdf6d"
-              ],
+              "failures": [],
               "pending": [],
               "skipped": [],
-              "duration": 36,
-              "root": false,
-              "rootEmpty": false,
-              "_timeout": 40000
-            },
-            {
-              "uuid": "72eeaa72-de9b-4009-889b-86b7407a3688",
-              "title": "gathering players state (FOR GROUP MODE SPECIFIC TESTS)",
-              "fullFile": "/home/ibuntu/BlockchainDev/Alyra/MyTests/PROJET_FINAL/backend/test/Challenge NEW.test.js",
-              "file": "/test/Challenge NEW.test.js",
-              "beforeHooks": [
-                {
-                  "title": "\"before each\" hook in \"gathering players state (FOR GROUP MODE SPECIFIC TESTS)\"",
-                  "fullTitle": "tests Challenge contract gathering players state (FOR GROUP MODE SPECIFIC TESTS) \"before each\" hook in \"gathering players state (FOR GROUP MODE SPECIFIC TESTS)\"",
-                  "timedOut": false,
-                  "duration": 0,
-                  "state": null,
-                  "speed": null,
-                  "pass": false,
-                  "fail": false,
-                  "pending": false,
-                  "context": null,
-                  "code": "//Deploying in group mode\n({challenge, signers, bid, token} = await loadFixture(groupModeFixture));",
-                  "err": {},
-                  "uuid": "e8eef8b9-7663-453a-b800-1484e4d5964c",
-                  "parentUUID": "72eeaa72-de9b-4009-889b-86b7407a3688",
-                  "isHook": true,
-                  "skipped": false
-                }
-              ],
-              "afterHooks": [],
-              "tests": [
-                {
-                  "title": "FOR GROUP MODE : the stored array of players should be correct",
-                  "fullTitle": "tests Challenge contract gathering players state (FOR GROUP MODE SPECIFIC TESTS) FOR GROUP MODE : the stored array of players should be correct",
-                  "timedOut": false,
-                  "duration": 4,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "await challenge.connect(signers[0]).joinChallenge()\nawait challenge.connect(signers[1]).joinChallenge()\nawait challenge.connect(signers[2]).joinChallenge()\nawait challenge.connect(signers[3]).joinChallenge()\n\nconst player1 = await challenge.players(0);\nexpect(player1[0]).to.equal(signers[0].address);\nconst player2 = await challenge.players(1);\nexpect(player2[0]).to.equal(signers[1].address);\nconst player3 = await challenge.players(2);\nexpect(player3[0]).to.equal(signers[2].address);\nconst player4 = await challenge.players(3);\nexpect(player4[0]).to.equal(signers[3].address);",
-                  "err": {
-                    "message": "TypeError: challenge.players is not a function",
-                    "estack": "TypeError: challenge.players is not a function\n    at Context.<anonymous> (test/Challenge NEW.test.js:339:45)",
-                    "diff": null
-                  },
-                  "uuid": "09e7eadd-130f-43ff-9775-2ce7f7467fa0",
-                  "parentUUID": "72eeaa72-de9b-4009-889b-86b7407a3688",
-                  "isHook": false,
-                  "skipped": false
-                },
-                {
-                  "title": "FOR GROUP MODE : should not allow a player to join if he is not among those chosen by the admin at creation",
-                  "fullTitle": "tests Challenge contract gathering players state (FOR GROUP MODE SPECIFIC TESTS) FOR GROUP MODE : should not allow a player to join if he is not among those chosen by the admin at creation",
-                  "timedOut": false,
-                  "duration": 1,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "await expect(\n    challenge.connect(signers[5]).joinChallenge()\n).to.be.revertedWith(\"You are not allowed to join this challenge.\")",
-                  "err": {
-                    "message": "AssertionError: Expected transaction to be reverted with reason 'You are not allowed to join this challenge.', but it didn't revert",
-                    "estack": "AssertionError: Expected transaction to be reverted with reason 'You are not allowed to join this challenge.', but it didn't revert\n    at Context.<anonymous> (test/Challenge NEW.test.js:354:13)",
-                    "diff": null
-                  },
-                  "uuid": "387578bf-131f-4a0f-bba8-48e62a1844f0",
-                  "parentUUID": "72eeaa72-de9b-4009-889b-86b7407a3688",
-                  "isHook": false,
-                  "skipped": false
-                }
-              ],
-              "suites": [],
-              "passes": [],
-              "failures": [
-                "09e7eadd-130f-43ff-9775-2ce7f7467fa0",
-                "387578bf-131f-4a0f-bba8-48e62a1844f0"
-              ],
-              "pending": [],
-              "skipped": [],
-              "duration": 5,
-              "root": false,
-              "rootEmpty": false,
-              "_timeout": 40000
-            },
-            {
-              "uuid": "daa91303-dc59-4a0e-b158-4270372a9f65",
-              "title": "ongoing challenge state",
-              "fullFile": "/home/ibuntu/BlockchainDev/Alyra/MyTests/PROJET_FINAL/backend/test/Challenge NEW.test.js",
-              "file": "/test/Challenge NEW.test.js",
-              "beforeHooks": [
-                {
-                  "title": "\"before each\" hook in \"ongoing challenge state\"",
-                  "fullTitle": "tests Challenge contract ongoing challenge state \"before each\" hook in \"ongoing challenge state\"",
-                  "timedOut": false,
-                  "duration": 32,
-                  "state": null,
-                  "speed": null,
-                  "pass": false,
-                  "fail": false,
-                  "pending": false,
-                  "context": null,
-                  "code": "({challenge, signers} = await loadFixture(OngoingChallengeFixture));",
-                  "err": {},
-                  "uuid": "0eb19791-7dbe-4d10-9aa4-f60719e7ab87",
-                  "parentUUID": "daa91303-dc59-4a0e-b158-4270372a9f65",
-                  "isHook": true,
-                  "skipped": false
-                }
-              ],
-              "afterHooks": [],
-              "tests": [
-                {
-                  "title": "state should be \"OngoingChallenge\" during the challenge. ",
-                  "fullTitle": "tests Challenge contract ongoing challenge state state should be \"OngoingChallenge\" during the challenge. ",
-                  "timedOut": false,
-                  "duration": 0,
-                  "state": "failed",
-                  "speed": null,
-                  "pass": false,
-                  "fail": true,
-                  "pending": false,
-                  "context": null,
-                  "code": "expect(await challenge.currentStatus()).to.equal(ChallengeStatus.OngoingChallenge);",
-                  "err": {
-                    "message": "AssertionError: expected 0 to equal 1.",
-                    "estack": "AssertionError: expected 0 to equal 1.\n    at Context.<anonymous> (test/Challenge NEW.test.js:370:56)",
-                    "diff": "- 0\n+ 1\n"
-                  },
-                  "uuid": "bfbfa1e7-de5c-42c1-98f2-f05421eee92b",
-                  "parentUUID": "daa91303-dc59-4a0e-b158-4270372a9f65",
-                  "isHook": false,
-                  "skipped": false
-                }
-              ],
-              "suites": [],
-              "passes": [],
-              "failures": [
-                "bfbfa1e7-de5c-42c1-98f2-f05421eee92b"
-              ],
-              "pending": [],
-              "skipped": [],
-              "duration": 0,
+              "duration": 29,
               "root": false,
               "rootEmpty": false,
               "_timeout": 40000
