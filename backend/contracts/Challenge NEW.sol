@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./DareWinTokenERC20 NEW.sol";
 
+import "hardhat/console.sol";
+
 /// @title Challenge
 /// @notice Manages a DARE-token challenge: creation, participation, voting, and prize distribution.
 contract ChallengeNew is Ownable{
@@ -26,11 +28,11 @@ contract ChallengeNew is Ownable{
     }
 
     uint64 public immutable duration;          
-    // uint64 private challengeStartTimestamp;    
+    uint64 private challengeStartTimestamp;    
     // uint64 private voteForWinnerStarted;       
     // uint24 public constant MINIMUM_DELAY_BEFORE_ENDING_VOTE = 1 hours; 
     uint8 public immutable maxPlayers;         
-    // uint8 private currentPlayerNumber;         
+    uint8 private currentPlayerNumber;         
     bool public immutable groupMode;           
     // uint8 public highestVotes;                 
 
@@ -56,7 +58,7 @@ contract ChallengeNew is Ownable{
     // address[] public challengeWinners;
 
     mapping (address => bool) public isAllowed;
-    // mapping (address => bool) hasJoined;
+    mapping (address => bool) hasJoined;
     // mapping (address => bool) hasVoted;
     // Player[] public players;
 
@@ -140,24 +142,47 @@ contract ChallengeNew is Ownable{
     /// @notice Join the challenge by approving the bid
     function joinChallenge(uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isCorrectState(ChallengeStatus.GatheringPlayers) { 
 
-        // dareWinToken.permit(msg.sender, address(this), bid, block.timestamp + 300, v, r, s);
+        if(groupMode){
+            require(isAllowed[msg.sender], "You are not allowed to join this challenge.");
+        }else{
+            require(currentPlayerNumber < maxPlayers, "This challenge is already full");
+        }        
+        require(!hasJoined[msg.sender], "You already joined"); 
+
+        emit PlayerJoined(msg.sender);
+        hasJoined[msg.sender] = true;
+        ++currentPlayerNumber;
+
         dareWinToken.permit(msg.sender, address(this), bid, deadline, v, r, s);
 
         require(
             dareWinToken.transferFrom(msg.sender, address(this), bid),
             "Transfer failed"
         );
-
     }
 
     /// @notice Withdraw from challenge before it starts
     function withdrawFromChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {
+        require(hasJoined[msg.sender], "You have not joined the challenge.");
+        
+        hasJoined[msg.sender] = false;
+        --currentPlayerNumber;
 
+        emit PlayerWithdrawn(msg.sender);
+
+        require(
+            dareWinToken.transfer(msg.sender, bid),
+            "Transfer failed"
+        );
     }
 
     /// @notice Starts the challenge and collects all bids into the contract
     function startChallenge() external onlyOwner isCorrectState(ChallengeStatus.GatheringPlayers) {
+        require(currentPlayerNumber > 1, "Not enough players to start the challenge");
 
+        currentStatus = ChallengeStatus.OngoingChallenge;
+        challengeStartTimestamp = uint64(block.timestamp);
+        emit ChallengeStarted(challengeStartTimestamp);
     }
 
     /// @notice Casts a vote for a given player after the challenge ends

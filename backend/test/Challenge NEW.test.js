@@ -80,11 +80,16 @@ describe("tests Challenge contract", function () {
         const { challenge, signers, token, bid } = await deployedChallengeFixtureBase();
 
         //5 players join
-        await challenge.joinChallenge();
-        await challenge.connect(signers[1]).joinChallenge();
-        await challenge.connect(signers[2]).joinChallenge();
-        await challenge.connect(signers[3]).joinChallenge();
-        await challenge.connect(signers[4]).joinChallenge();
+        const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+        const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+        const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+        const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
+        const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
+        await challenge.joinChallenge(deadline1, v1, r1, s1);
+        await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2);
+        await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3);
+        await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4);
+        await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5);
 
         await challenge.startChallenge();
         return { challenge, signers, token, bid };
@@ -183,25 +188,30 @@ describe("tests Challenge contract", function () {
 
         // sign the Permit type data with the deployer's private key
         const signature = await signer.signTypedData(domain, types, values);
-        console.log(signature)
+        // console.log(signature)
 
         // split the signature into its components
         const sig = ethers.Signature.from(signature)
-        console.log(sig)
+        // console.log(sig)
 
         const v = sig.v ?? (27 + sig.yParity); // 27/28
 
         // // verify the Permit type data with the signature
-        const recovered = ethers.verifyTypedData(
-            domain,
-            types,
-            values,
-            sig
-        );
-        console.log("expected owner:", signer.address);
-        console.log("recovered address:", recovered);
+        // const recovered = ethers.verifyTypedData(
+        //     domain,
+        //     types,
+        //     values,
+        //     sig
+        // );
+        // console.log("expected owner:", signer.address);
+        // console.log("recovered address:", recovered);
 
-        return {sig, deadline};
+        return  {
+            v,
+            r: sig.r,
+            s: sig.s,
+            deadline,
+        };
     }
 
 
@@ -266,16 +276,15 @@ describe("tests Challenge contract", function () {
         });
 
         it('should send the money to the challenge contract correctly', async function() {
-            const {sig, deadline} = await GetRSVsig(signers[0], token, bid, challenge);
-            const v = sig.v ?? (27 + sig.yParity);
-console.log(sig)
-console.log(deadline)
-console.log(v)
+            const { v, r, s, deadline } = await GetRSVsig(signers[0], token, bid, challenge);
+
             expect(
                 await token.balanceOf(challenge)
             ).to.equal(0)
 
-            await expect(challenge.joinChallenge(signers[0].address, challenge.target, bid, deadline, v, sig.r, sig.s))
+            await expect(
+                challenge.joinChallenge(deadline, v, r, s)
+            )
             .to.not.be.reverted;
             
             expect(
@@ -283,188 +292,226 @@ console.log(v)
             ).to.equal(bid)
         })
 
-        // it('should store a player in the players array (if sending enough money)', async function() {
+        it('should store a player in the players array (if sending enough money)', async function() {
  
-        //     await expect(challenge.joinChallenge())
-        //     .to.not.be.reverted;
-        //     await expect(challenge.connect(signers[1]).joinChallenge())
-        //     .to.not.be.reverted;
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
 
-        //     const player1 = await challenge.players(0);
-        //     expect(player1[0]).to.equal(signers[0].address);
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1))
+            .to.not.be.reverted;
+            await expect(challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2))
+            .to.not.be.reverted;
 
-        //     const player2 = await challenge.players(1);
-        //     expect(player2[0]).to.equal(signers[1].address);
-        // })        
+            // const player1 = await challenge.players(0);
+            // expect(player1[0]).to.equal(signers[0].address);
 
-        // it('FOR LINK MODE : should not allow any more participants to join if the max is already reached', async function() {
-        //     await challenge.joinChallenge();
-        //     await challenge.connect(signers[1]).joinChallenge();
-        //     await challenge.connect(signers[2]).joinChallenge();
-        //     await challenge.connect(signers[3]).joinChallenge();
-        //     await challenge.connect(signers[4]).joinChallenge();
+            // const player2 = await challenge.players(1);
+            // expect(player2[0]).to.equal(signers[1].address);
+        })        
 
-        //     const player1 = await challenge.players(0);
-        //     expect(player1[0]).to.equal(signers[0].address);
+        it('FOR LINK MODE : should not allow any more participants to join if the max is already reached', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
+            const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
+            const { v: v6, r: r6, s: s6, deadline: deadline6 } = await GetRSVsig(signers[5], token, bid, challenge);
+            await challenge.joinChallenge(deadline1, v1, r1, s1);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2);
+            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3);
+            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4);
+            await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5);
 
-        //     const player2 = await challenge.players(1);
-        //     expect(player2[0]).to.equal(signers[1].address);
+            // const player1 = await challenge.players(0);
+            // expect(player1[0]).to.equal(signers[0].address);
 
-        //     const player3 = await challenge.players(2);
-        //     expect(player3[0]).to.equal(signers[2].address);
+            // const player2 = await challenge.players(1);
+            // expect(player2[0]).to.equal(signers[1].address);
 
-        //     const player4 = await challenge.players(3);
-        //     expect(player4[0]).to.equal(signers[3].address);
+            // const player3 = await challenge.players(2);
+            // expect(player3[0]).to.equal(signers[2].address);
 
-        //     const player5 = await challenge.players(4);
-        //     expect(player5[0]).to.equal(signers[4].address);
+            // const player4 = await challenge.players(3);
+            // expect(player4[0]).to.equal(signers[3].address);
 
-        //     await expect(challenge.connect(signers[5]).joinChallenge()).to.be.revertedWith("This challenge is already full");
+            // const player5 = await challenge.players(4);
+            // expect(player5[0]).to.equal(signers[4].address);
 
-        // })
+            await expect(
+                challenge.connect(signers[5]).joinChallenge(deadline6, v6, r6, s6)
+            ).to.be.revertedWith("This challenge is already full");
 
-
-        // it('should not allow a participant to join twice', async function()  {
-        //     await challenge.joinChallenge();
-        //     await expect(challenge.joinChallenge()).to.be.revertedWith("You already joined");
-        // })
-
-        // it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues. Money should be sent back to him??', async function() {
-        //     //5 players join
-        //     await challenge.joinChallenge();
-        //     await challenge.connect(signers[1]).joinChallenge();
-        //     await challenge.connect(signers[2]).joinChallenge();
-        //     await challenge.connect(signers[3]).joinChallenge();
-        //     await challenge.connect(signers[4]).joinChallenge();
-
-        //     //one player withdraws from challenge
-        //     expect(
-        //         await token.balanceOf(signers[2].address)
-        //     ).to.equal(0);
-
-        //     await challenge.connect(signers[2]).withdrawFromChallenge();
-
-        //     //His balance should be 1000
-        //     expect(
-        //         await token.balanceOf(signers[2].address)
-        //     ).to.equal(1000);
-
-        //     const player1 = await challenge.players(0);
-        //     expect(player1[0]).to.equal(signers[0].address);
-
-        //     const player2 = await challenge.players(1);
-        //     expect(player2[0]).to.equal(signers[1].address);
-
-        //     const player3 = await challenge.players(2);
-        //     expect(player3[0]).to.equal(signers[4].address);
-
-        //     const player4 = await challenge.players(3);
-        //     expect(player4[0]).to.equal(signers[3].address);
-
-        //     //the 3rd player should not be in the array anymore, this should revert
-        //     await expect(
-        //         challenge.players(4)
-        //     ).to.be.reverted;
-
-        //     //Admin successfully starts challenge
-        //     await challenge.startChallenge();
-
-        //     expect(
-        //        await challenge.currentStatus()
-        //     ).to.equal(ChallengeStatus.OngoingChallenge);
-        // })
-
-        // it('should not allow a player to withdraw from the challenge if he hasnt joined', async function() {
-        //     //try to withdraw without having joined, reverts
-        //     await expect(
-        //        challenge.withdrawFromChallenge()
-        //     ).to.be.revertedWith("You are not in players list");
-        // })
-
-        // it('should allow a player to join, withdraw and then join again the challenge', async function() {
-        //     await challenge.joinChallenge();
-        //     await challenge.withdrawFromChallenge();
-        //     await expect(
-        //        challenge.joinChallenge()
-        //     ).to.not.be.reverted
-        // })
-
-        // it('should not allow to start the challenge if there is less than 2 players', async function() {
-        //     challenge.joinChallenge();
-        //     await expect(
-        //         challenge.startChallenge()
-        //     ).to.be.revertedWith("Not enough players to start the challenge")
-        // })
+        })
 
 
-        // it("should allow the admin to go to the next state", async function() {
-        //     await challenge.joinChallenge();
-        //     await challenge.connect(signers[1]).joinChallenge();
-        //     await challenge.startChallenge();
-        //     expect(
-        //        await challenge.currentStatus()
-        //     ).to.equal(ChallengeStatus.OngoingChallenge);
-        // })
+        it('should not allow a participant to join twice', async function()  {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1);
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1)).to.be.revertedWith("You already joined");
+        })
+
+        it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues. Money should be sent back to him??', async function() {
+            //5 players join
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
+            const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2);
+            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3);
+            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4);
+            await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5);
+
+            //one player withdraws from challenge
+            expect(
+                await token.balanceOf(signers[2].address)
+            ).to.equal(0);
+
+            await challenge.connect(signers[2]).withdrawFromChallenge();
+
+            //His balance should be 1000
+            expect(
+                await token.balanceOf(signers[2].address)
+            ).to.equal(bid);
+
+            // const player1 = await challenge.players(0);
+            // expect(player1[0]).to.equal(signers[0].address);
+
+            // const player2 = await challenge.players(1);
+            // expect(player2[0]).to.equal(signers[1].address);
+
+            // const player3 = await challenge.players(2);
+            // expect(player3[0]).to.equal(signers[4].address);
+
+            // const player4 = await challenge.players(3);
+            // expect(player4[0]).to.equal(signers[3].address);
+
+            // //the 3rd player should not be in the array anymore, this should revert
+            // await expect(
+            //     challenge.players(4)
+            // ).to.be.reverted;
+
+            //Admin successfully starts challenge
+            await challenge.startChallenge();
+
+            expect(
+               await challenge.currentStatus()
+            ).to.equal(ChallengeStatus.OngoingChallenge);
+        })
+
+        it('should not allow a player to withdraw from the challenge if he hasnt joined', async function() {
+            //try to withdraw without having joined, reverts
+            await expect(
+               challenge.withdrawFromChallenge()
+            ).to.be.revertedWith("You have not joined the challenge.");
+        })
+
+        it('should allow a player to join, withdraw and then join again the challenge', async function() {
+            //Needed twice, because of the nonce
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1);
+            await challenge.withdrawFromChallenge();
+
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[0], token, bid, challenge);
+            await expect(
+               challenge.joinChallenge(deadline2, v2, r2, s2)
+            ).to.not.be.reverted
+        })
+
+        it('should not allow to start the challenge if there is less than 2 players', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1);
+
+            await expect(
+                challenge.startChallenge()
+            ).to.be.revertedWith("Not enough players to start the challenge")
+        })
+
+
+        it("should allow the admin to go to the next state", async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2);
+            await challenge.startChallenge();
+            expect(
+               await challenge.currentStatus()
+            ).to.equal(ChallengeStatus.OngoingChallenge);
+        })
 
     });
 
-    // describe("gathering players state (FOR GROUP MODE SPECIFIC TESTS)", function () {
+    describe("gathering players state (FOR GROUP MODE SPECIFIC TESTS)", function () {
 
-    //     let challenge;
-    //     let signers;
-    //     let bid;
-    //     let token;
+        let challenge;
+        let signers;
+        let bid;
+        let token;
         
-    //     //Function for using the group fixture with 'loadFixture'
-    //     async function groupModeFixture() {
-    //         return await deployedChallengeFixtureBase('group');
-    //     }
+        //Function for using the group fixture with 'loadFixture'
+        async function groupModeFixture() {
+            return await deployedChallengeFixtureBase('group');
+        }
 
-    //     beforeEach(async function () {
-    //         //Deploying in group mode
-    //         ({challenge, signers, bid, token} = await loadFixture(groupModeFixture));
-    //     });
+        beforeEach(async function () {
+            //Deploying in group mode
+            ({challenge, signers, bid, token} = await loadFixture(groupModeFixture));
+        });
 
-    //     it('FOR GROUP MODE : the stored array of players should be correct', async function() {
-    //         await challenge.connect(signers[0]).joinChallenge()
-    //         await challenge.connect(signers[1]).joinChallenge()
-    //         await challenge.connect(signers[2]).joinChallenge()
-    //         await challenge.connect(signers[3]).joinChallenge()
+        it('FOR GROUP MODE : should still allow players to join', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
+
+            await challenge.connect(signers[0]).joinChallenge(deadline1, v1, r1, s1)
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2)
+            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3)
+            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4)
             
-    //         const player1 = await challenge.players(0);
-    //         expect(player1[0]).to.equal(signers[0].address);
+            // const player1 = await challenge.players(0);
+            // expect(player1[0]).to.equal(signers[0].address);
 
-    //         const player2 = await challenge.players(1);
-    //         expect(player2[0]).to.equal(signers[1].address);
+            // const player2 = await challenge.players(1);
+            // expect(player2[0]).to.equal(signers[1].address);
 
-    //         const player3 = await challenge.players(2);
-    //         expect(player3[0]).to.equal(signers[2].address);
+            // const player3 = await challenge.players(2);
+            // expect(player3[0]).to.equal(signers[2].address);
 
-    //         const player4 = await challenge.players(3);
-    //         expect(player4[0]).to.equal(signers[3].address);
+            // const player4 = await challenge.players(3);
+            // expect(player4[0]).to.equal(signers[3].address);
 
-    //     })
+        })
 
-    //     it('FOR GROUP MODE : should not allow a player to join if he is not among those chosen by the admin at creation', async function() {
-    //         await expect(
-    //             challenge.connect(signers[5]).joinChallenge()
-    //         ).to.be.revertedWith("You are not allowed to join this challenge.")
-    //     })
-    // })
+        it('FOR GROUP MODE : should not allow a player to join if he is not among those chosen by the admin at creation', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[5], token, bid, challenge);
+
+            await expect(
+                challenge.connect(signers[5]).joinChallenge(deadline1, v1, r1, s1)
+            ).to.be.revertedWith("You are not allowed to join this challenge.")
+        })
+    })
 
 
-    //state OngoingChallenge
-    // describe('ongoing challenge state', function() { 
-    //     let challenge;
-    //     let signers;
-    //     beforeEach(async function () {
-    //         ({challenge, signers} = await loadFixture(OngoingChallengeFixture));
-    //     });
+    // state OngoingChallenge
+    describe('ongoing challenge state', function() { 
+        let challenge;
+        let signers;
+        beforeEach(async function () {
+            ({challenge, signers} = await loadFixture(OngoingChallengeFixture));
+        });
 
-    //     it('state should be "OngoingChallenge" during the challenge. ', async function() {
-    //         expect(await challenge.currentStatus()).to.equal(ChallengeStatus.OngoingChallenge);
-    //     })
-    // });
+        it('state should be "OngoingChallenge" during the challenge. ', async function() {
+            expect(await challenge.currentStatus()).to.equal(ChallengeStatus.OngoingChallenge);
+        })
+    });
 
 
 
