@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./DareWinTokenERC20 NEW.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import "hardhat/console.sol";
 
@@ -26,6 +27,8 @@ contract ChallengeNew is Ownable{
         /// @notice Number of votes received
         uint8 voteCount;
     }
+
+    bytes32 public merkleRoot;
 
     uint64 public immutable duration;          
     uint64 private challengeStartTimestamp;    
@@ -102,18 +105,23 @@ contract ChallengeNew is Ownable{
     /// @param _description Short description of the challenge
     /// @param _feeReceiver Address receiving the platform fee
     /// @param _groupMode If true, only allowed group can join
-    /// @param _group List of addresses allowed in group mode
-    constructor(address initialOwner, DareWinNew _tokenAddress, uint64 _duration, uint8 _maxPlayers, uint128 _bid, string memory _description, address _feeReceiver, bool _groupMode, address[] memory _group) Ownable(initialOwner) {
+    /// @param _merkleRoot merkle root of addresses allowed in group mode
+        // @param _group List of addresses allowed in group mode
+    constructor(address initialOwner, DareWinNew _tokenAddress, uint64 _duration, uint8 _maxPlayers, uint128 _bid, string memory _description, address _feeReceiver, bool _groupMode, bytes32 _merkleRoot/*address[] memory _group*/) Ownable(initialOwner) {
         require(_feeReceiver != address(0), "the feeReceiver cannot be address 0!");
+        // if(_groupMode){
+        //     require(
+        //         _group.length > 1,
+        //         "The predefined group of players is too small. There should be a minimum of 2 players per challenge"
+        //     );
+        //     for (uint i; i < _group.length; i++) {
+        //         require(_group[i] != address(0), "address 0 cannot be a player!");
+        //         isAllowed[_group[i]] = true;
+        //     }
+        // }
         if(_groupMode){
-            require(
-                _group.length > 1,
-                "The predefined group of players is too small. There should be a minimum of 2 players per challenge"
-            );
-            for (uint i; i < _group.length; i++) {
-                require(_group[i] != address(0), "address 0 cannot be a player!");
-                isAllowed[_group[i]] = true;
-            }
+            require(_merkleRoot != bytes32(0), "Merkle root required when groupMode is true");
+            merkleRoot=_merkleRoot;
         }
 
         dareWinToken=_tokenAddress;
@@ -139,11 +147,19 @@ contract ChallengeNew is Ownable{
         _;
     }
 
+    function isWhitelisted(address _account, bytes32[] calldata _proof) internal view returns(bool) {
+        bytes32 leaf = keccak256(abi.encode(keccak256(abi.encode(_account))));
+        
+        //*** à compléter ***//
+        return MerkleProof.verify(_proof, merkleRoot, leaf);
+    }
+
     /// @notice Join the challenge by approving the bid
-    function joinChallenge(uint256 deadline, uint8 v, bytes32 r, bytes32 s) external isCorrectState(ChallengeStatus.GatheringPlayers) { 
+    function joinChallenge(uint256 deadline, uint8 v, bytes32 r, bytes32 s, bytes32[] calldata _proof) external isCorrectState(ChallengeStatus.GatheringPlayers) { 
 
         if(groupMode){
-            require(isAllowed[msg.sender], "You are not allowed to join this challenge.");
+            // require(isAllowed[msg.sender], "You are not allowed to join this challenge.");
+            require(isWhitelisted(msg.sender, _proof), "You are not allowed to join this challenge.");
         }else{
             require(currentPlayerNumber < maxPlayers, "This challenge is already full");
         }        
