@@ -24,9 +24,12 @@ describe("tests Challenge contract", function () {
     const platinum = 2n; //2 % (>100000 tokens)
 
 
-    function getTimestampInSeconds() {
+    async function getTimestampPlusOneHourInSeconds() {
         // returns current timestamp in seconds
-        return Math.floor(Date.now() / 1000);
+        // return Math.floor(Date.now() / 1000);
+        const latestBlock = await ethers.provider.getBlock('latest');
+        const now = latestBlock.timestamp;            // already in seconds (BigInt or number)
+        return Number(now) + 3600;
     }
 
 
@@ -93,11 +96,15 @@ describe("tests Challenge contract", function () {
 
         //5 players join
         const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+// const timestamp = await getTimestampPlusOneHourInSeconds()
+// console.log(timestamp)
+// console.log(deadline1)
+        await challenge.joinChallenge(deadline1, v1, r1, s1, []);
         const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
         const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
         const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
         const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
-        await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+        
         await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
         await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
         await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
@@ -149,7 +156,7 @@ describe("tests Challenge contract", function () {
     async function GetRSVsig(signer, token, bid, challenge) {
         //For permit
         // set token deadline
-        const deadline = getTimestampInSeconds() + 300;
+        const deadline = await getTimestampPlusOneHourInSeconds();
     
         // get the current nonce for the deployer address
         const nonces = await token.nonces(signer.address);
@@ -317,13 +324,16 @@ describe("tests Challenge contract", function () {
             ({challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase));
         });
 
-        it('should send the money to the challenge contract correctly', async function() {
+        it('should allow a player to join, and sends the money to the challenge contract correctly', async function() {
             const { v, r, s, deadline } = await GetRSVsig(signers[0], token, bid, challenge);
 
             expect(
                 await token.balanceOf(challenge)
             ).to.equal(0)
-
+// console.log("v : ", v)
+// console.log("r : ", r)
+// console.log("s : ", s)
+// console.log("deadline : ", deadline)
             await expect(
                 challenge.joinChallenge(deadline, v, r, s, [])
             )
@@ -332,24 +342,7 @@ describe("tests Challenge contract", function () {
             expect(
                 await token.balanceOf(challenge)
             ).to.equal(bid)
-        })
-
-        it('should store a player in the players array (if sending enough money)', async function() {
- 
-            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
-            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
-
-            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, []))
-            .to.not.be.reverted;
-            await expect(challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []))
-            .to.not.be.reverted;
-
-            // const player1 = await challenge.players(0);
-            // expect(player1[0]).to.equal(signers[0].address);
-
-            // const player2 = await challenge.players(1);
-            // expect(player2[0]).to.equal(signers[1].address);
-        })        
+        })       
 
         it('FOR LINK MODE : should not allow any more participants to join if the max is already reached', async function() {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
@@ -393,7 +386,7 @@ describe("tests Challenge contract", function () {
             await expect(challenge.joinChallenge(deadline1, v1, r1, s1, [])).to.be.revertedWith("You already joined");
         })
 
-        it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues. Money should be sent back to him??', async function() {
+        it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues. Money should be sent back to him', async function() {
             //5 players join
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
             const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
@@ -575,6 +568,488 @@ describe("tests Challenge contract", function () {
 
 
 
+    //state Voting for winner
+    describe('voting for winner state', function() { 
+        let challenge;
+        let signers;
+        beforeEach(async function () {
+            ({challenge, signers} = await loadFixture(VotingForWinnerFixture));
+        });
+
+        it('should allow a player to vote (for another player).', async function(){
+            await challenge.voteForWinner(signers[1].address);
+
+            // const player2 = await challenge.players(1);
+            // expect(player2[1]).to.equal(1);
+        })
+
+        it('should not allow a non player to vote', async function(){
+            await expect(
+               challenge.connect(signers[5]).voteForWinner(signers[1].address)
+            ).to.be.revertedWith("You are not a player. You cannot vote for winner.");
+        })
+
+        it('should not allow a player to vote twice', async function() {
+            await challenge.voteForWinner(signers[1].address);
+            await expect(
+               challenge.voteForWinner(signers[1].address)
+            ).to.be.revertedWith("You have already voted.");
+        })
+
+        it("should not allow to go to next state (ChallengeWon) if everyone has not voted (and minimum delay hasn't passed)", async function(){
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[1].address)
+            await expect(
+               challenge.endWinnerVote()
+            ).to.be.revertedWith("Not all player have voted for a winner yet (and minimum delay has not passed)");
+        })
+
+        it("should allow ANYONE to go to next state (ChallengeWon) if everyone has not voted but minimum delay has passed", async function(){
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[1].address)
+
+            //Pass enough time
+            await time.increase(votingDelay);
+
+            await expect(
+               challenge.connect(signers[2]).endWinnerVote()
+            ).not.to.be.reverted;
+        })
+
+        it('should allow ANYONE to go to next state (ChallengeWon) when everyone voted', async function(){
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //Any player can end vote, because everyone has voted
+            await challenge.connect(signers[1]).endWinnerVote();
+
+            expect(await challenge.currentStatus()).to.equal(ChallengeStatus.ChallengeWon);
+        })
+
+        it('should not allow ANYONE to go to next state (ChallengeWon) if no one has voted (even if time has passed)', async function(){
+
+            //Pass enough time
+            await time.increase(votingDelay);
+
+            //Any player can end vote, because everyone has voted
+            await expect(challenge.connect(signers[1]).endWinnerVote()).to.be.revertedWith('Not allowed in this state');
+        })
+
+    });
 
 
+
+
+    describe('challenge won state', function() { 
+        let challenge;
+        let signers;
+        let bid;
+        let token;
+        beforeEach(async function () {
+            ({challenge, signers, bid, token} = await loadFixture(VotingForWinnerFixture));
+        });
+        
+
+        it('winner should be able to retrieve prize when endWinnerVote() is triggered', async function(){
+            //Players voting
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //Check balance before
+            const balanceBefore = await token.balanceOf(signers[2].address);
+            //End vote
+            await challenge.endWinnerVote();
+
+            await challenge.connect(signers[2]).withdrawPrize();
+
+            //Check balance after
+            const balanceAfter = await token.balanceOf(signers[2].address);
+
+            const diff = balanceAfter - balanceBefore;
+            const expectedDiff = bid*5n - 5n*bid*bronze/100n;
+            // const expectedDiff = bid*5n;
+
+            //Difference should be equal to cash prize won
+            expect(diff).to.equal(expectedDiff); // substract fees too
+        })
+
+        it('winner should NOT be able to retrieve prize multiple times', async function(){
+            //Players voting
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //End vote
+            await challenge.endWinnerVote();
+
+            await challenge.connect(signers[2]).withdrawPrize();
+
+            await expect(
+                challenge.connect(signers[2]).withdrawPrize()
+            ).to.be.revertedWith("You have already withdrawn your prize");
+            
+        })
+
+        it("When there is a tie, should allow both winners to receive prize", async function () {
+            //Players voting
+            await challenge.voteForWinner(signers[2].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[1].address)
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address)
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address)
+            await challenge.connect(signers[4]).voteForWinner(signers[4].address)
+
+            //Check balance before for both winners
+            const balanceBefore1 = await token.balanceOf(signers[1].address);
+            const balanceBefore2 = await token.balanceOf(signers[2].address);
+
+            //End vote
+            await challenge.endWinnerVote();
+
+            // const winner1 = await challenge.challengeWinners(0)
+            // const winner2 = await challenge.challengeWinners(1)
+
+            // expect(winner1).to.equal(signers[2].address);
+            // expect(winner2).to.equal(signers[1].address);
+
+            await challenge.connect(signers[1]).withdrawPrize();
+            //Check balance after (winner1)
+            const balanceAfter1 = await token.balanceOf(signers[1].address);
+
+            const diff1 = balanceAfter1 - balanceBefore1;
+            const expectedDiff1 = bid*5n/2n - bid*5n/2n*gold/100n;
+
+            expect(
+                diff1
+            ).to.equal(expectedDiff1);
+
+            await challenge.connect(signers[2]).withdrawPrize();
+            //Check balance after (winner2)
+            const balanceAfter2 = await token.balanceOf(signers[2].address);
+
+            const diff2 = balanceAfter2 - balanceBefore2;
+
+            const expectedDiff2 = bid*5n/2n - bid*5n/2n*bronze/100n;
+
+            expect(
+                diff2
+            ).to.equal(expectedDiff2); //substract fees too
+        });
+
+        it('if more tokens (signers[1] gold tier here) winner should receive more tokens', async function(){
+            //Players voting
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[0].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //Check balance before
+            const balanceBefore = await token.balanceOf(signers[1].address);
+            //End vote
+            await challenge.endWinnerVote();
+
+            await challenge.connect(signers[1]).withdrawPrize();
+            //Check balance after
+            const balanceAfter = await token.balanceOf(signers[1].address);
+
+            const diff = balanceAfter - balanceBefore;
+            const expectedDiff = bid*5n - 5n*bid*gold/100n;
+
+            //Difference should be equal to cash prize won
+            expect(diff).to.equal(expectedDiff); // substract fees too
+        })
+
+        it("fee receiver should receive half of the fees (the rest is burnt)", async function () {
+            //Players voting
+            await challenge.voteForWinner(signers[2].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address)
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address)
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address)
+            await challenge.connect(signers[4]).voteForWinner(signers[4].address)
+
+            const balanceBefore = await token.balanceOf(signers[0].address);
+            //End vote
+            await challenge.endWinnerVote();
+
+            await challenge.connect(signers[2]).withdrawPrize();
+            const balanceAfter = await token.balanceOf(signers[0].address);
+
+            const diff = balanceAfter - balanceBefore;
+            const expectedFeesReceived = 5n*bid/2n*bronze/100n;
+            
+            expect(
+                diff
+            ).to.equal(expectedFeesReceived);
+        });
+
+        it("half of the fees should have been burnt", async function () {
+            //Players voting
+            await challenge.voteForWinner(signers[0].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[0].address)
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address)
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address)
+            await challenge.connect(signers[4]).voteForWinner(signers[4].address)
+
+            const initialTotalSupply = await token.totalSupply();
+            //End vote
+            await challenge.endWinnerVote();
+
+            await challenge.connect(signers[0]).withdrawPrize();
+            const finalTotalSupply = await token.totalSupply();
+
+            const diff = initialTotalSupply - finalTotalSupply;
+            const expectedBurntAmount = bid*5n/2n*platinum/100n;
+            
+            expect(
+                diff
+            ).to.equal(expectedBurntAmount);
+        });
+    })
+
+
+
+
+    //Check only owner functions
+    describe('Owner functions', function() {
+        it('should not allow not admin player to go to OngoingChallenge state', async function() {
+            const {challenge, signers} = await loadFixture(deployedChallengeFixtureBase);
+
+            await expect(
+               challenge.connect(signers[1]).startChallenge()
+            ).to.be.revertedWithCustomError(challenge, "OwnableUnauthorizedAccount").withArgs(signers[1].address);
+        })
+    })
+
+
+    //Checking function availability considering current state. For each state, check that only the authorized functions are available
+    describe('State functions availability', function() { 
+        
+        describe('state GatheringPlayers', function(){ 
+            let challenge;
+            let signers;
+            beforeEach(async function () {
+                ({challenge, signers} = await loadFixture(deployedChallengeFixtureBase));
+            });
+
+            it('should not allow voteForWinner() in GatheringPlayers state', async function() {
+                await expect(
+                    challenge.voteForWinner(signers[1].address)
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow endWinnerVote() in GatheringPlayers state', async function() {
+                await expect(
+                    challenge.endWinnerVote()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow withdrawPrize() in GatheringPlayers state', async function() {
+                await expect(
+                    challenge.withdrawPrize()
+                ).to.be.revertedWith("Not allowed in this state");
+            })
+        })
+
+
+        describe('state OngoingChallenge', function(){ 
+            let challenge;
+            let signers;
+            let bid;
+            let token;
+            beforeEach(async function () {
+                ({challenge, signers, bid, token} = await loadFixture(OngoingChallengeFixture));  
+            });
+
+            it('should not allow joinChallenge() in OngoingChallenge state', async function() {
+                const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+                await expect(
+                    challenge.joinChallenge(deadline1, v1, r1, s1, [])
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawFromChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow startChallenge() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.startChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow voteForWinner() in OngoingChallenge state (if the challenge is not over)', async function() {
+                await expect(
+                    challenge.voteForWinner(signers[1].address)
+                ).to.be.revertedWith("You are not allowed to vote now");
+            }) 
+            it('should allow voteForWinner() in OngoingChallenge state (if the challenge is over). state should become "VotingForWinner" after first player votes at the end of the challenge. ', async function() {
+                expect(await challenge.currentStatus()).to.equal(ChallengeStatus.OngoingChallenge);
+
+                //wait for challenge to end
+                await time.increase(duration);
+                
+                //should be allowed
+                await expect(
+                    challenge.voteForWinner(signers[1].address)
+                ).to.not.be.reverted;
+                //State should have changed
+                expect(await challenge.currentStatus()).to.equal(ChallengeStatus.VotingForWinner);
+            })
+            it('should not allow endWinnerVote() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.endWinnerVote()
+                ).to.be.revertedWith("Not allowed in this state");
+            })
+            it('should not allow withdrawPrize() in OnGoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawPrize()
+                ).to.be.revertedWith("Not allowed in this state");
+            })
+        })
+
+
+        describe('state VotingForWinner', function(){ 
+            let challenge;
+            let signers;
+            let bid;
+            let token;
+            beforeEach(async function () {
+                ({challenge, signers, bid, token} = await loadFixture(VotingForWinnerFixture));
+            });
+
+            it('should not allow joinChallenge() in VotingForWinner state', async function() {
+                const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+                await expect(
+                    challenge.joinChallenge(deadline1, v1, r1, s1, [])
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawFromChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow startChallenge() in VotingForWinner state', async function() {
+                await expect(
+                    challenge.startChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow withdrawPrize() in VotingForWinner state', async function() {
+                await expect(
+                    challenge.withdrawPrize()
+                ).to.be.revertedWith("Not allowed in this state");
+            })
+        })
+
+        
+        describe('state ChallengeWon', function(){ 
+            let challenge;
+            let signers;
+            let bid;
+            let token;
+            beforeEach(async function () {
+                ({challenge, signers, bid, token} = await loadFixture(EndingVoteFixture));
+                await challenge.endWinnerVote();
+            });
+
+            it('should not allow joinChallenge() in ChallengeWon state', async function() {
+                const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+                await expect(
+                    challenge.joinChallenge(deadline1, v1, r1, s1, [])
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawFromChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow startChallenge() in ChallengeWon state', async function() {
+                await expect(
+                    challenge.startChallenge()
+                ).to.be.revertedWith("Not allowed in this state");
+            })  
+            it('should not allow voteForWinner() in ChallengeWon state', async function() {
+                await expect(
+                    challenge.voteForWinner(signers[1].address)
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+            it('should not allow endWinnerVote() in ChallengeWon state', async function() {
+                await expect(
+                    challenge.endWinnerVote()
+                ).to.be.revertedWith("Not allowed in this state");
+            }) 
+        })
+        
+    })
+
+
+    //Events
+    describe('Events', function() { 
+
+        it("should emit an event when a Player Joined", async function() {
+            const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, []))
+                .to.emit(challenge, "PlayerJoined")
+                .withArgs(signers[0].address); 
+        })
+
+        it("should emit an event when a Player Withdraws from challenge", async function() {
+            const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await expect(challenge.withdrawFromChallenge())
+                .to.emit(challenge, "PlayerWithdrawn")
+                .withArgs(signers[0].address); 
+        })
+
+        it("should emit an event when ChallengeStarted", async function() {
+            const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
+
+            await expect(challenge.startChallenge())
+                .to.emit(challenge, "ChallengeStarted")
+        })
+
+        it("should emit an event when ChallengeEnded ", async function() {
+            const {challenge, signers} = await loadFixture(OngoingChallengeFixture)
+
+            //Pass enough time
+            await time.increase(duration)
+
+            await expect(challenge.voteForWinner(signers[1].address))
+                .to.emit(challenge, "ChallengeEnded")
+        })
+
+        it("should emit an event when PlayerVoted", async function() {
+            const {challenge, signers} = await loadFixture(VotingForWinnerFixture)
+            await expect(challenge.voteForWinner(signers[1].address))
+                .to.emit(challenge, "PlayerVoted")
+                .withArgs(signers[0].address, signers[1].address)
+        })
+
+        it("should emit an event when a prize is sent", async function() {
+            const {challenge, signers, bid} = await loadFixture(EndingVoteFixture)
+
+            await challenge.endWinnerVote()
+
+            const expectedPrize = bid*5n - 5n*bid*BigInt(gold)/100n;
+
+            await expect(
+                await challenge.connect(signers[1]).withdrawPrize()
+            ).to.emit(challenge, "PrizeWithdrawn")
+                .withArgs(signers[1].address, expectedPrize)
+        })
+    })
+    
 })
