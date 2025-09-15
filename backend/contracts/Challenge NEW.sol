@@ -275,7 +275,7 @@ contract ChallengeNew is Ownable{
         uint256 total = dareWinToken.balanceOf(address(this));
         prizePerWinner = total / numberOfWinners;
         uint256 remainder = total - (prizePerWinner * numberOfWinners);
-        
+          
         //Burn the tiny amount remaining
         dareWinToken.burn(remainder);
 

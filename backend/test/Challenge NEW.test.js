@@ -290,17 +290,6 @@ describe("tests Challenge contract", function () {
             ).to.be.revertedWith("the feeReceiver cannot be address 0!")
         })
 
-        // it('GROUP MODE : should not be possible to deploy if one player in the array is address 0', async function() { 
-        //     //Challenge Deployment
-        //     const Challenge = await ethers.getContractFactory('ChallengeNew'); 
-
-        //     const playersArray = [signers[0].address, signers[1].address, "0x0000000000000000000000000000000000000000"]
-        //     await expect(
-        //         Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, playersArray)
-        //     ).to.be.revertedWith("address 0 cannot be a player!")
-        // })
-
-
         it('GROUP MODE : should not be possible to deploy if the merkle root is 0', async function() { 
             //Challenge Deployment
             const Challenge = await ethers.getContractFactory('ChallengeNew'); 
@@ -330,10 +319,7 @@ describe("tests Challenge contract", function () {
             expect(
                 await token.balanceOf(challenge)
             ).to.equal(0)
-// console.log("v : ", v)
-// console.log("r : ", r)
-// console.log("s : ", s)
-// console.log("deadline : ", deadline)
+
             await expect(
                 challenge.joinChallenge(deadline, v, r, s, [])
             )
@@ -356,21 +342,6 @@ describe("tests Challenge contract", function () {
             await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
             await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
             await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, []);
-
-            // const player1 = await challenge.players(0);
-            // expect(player1[0]).to.equal(signers[0].address);
-
-            // const player2 = await challenge.players(1);
-            // expect(player2[0]).to.equal(signers[1].address);
-
-            // const player3 = await challenge.players(2);
-            // expect(player3[0]).to.equal(signers[2].address);
-
-            // const player4 = await challenge.players(3);
-            // expect(player4[0]).to.equal(signers[3].address);
-
-            // const player5 = await challenge.players(4);
-            // expect(player5[0]).to.equal(signers[4].address);
 
             await expect(
                 challenge.connect(signers[5]).joinChallenge(deadline6, v6, r6, s6, [])
@@ -412,23 +383,6 @@ describe("tests Challenge contract", function () {
                 await token.balanceOf(signers[2].address)
             ).to.equal(bid);
 
-            // const player1 = await challenge.players(0);
-            // expect(player1[0]).to.equal(signers[0].address);
-
-            // const player2 = await challenge.players(1);
-            // expect(player2[0]).to.equal(signers[1].address);
-
-            // const player3 = await challenge.players(2);
-            // expect(player3[0]).to.equal(signers[4].address);
-
-            // const player4 = await challenge.players(3);
-            // expect(player4[0]).to.equal(signers[3].address);
-
-            // //the 3rd player should not be in the array anymore, this should revert
-            // await expect(
-            //     challenge.players(4)
-            // ).to.be.reverted;
-
             //Admin successfully starts challenge
             await challenge.startChallenge();
 
@@ -438,6 +392,17 @@ describe("tests Challenge contract", function () {
         })
 
         it('should not allow a player to withdraw from the challenge if he hasnt joined', async function() {
+            //try to withdraw without having joined, reverts
+            await expect(
+               challenge.withdrawFromChallenge()
+            ).to.be.revertedWith("You have not joined the challenge.");
+        })
+
+        it('should not allow a player to join, and then withdraw twice', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.withdrawFromChallenge();
             //try to withdraw without having joined, reverts
             await expect(
                challenge.withdrawFromChallenge()
@@ -501,7 +466,6 @@ describe("tests Challenge contract", function () {
         });
 
         it('FOR GROUP MODE : should still allow players to join', async function() {
-
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
             const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
             const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
@@ -526,19 +490,6 @@ describe("tests Challenge contract", function () {
             await expect(
                 challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, proof4)
             ).to.not.be.reverted;
-            
-            // const player1 = await challenge.players(0);
-            // expect(player1[0]).to.equal(signers[0].address);
-
-            // const player2 = await challenge.players(1);
-            // expect(player2[0]).to.equal(signers[1].address);
-
-            // const player3 = await challenge.players(2);
-            // expect(player3[0]).to.equal(signers[2].address);
-
-            // const player4 = await challenge.players(3);
-            // expect(player4[0]).to.equal(signers[3].address);
-
         })
 
         it('FOR GROUP MODE : should not allow a player to join if he is not among those chosen by the admin at creation', async function() {
@@ -577,10 +528,9 @@ describe("tests Challenge contract", function () {
         });
 
         it('should allow a player to vote (for another player).', async function(){
-            await challenge.voteForWinner(signers[1].address);
-
-            // const player2 = await challenge.players(1);
-            // expect(player2[1]).to.equal(1);
+            await expect(
+                challenge.voteForWinner(signers[1].address)
+            ).to.not.be.reverted;
         })
 
         it('should not allow a non player to vote', async function(){
@@ -713,12 +663,6 @@ describe("tests Challenge contract", function () {
             //End vote
             await challenge.endWinnerVote();
 
-            // const winner1 = await challenge.challengeWinners(0)
-            // const winner2 = await challenge.challengeWinners(1)
-
-            // expect(winner1).to.equal(signers[2].address);
-            // expect(winner2).to.equal(signers[1].address);
-
             await challenge.connect(signers[1]).withdrawPrize();
             //Check balance after (winner1)
             const balanceAfter1 = await token.balanceOf(signers[1].address);
@@ -743,7 +687,7 @@ describe("tests Challenge contract", function () {
             ).to.equal(expectedDiff2); //substract fees too
         });
 
-        it('if more tokens (signers[1] gold tier here) winner should receive more tokens', async function(){
+        it('if more tokens (signers[1] gold tier here), winner should receive more tokens', async function(){
             //Players voting
             await challenge.voteForWinner(signers[1].address)
             await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
