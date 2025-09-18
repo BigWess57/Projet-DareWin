@@ -8,7 +8,7 @@ async function main() {
     const isLocalhost = network.name.includes('localhost');  
    
    //Get DARE token first
-    const DareWin = await ethers.getContractFactory("DareWin");
+    const DareWin = await ethers.getContractFactory("DareWinNew");
     let DareWinToken;
     if(isLocalhost){
         DareWinToken = DareWin.attach("0x5fbdb2315678afecb367f032d93f642f64180aa3")

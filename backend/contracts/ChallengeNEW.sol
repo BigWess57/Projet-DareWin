@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./DareWinTokenERC20 NEW.sol";
+import "./DareWinTokenERC20NEW.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 import "hardhat/console.sol";
@@ -122,7 +122,6 @@ contract ChallengeNew is Ownable{
     /// @param _feeReceiver Address receiving the platform fee
     /// @param _groupMode If true, only allowed group can join
     /// @param _merkleRoot merkle root of addresses allowed in group mode
-        // @param _group List of addresses allowed in group mode
     constructor(address initialOwner, DareWinNew _tokenAddress, uint64 _duration, uint8 _maxPlayers, uint128 _bid, string memory _description, address _feeReceiver, bool _groupMode, bytes32 _merkleRoot/*address[] memory _group*/) Ownable(initialOwner) {
         require(_feeReceiver != address(0), "the feeReceiver cannot be address 0!");
         // if(_groupMode){

@@ -1,19 +1,21 @@
 import { createConfig } from 'wagmi';
 import { AbiEvent, Address, createPublicClient, GetLogsReturnType, http, parseAbi, parseAbiItem } from "viem";
 import { hardhat, sepolia, holesky } from "viem/chains";
+
 export const SepoliaRPC = process.env.NEXT_PUBLIC_SEPOLIA_ALCHEMY_RPC || "";
 export const HoleskyRPC = process.env.NEXT_PUBLIC_HOLESKY_ALCHEMY_RPC || "";
 
 export const publicClient = createPublicClient({
-    chain: holesky,//sepolia, //hardhat
-    transport: http(HoleskyRPC),
+    chain: hardhat,//sepolia, //holesky
+    transport: http(/*HoleskyRPC*/),
 })
 
 export const wagmiEventRefreshConfig = createConfig({
   syncConnectedChain: true,
-  chains: [holesky],//sepolia, //hardhat
+  chains: [hardhat],//sepolia, //holesky
   transports: {
-    [holesky.id]: http(HoleskyRPC),
+    // [holesky.id]: http(HoleskyRPC),
+    [hardhat.id]: http(),
   },
 });
 

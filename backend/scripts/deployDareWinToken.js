@@ -6,7 +6,7 @@ async function main() {
     const signers = await ethers.getSigners()
 
     //Deploy DARE token first
-    const DareWinToken = await ethers.deployContract("DareWin", [signers[0].address]);
+    const DareWinToken = await ethers.deployContract("DareWinNew", [signers[0].address]);
 
     console.log('deploiement du token DARE en cours...');
     const isLocalhost = network.name.includes('localhost');
