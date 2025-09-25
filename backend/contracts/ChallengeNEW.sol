@@ -41,6 +41,7 @@ contract ChallengeNew is Ownable{
     }
 
     bytes32 public merkleRoot;
+    string public ipfsCid;
 
     uint64 public immutable duration;          
     uint64 private challengeStartTimestamp;    
@@ -77,7 +78,7 @@ contract ChallengeNew is Ownable{
 
     // mapping (address => bool) public isAllowed;
     // mapping (address => bool) hasJoined;
-    mapping (address => Player) Players;
+    mapping (address => Player) public Players;
     // mapping (address => bool) hasVoted;
     // Player[] public players;
 
@@ -122,7 +123,7 @@ contract ChallengeNew is Ownable{
     /// @param _feeReceiver Address receiving the platform fee
     /// @param _groupMode If true, only allowed group can join
     /// @param _merkleRoot merkle root of addresses allowed in group mode
-    constructor(address initialOwner, DareWinNew _tokenAddress, uint64 _duration, uint8 _maxPlayers, uint128 _bid, string memory _description, address _feeReceiver, bool _groupMode, bytes32 _merkleRoot/*address[] memory _group*/) Ownable(initialOwner) {
+    constructor(address initialOwner, DareWinNew _tokenAddress, uint64 _duration, uint8 _maxPlayers, uint128 _bid, string memory _description, address _feeReceiver, bool _groupMode, bytes32 _merkleRoot, string memory _ipfsCid) Ownable(initialOwner) {
         require(_feeReceiver != address(0), "the feeReceiver cannot be address 0!");
         // if(_groupMode){
         //     require(
@@ -136,7 +137,9 @@ contract ChallengeNew is Ownable{
         // }
         if(_groupMode){
             require(_merkleRoot != bytes32(0), "Merkle root required when groupMode is true");
+            require(bytes(_ipfsCid).length != 0, "IPFS Cid should not be empty here");
             merkleRoot=_merkleRoot;
+            ipfsCid= _ipfsCid;
         }
 
         dareWinToken=_tokenAddress;
@@ -201,7 +204,6 @@ contract ChallengeNew is Ownable{
 
     /// @notice Join the challenge by approving the bid
     function joinChallenge(uint256 deadline, uint8 v, bytes32 r, bytes32 s, bytes32[] calldata _proof) external isCorrectState(ChallengeStatus.GatheringPlayers) { 
-
         if(groupMode){
             // require(isAllowed[msg.sender], "You are not allowed to join this challenge.");
             require(isWhitelisted(msg.sender, _proof), "You are not allowed to join this challenge.");

@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 
 import { toast } from "sonner"
 
-import { Address, GetLogsReturnType, isAddressEqual, parseAbiItem } from "viem"
+import { Address, GetLogsReturnType, isAddressEqual, parseAbiItem, zeroHash } from "viem"
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
 
 import { contractAbi } from "@/constants/ChallengeInfo"
@@ -11,12 +11,26 @@ import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
 import { retriveEventsFromBlock } from '@/utils/client';
 
 import { BidContext } from "../RouteBaseElements/ChallengePage";
-import { ReadContractErrorType, waitForTransactionReceipt, writeContract } from "wagmi/actions";
+ import { ReadContractErrorType } from "wagmi/actions";
+
 import { config } from "@/app/RainbowKitAndWagmiProvider";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 import { ContractAddressContext } from "../RouteBaseElements/ChallengePage";
 import Joined from "../Miscellaneous/Joined";
 import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToast";
+
+import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import { checkWhitelistFromIpfs } from "@/utils/checkWhitelistFromIPFS";
+import { GetRSVsig } from "@/utils/getSignatureForPermit";
+import { group } from "console";
+
+
+// small type guard — narrows unknown -> readonly `0x${string}`[]
+function isHexArray(x: unknown): x is `0x${string}`[] {
+  if (!Array.isArray(x)) return false;
+  return x.every(item => typeof item === 'string' && /^0x[0-9a-fA-F]+$/.test(item));
+}
+
 
 
 const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
@@ -28,9 +42,31 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const [userHasJoined, setUserHasJoined] = useState<boolean>(false)
 
+    const [challengeCid, setChallengeCid] = useState<string>("")
+    const [challengeMerkleProof, setChallengeMerkleProof] = useState<readonly `0x${string}`[]>()
+
     /***************** 
- * Functions for interaction with the blokchain 
+ * Functions for interaction with the blockchain 
  * **************/
+
+
+    //For join transaction
+    const { data: joinHash, isPending: isJoining, writeContract: joinContract, } = useWriteContract({
+        mutation: {
+            onError: (err) => {
+                if(err.message.toLowerCase().includes("user rejected")){
+                    toast.error("joining failed: Use rejected the request")
+                }else{
+                    toast.error("joining failed: " + err.message)
+                }
+            },
+        },
+    })
+    //Used to check the current transaction state
+    const { isLoading: joinConfirming, isSuccess: joinSuccess, error: joinReceiptError, } = useWaitForTransactionReceipt({
+        hash: joinHash
+    }) 
+
 
     //For withdraw transaction
     const { data: withdrawHash, isPending: isWithdrawing, writeContract: withdrawContract, } = useWriteContract({
@@ -85,11 +121,21 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 abi: contractAbi,
                 functionName: 'groupMode',
             },
+            // {
+            //     address: contractAddress,
+            //     abi: contractAbi,
+            //     functionName: 'isAllowed',
+            //     args: [address as Address],
+            // },
+            // {
+            //     address: contractAddress,
+            //     abi: contractAbi,
+            //     functionName: 'merkleRoot',
+            // },
             {
                 address: contractAddress,
                 abi: contractAbi,
-                functionName: 'isAllowed',
-                args: [address as Address],
+                functionName: 'ipfsCid',
             },
         ],
         account: address as `0x${string}` | undefined
@@ -152,61 +198,90 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const joinChallenge = async () => {
 
-        try{
+        // try{
             //Check if allowance has already been set
-            if(allowance as bigint < bid){
-                toast.loading('Pending...', {
-                    id: 1,
-                    description: "Autorisation de l'utilisation de vos tokens...",
-                    action:null,
-                })
-                //Approve the use of needed amount of tokens
-                const approveHash = await writeContract(config, {
-                    address: tokenAddress,
-                    abi: tokenAbi,
-                    functionName: 'approve',
-                    args: [contractAddress, bid],
-                    account: address as `0x${string}`,
-                })
-                //Wait for approval of transaction
-                await waitForTransactionReceipt(config, { hash: approveHash, confirmations: 1  })
+            // if(allowance as bigint < bid){
+            //     toast.loading('Pending...', {
+            //         id: 1,
+            //         description: "Autorisation de l'utilisation de vos tokens...",
+            //         action:null,
+            //     })
+            //     //Approve the use of needed amount of tokens
+            //     const approveHash = await writeContract(config, {
+            //         address: tokenAddress,
+            //         abi: tokenAbi,
+            //         functionName: 'approve',
+            //         args: [contractAddress, bid],
+            //         account: address as `0x${string}`,
+            //     })
+            //     //Wait for approval of transaction
+            //     await waitForTransactionReceipt(config, { hash: approveHash, confirmations: 1  })
 
-                toast.success("Success", {
-                    id: 1,
-                    description: "Autorisation accordée !",
-                    duration: 3000,
-                })
-            }
+            //     toast.success("Success", {
+            //         id: 1,
+            //         description: "Autorisation accordée !",
+            //         duration: 3000,
+            //     })
+            // }
 
-            toast.loading('Pending...', {
-                id: 2,
-                description: "En train de rejoindre...",
-            })
+            // toast.loading('Pending...', {
+            //     id: 2,
+            //     description: "En train de rejoindre...",
+            // })
 
-            //Ask user to joinChallenge
-            const joinHash = await writeContract(config, {
-                address: contractAddress,
-                abi: contractAbi,
-                functionName: 'joinChallenge',
-                account: address as `0x${string}`,
-            })
-            await waitForTransactionReceipt(config, { hash: joinHash, confirmations: 1 })
+        //     //Ask user to joinChallenge
+        //     const joinHash = await writeContract(config, {
+        //         address: contractAddress,
+        //         abi: contractAbi,
+        //         functionName: 'joinChallenge',
+        //         account: address as `0x${string}`,
+        //     })
+        //     await waitForTransactionReceipt(config, { hash: joinHash, confirmations: 1 })
 
-            toast.success("Success", {
-                id: 2,
-                description: "Vous avez rejoint le challenge!",
-                duration: 3000,
-            })
-            refetchAll();
-        } catch (err) {
-            console.error('Transaction failed ', err)
-            toast.dismiss();
-            toast.error("Error : Erreur pour rejoindre le challenge", {
-                duration: 3000,
-                // isClosable: true,
-            });
-        }
+        //     toast.success("Success", {
+        //         id: 2,
+        //         description: "Vous avez rejoint le challenge!",
+        //         duration: 3000,
+        //     })
+        //     refetchAll();
+        // } catch (err) {
+        //     console.error('Transaction failed ', err)
+        //     toast.dismiss();
+        //     toast.error("Error : Erreur pour rejoindre le challenge", {
+        //         duration: 3000,
+        //         // isClosable: true,
+        //     });
+        // }
         
+        if(!address) return;
+
+        const {deadline, v, r, s} = await GetRSVsig(address, tokenAddress, bid, contractAddress)
+
+        // console.log("deadline : ", deadline)
+        // console.log("v : ", v)
+        // console.log("r : ", r)
+        // console.log("s : ", s)
+
+        let merkleProof;
+        if (groupMode) {
+            if(!challengeMerkleProof){
+                // user not whitelisted or proof not loaded yet
+                toast.error('No Merkle proof available for your address.');
+                return;
+            }else{
+                merkleProof = challengeMerkleProof;
+            }
+        }else{
+            merkleProof = [];
+        }
+
+        joinContract({
+            address: contractAddress,
+            abi: contractAbi,
+            functionName: 'joinChallenge',
+            account: address as `0x${string}`,
+            args: [deadline, v, r, s, merkleProof],
+        })
     }
 
     const withdrawFromChallenge = () => {
@@ -229,33 +304,47 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     }
     
 
+
  /********** Use effects *************/
 
+    //For joining
+    useEffect(() => {
+        if(joinSuccess) {
+            refetchAll()
+        }
+        if(joinReceiptError) {
+            console.error('Transaction failed ', joinReceiptError.message)
+            toast.error("Error : Could not join the challenge", {
+                duration: 3000,
+            });
+        }
+    }, [joinSuccess, joinReceiptError])
+
     //For withdraw
-        useEffect(() => {
-            if(withdrawSuccess) {
-                refetchAll()
-            }
-            if(withdrawReceiptError) {
-                console.error('Transaction failed ', withdrawReceiptError.message)
-                toast.error("Error : Could not leave the challenge", {
-                    duration: 3000,
-                });
-            }
-        }, [withdrawSuccess, withdrawReceiptError])
+    useEffect(() => {
+        if(withdrawSuccess) {
+            refetchAll()
+        }
+        if(withdrawReceiptError) {
+            console.error('Transaction failed ', withdrawReceiptError.message)
+            toast.error("Error : Could not leave the challenge", {
+                duration: 3000,
+            });
+        }
+    }, [withdrawSuccess, withdrawReceiptError])
     
     //For start challenge
-        useEffect(() => {
-            if(startSuccess) {
-                refetchAll()
-            }
-            if(startReceiptError) {
-                console.error('Transaction failed ', startReceiptError.message)
-                toast.error("Error : Could not start the challenge", {
-                    duration: 3000,
-                });
-            }
-        }, [startSuccess, startReceiptError])
+    useEffect(() => {
+        if(startSuccess) {
+            refetchAll()
+        }
+        if(startReceiptError) {
+            console.error('Transaction failed ', startReceiptError.message)
+            toast.error("Error : Could not start the challenge", {
+                duration: 3000,
+            });
+        }
+    }, [startSuccess, startReceiptError])
 
 
 
@@ -274,12 +363,60 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         const mode = readData[2].result
         setGroupMode(mode as boolean)
 
-        // is player allowed to join
-        const allowed = readData[3].result
-        setIsAllowed(allowed as boolean)
+        // // is player allowed to join
+        // const merkleRoot = readData[3].result
+
+        // // runtime check: must be a hex string, 0x + 64 hex chars
+        // function isBytes32(value: unknown): value is `0x${string}` {
+        //     return (
+        //         typeof value === "string" &&
+        //         /^0x[0-9a-fA-F]{64}$/.test(value)
+        //     );
+        // }
+
+        // if (isBytes32(merkleRoot)) {
+        //     setChallengeMerkleRoot(merkleRoot);
+        // } else {
+        //     throw new Error(`Invalid bytes32 value: ${merkleRoot}`);
+        // }
+        const ipfsCid = readData[3].result
+        setChallengeCid(ipfsCid as string)
+
 
         refetchAll();
     }, [readData, address])
+
+    
+    useEffect(() => {
+        if(!address) return;
+        if(!challengeCid) return;
+        const connected = address;
+        checkWhitelistFromIpfs(challengeCid, connected).then(result => {
+            if (result.whitelisted && result.proof !== undefined) {
+                // show join button, send proof.result.proof with tx, etc.
+                // console.log('You are whitelisted — proof:', result.proof);
+                setIsAllowed(true);
+
+                if (!result.proof) {
+                    // user not whitelisted or proof not loaded yet
+                    toast.error('No Merkle proof available for your address.');
+                    return;
+                }
+
+                if (!isHexArray(result.proof)) {
+                    toast.error('Invalid proof format.');
+                    return;
+                }
+
+                setChallengeMerkleProof(result.proof)
+            } else {
+                console.warn('Not whitelisted:', result.reason);
+                setIsAllowed(false);
+            }
+        });
+
+    }, [challengeCid, address])
+
 
     //For displaying moving dots
     const [dots, setDots] = useState(".");
@@ -381,6 +518,8 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 )}
                 </div>
             </div>
+
+            <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage="Vous avez rejoint le challenge avec succès!" />
             <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Le challenge a démarré avec succès!" />
             <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage="Vous avez quitté le challenge" />
         </div>

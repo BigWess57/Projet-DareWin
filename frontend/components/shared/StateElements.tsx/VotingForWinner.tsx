@@ -7,7 +7,7 @@ import { retriveEventsFromBlock, wagmiEventRefreshConfig } from '@/utils/client'
 import Event from "../Miscellaneous/Joined";
 
 import { Address, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem, ReadContractErrorType } from 'viem'
-import { useAccount, useReadContract, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
+import { useAccount, useReadContract, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
@@ -28,6 +28,8 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     const [players, setPlayers] = useState<(Address | undefined)[]>([]);
     const [playersVoted, setPlayersVoted] = useState<(Address | undefined)[]>([]);
 
+    const [votingDuration, setVotingDuration] = useState<number>(0);
+
     //Current user a player 
     const [isPlayer, setIsPlayer] = useState<boolean>(false);
     //Current user voted?
@@ -37,6 +39,8 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 
     //Has voting duration ended?
     const [votingDurationEnded, setVotingDurationEnded] = useState<boolean>(false);
+    
+
 
     //EVENTS ABI
     const PLAYER_JOINED_ABI = parseAbiItem(
@@ -59,10 +63,31 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
  * **************/   
 
     // Used to read the contract (voting delay)
-    const { data: durationVote, error: error, isPending: IsPending, refetch: refetchVotingDuration } = useReadContract({
-        address: contractAddress,
-        abi: contractAbi,
-        functionName: 'MINIMUM_DELAY_BEFORE_ENDING_VOTE',
+    // const { data: durationVote, error: error, isPending: IsPending, refetch: refetchVotingDuration } = useReadContract({
+    //     address: contractAddress,
+    //     abi: contractAbi,
+    //     functionName: 'MINIMUM_DELAY_BEFORE_ENDING_VOTE',
+    //     account: address as `0x${string}` | undefined,
+    // })
+
+    const { data: readData, error: error, isPending: IsPending, refetch: refetchReadData } = useReadContracts({
+        contracts: [
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'MINIMUM_DELAY_BEFORE_ENDING_VOTE',
+            },
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'groupMode',
+            },
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'ipfsCid',
+            },
+        ],
         account: address as `0x${string}` | undefined,
     })
 
@@ -260,7 +285,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         }else{
             const startingTime = Logs[0].args.endTime || 0n;
             setVotingStarted(startingTime)
-            console.log("setting start time :", startingTime)
+            // console.log("setting start time :", startingTime)
             return startingTime;
         }
     }
@@ -273,6 +298,31 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         setVotingDurationEnded(true);
     }
 
+    //Unpin the merkle proofs for joining the challenge, if
+    async function attemptUnpin(cid: string) {
+        try {
+            const res = await fetch('/api/unpinProofs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cid }),
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                console.error('Unpin failed', json);
+                toast.error("Error unpinning Proofs on IPFS: " + (json?.error ?? res.statusText), {
+                    duration: 3000,
+                });
+            } else {
+                console.log(json?.message ?? 'Unpinned (or not pinned)')
+            }
+        } catch (err) {
+            console.error('Network error unpinning', err);
+            toast.error('Network error when trying to unpin', {
+                duration: 3000,
+            });
+        }
+    }
+
 /******* Use effect ***** */
 
     useEffect(() => {
@@ -280,8 +330,29 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
             getPlayersVotedEvents(playersArray);
         });
         getChallengeEndedEvents();
-        refetchVotingDuration()
+        // refetchVotingDuration();
+        refetchReadData();
     }, [address])
+
+    useEffect(() => {
+        if (!readData) return
+
+        // Voting duration
+        const duration = readData[0].result
+        setVotingDuration(duration as number)
+
+        // mode of the challenge
+        const groupMode = readData[1].result;
+
+        // cid of the merkle proofs
+        const cid = readData[2].result
+
+        //only try to unpin if groupMode = true, to avoid unnecessary Api calls
+        if(groupMode){
+            attemptUnpin(cid as string);
+        }
+            
+    }, [readData, address])
 
 
 //Lorsqu'une transaction est effectuée, informer l'utilisateur de l'outcome
@@ -362,7 +433,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
                             <div className="space-y-1">
                             <ChallengeTimer
                                 startingTime={votingStarted}
-                                duration={durationVote ? BigInt(durationVote) : 0n}
+                                duration={votingDuration ? BigInt(votingDuration) : 0n}
                                 refreshDisplay={endVoteTimerDisplay}
                             />
                             </div>

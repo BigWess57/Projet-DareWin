@@ -37,8 +37,8 @@ contract ChallengeFactoryNew {
     /// @param description A short textual description of the challenge
     /// @param groupMode Whether the challenge is restricted to a predefined group
     /// @param merkleRoot merkle root of addresses allowed in group mode
-    function createChallenge(uint64 duration, uint8 maxPlayers, uint128 bid, string memory description, bool groupMode, bytes32 merkleRoot) external {
-        address c = address(new ChallengeNew(msg.sender, dareWinToken, duration, maxPlayers, bid, description, feeReceiver, groupMode, merkleRoot));
+    function createChallenge(uint64 duration, uint8 maxPlayers, uint128 bid, string memory description, bool groupMode, bytes32 merkleRoot, string memory ipfsCid) external {
+        address c = address(new ChallengeNew(msg.sender, dareWinToken, duration, maxPlayers, bid, description, feeReceiver, groupMode, merkleRoot, ipfsCid));
 
         challenges.push(c);
         // isChallenge[c] = true;
