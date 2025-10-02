@@ -1,9 +1,8 @@
 type ChallengeCreated @entity(immutable: true) {
-  id: Bytes!
+  id: ID!
   admin: Bytes! # address
   challengeAddress: Bytes! # address
   blockNumber: BigInt! # uint256
-  blockNumber: BigInt!
-  blockTimestamp: BigInt!
-  transactionHash: Bytes!
+  txHash: Bytes!         # transaction hash
+  createdAt: BigInt!
 }

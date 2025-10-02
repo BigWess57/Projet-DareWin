@@ -32,3 +32,6 @@ typechain-types
 
 # Hardhat files
 cache
+
+# Generated data from Docker-compose
+Graph-Node-Local/data/

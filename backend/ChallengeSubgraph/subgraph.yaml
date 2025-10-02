@@ -1,4 +1,7 @@
 specVersion: 1.3.0
+description: A subgraph to index data for CreateChallenge Events
+features:
+  - ipfsOnEthereumContracts
 indexerHints:
   prune: auto
 schema:

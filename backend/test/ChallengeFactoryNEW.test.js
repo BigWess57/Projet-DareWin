@@ -9,7 +9,7 @@ const { StandardMerkleTree } = require("@openzeppelin/merkle-tree")
 
 const { durationSlot, maxPlayersSlot, bidSlot } = require("./utils/constants");
 
-describe("tests ChallengeFactory contract", function () {
+describe("tests ChallengeFactory contract NEW", function () {
 
     const duration = 1000n;
     const maxPlayers = 5n;
@@ -37,7 +37,7 @@ describe("tests ChallengeFactory contract", function () {
         beforeEach(async function () {
             ({challengeFactory, signers, token } = await loadFixture(deployedChallengeFactoryFixtureBase));
 
-            await challengeFactory.createChallenge(duration, maxPlayers, bid, description, 0, ethers.ZeroHash);
+            await challengeFactory.createChallenge(duration, maxPlayers, bid, description, 0, ethers.ZeroHash, "ipfsCid");
         });
 
 
@@ -100,7 +100,7 @@ describe("tests ChallengeFactory contract", function () {
 
             const merkleTree = StandardMerkleTree.of(playersAllowed, ["address"]);
 
-            await challengeFactory.createChallenge(1111n, maxPlayers, bid+10n, description, true, merkleTree.root);
+            await challengeFactory.createChallenge(1111n, maxPlayers, bid+10n, description, true, merkleTree.root, "ipfsCid");
 
 
             // 2. Extract the address from the event
@@ -166,7 +166,8 @@ describe("tests ChallengeFactory contract", function () {
                     bid + BigInt(i),  // bid (just vary slightly)
                     `desc ${i}`,         // description
                     false,               // groupMode
-                    ethers.ZeroHash  // merkleRoot placeholder
+                    ethers.ZeroHash,  // merkleRoot placeholder
+                    "ipfsCid" // placeholder for IpfsCid  
                 );
                 const receipt = await tx.wait();
             }

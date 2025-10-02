@@ -7,7 +7,7 @@ const { ethers } = require("hardhat")
 const { StandardMerkleTree } = require("@openzeppelin/merkle-tree")
 
 
-describe("tests Challenge contract", function () {
+describe("tests Challenge contract NEW", function () {
 
 /**************  Starting fixtures ****************/ 
 
@@ -62,7 +62,7 @@ describe("tests Challenge contract", function () {
         let challenge;
         let merkleTree;
         if(mode == "link"){
-            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash);
+            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash, "ipfsCid");
         }else if(mode == "group"){
             //Make merkle tree from players array
             //array of players to store (for merkle root)
@@ -76,7 +76,7 @@ describe("tests Challenge contract", function () {
 
             merkleTree = StandardMerkleTree.of(playersAllowed, ["address"]);
 
-            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root);
+            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root, "ipfsCid");
         }
 
         //Players approve the right for the contract to use their tokens
@@ -257,7 +257,7 @@ describe("tests Challenge contract", function () {
             const Challenge = await ethers.getContractFactory('ChallengeNew'); 
 
             await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash)
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash, "ipfsCid")
             ).to.not.be.reverted
         })
 
@@ -277,7 +277,7 @@ describe("tests Challenge contract", function () {
 
             //Challenge Deployment
             await expect(
-                challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root)
+                challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root, "ipfsCid")
             ).to.not.be.reverted
         })
 
@@ -286,7 +286,7 @@ describe("tests Challenge contract", function () {
             const Challenge = await ethers.getContractFactory('ChallengeNew'); 
 
             await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, "0x0000000000000000000000000000000000000000", false, ethers.ZeroHash)
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, "0x0000000000000000000000000000000000000000", false, ethers.ZeroHash, "ipfsCid")
             ).to.be.revertedWith("the feeReceiver cannot be address 0!")
         })
 
@@ -295,7 +295,7 @@ describe("tests Challenge contract", function () {
             const Challenge = await ethers.getContractFactory('ChallengeNew'); 
 
             await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, ethers.ZeroHash)
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, ethers.ZeroHash, "ipfsCid")
             ).to.be.revertedWith("Merkle root required when groupMode is true")
         })
 
