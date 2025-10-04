@@ -8,7 +8,7 @@ import {
 
 export function handleChallengeCreated(event: ChallengeCreatedEvent): void {
   // Unique ID per event: txHash + logIndex
-  let id = event.transaction.hash.toHex() + "-" + event.logIndex.toString()
+  let id = event.block.number.toString() + "-" + event.transaction.hash.toHex() + "-" + event.logIndex.toString()
   let entity = new ChallengeCreated(id)
 
   // event params as defined in the ABI

@@ -95,8 +95,7 @@ describe("Describe entity assertions", () => {
       let event = createChallengeCreatedEvent(
         admins[i],
         challenges[i],
-        blocks[i],
-        i
+        blocks[i]
       )
       handleChallengeCreated(event)
     }
@@ -202,7 +201,7 @@ describe("Describe entity assertions", () => {
     let blocks = [BigInt.fromI32(200), BigInt.fromI32(201)]
 
     for (let i = 0; i < 2; i++) {
-      let event = createChallengeCreatedEvent(admin, challenges[i], blocks[i], i)
+      let event = createChallengeCreatedEvent(admin, challenges[i], blocks[i])
       handleChallengeCreated(event)
     }
 

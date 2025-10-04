@@ -301,7 +301,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     //Unpin the merkle proofs for joining the challenge, if
     async function attemptUnpin(cid: string) {
         try {
-            const res = await fetch('/api/unpinProofs', {
+            const res = await fetch('/api/ipfsProofs/unpinProofs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cid }),

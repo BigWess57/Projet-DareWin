@@ -6,14 +6,13 @@ export function createChallengeCreatedEvent(
   admin: Address,
   challengeAddress: Address,
   blockNumber: BigInt,
-  logIndex: i32 = 1
+  // logIndex: i32 = 1
 ): ChallengeCreated {
   // Create a new mock event
-  let mockEvent = newMockEvent()
-
-  mockEvent.logIndex = BigInt.fromI32(logIndex)
+  // let mockEvent = newMockEvent()
+  // mockEvent.logIndex = BigInt.fromI32(logIndex)
   
-  let challengeCreatedEvent = changetype<ChallengeCreated>(mockEvent)
+  let challengeCreatedEvent = changetype<ChallengeCreated>(newMockEvent())
 
   challengeCreatedEvent.parameters = new Array()
 

@@ -27,7 +27,7 @@ const ChallengeFactory = () => {
             onError: (err) => {
                 //Unpin content on Ipfs if challenge creation has failed
                 if (challengeIpfsCid) {
-                    fetch('/api/unpinProofs', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ipfsHash: challengeIpfsCid })})
+                    fetch('/api/ipfsProofs/unpinProofs', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ipfsHash: challengeIpfsCid })})
                     .then(async (res) => {
                         if (!res.ok) {
                             const errJson = await res.json().catch(() => ({}));
@@ -112,7 +112,7 @@ const ChallengeFactory = () => {
             // console.log("Merkle root:", merkleRoot);
             // console.log("Proof object:", JSON.stringify(payload, null, 2));
 
-            const pinRes = await fetch('/api/pinProofs', {
+            const pinRes = await fetch('/api/ipfsProofs/pinProofs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -147,7 +147,7 @@ const ChallengeFactory = () => {
 
 
 
-    const getChallengeEndedEvents = async() => {
+    const getChallengeCreatedEvents = async() => {
         
         const latestBlockNumber = await publicClient.getBlockNumber();
         const block500Before = latestBlockNumber > 499n ? latestBlockNumber - 499n : 0n;
@@ -190,7 +190,7 @@ const ChallengeFactory = () => {
         }
         if (isSuccess) {
             // Remplace toast "loading" by toast success with same ID
-            getChallengeEndedEvents().then((challengeAddress) => {
+            getChallengeCreatedEvents().then((challengeAddress) => {
                 if(challengeAddress == null){
                     toast.warning("Warning!", {
                         id: 1,
@@ -210,7 +210,7 @@ const ChallengeFactory = () => {
         if(errorConfirmation) {
             //Unpin content on Ipfs if challenge creation has failed
             if (challengeIpfsCid) {
-                fetch('/api/unpinProofs', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ipfsHash: challengeIpfsCid })})
+                fetch('/api/ipfsProofs/unpinProofs', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ipfsHash: challengeIpfsCid })})
                 .then(async (res) => {
                     if (!res.ok) {
                         const errJson = await res.json().catch(() => ({}));
