@@ -6,7 +6,7 @@ import { retriveEventsFromBlock } from '@/utils/client';
 import { Address, formatEther, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem } from 'viem';
 import { useAccount } from 'wagmi';
 import { contractAbi } from '@/constants/ChallengeInfo';
-import { readContracts } from 'wagmi/actions';
+import { readContract, readContracts } from 'wagmi/actions';
 import { config } from '@/app/RainbowKitAndWagmiProvider';
 import ChallengePreview from '../ChallengePreview';
 import { useRouter } from 'next/navigation';
@@ -19,8 +19,23 @@ export type Challenge = {
     duration : string,
     bid : string,
     maxPlayers : string,
-    timestampOfCreation : bigint
+    timestampOfCreation : string
     groupMode: boolean
+}
+
+type ChallengeCreated = {
+    id: string
+    admin: Address
+    challengeAddress: Address
+    blockNumber: string
+    txHash: string
+    createdAt: string
+}
+
+type ChallengeAddresses = {
+    admin: Address,
+    address: Address,
+    blockNumber: string,
 }
 
 const ChallengeList = () => {
@@ -50,7 +65,7 @@ const ChallengeList = () => {
 
 
 
-
+    //Call Api router, that call GraphQL subgraph to retrieve created Challenges
     const retrieveChallenges = async (URL : string) => {
         const res = await fetch(URL);
         if (!res.ok) {
@@ -67,245 +82,137 @@ const ChallengeList = () => {
         return Challenges;
     }
 
-    const getChallengeEvents = async() => {
+    //Builds challenges object, for displaying
+    const buildChallengesObject = async (challengeAddresses : ChallengeAddresses[]) => {
 
-        // const Logs = await retriveEventsFromBlock(factoryAddress, "event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber)")
+        let challengesInfo: Challenge[] = [];
 
-        // const Logs : GetLogsReturnType = await retrieveChallengeCreatedEvents(factoryAddress);
+        //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
+        for(const challenge of challengeAddresses){
+            const result = await readContracts(config, {
+                contracts: [
+                    {
+                        address: challenge.address,
+                        abi: contractAbi,
+                        functionName: 'duration',
+                    },
+                    {
+                        address: challenge.address,
+                        abi: contractAbi,
+                        functionName: 'bid',
+                    },
+                    {
+                        address: challenge.address,
+                        abi: contractAbi,
+                        functionName: 'maxPlayers',
+                    },
+                    {
+                        address: challenge.address,
+                        abi: contractAbi,
+                        functionName: 'description',
+                    },
+                    {
+                        address: challenge.address,
+                        abi: contractAbi,
+                        functionName: 'groupMode',
+                    },
+                ],
+            })
 
-        // if (Logs.length === 0) {
-        //     console.log("No challenge created have been found")
-        //     return;
-        // }        
+            const [duration, bid, maxPlayers, description, groupMode] = result.map((r) => r.result!)
+            
+
+            challengesInfo.push({
+                creator: challenge.admin,
+                contractAddress: challenge.address,
+                duration: duration as string,
+                bid: formatEther(bid as bigint),
+                maxPlayers: maxPlayers as string,
+                description: description as string,
+                timestampOfCreation: challenge.blockNumber,
+                groupMode: groupMode as boolean,
+            })
+        }
+
+        return challengesInfo;
+    }
+
+
+
+    const getChallengeEvents = async() => {     
 
         if(address == undefined){
             return
         }
-        
-        //FOR CHALLENGES CREATED
-        //keep only the addresses of the ones created by current user
-        // const challengeCreatedAddresses = (Logs as GetLogsReturnType<typeof CHALLENGE_CREATED_ABI>)
-        //     .filter((log) => log.args?.admin && isAddressEqual(log.args?.admin, address))
-        //     .map((log) => ({
-        //         address: log.args!.challengeAddress as Address,
-        //         blockNumber: log.args!.blockNumber as bigint,
-        //     }))
 
+    //FOR CHALLENGES CREATED by current user
+        const ChallengesCreated: ChallengeCreated[] = await retrieveChallenges(`/api/challenges/getChallengesCreated?admin=${address}`);
 
-        const ChallengesCreated = await retrieveChallenges(`/api/challenges/getChallengesCreated?admin=${address}`);
-
-        const challengeCreatedAddresses = ChallengesCreated.map((challenge: any) => ({
+        const challengeAddresses = ChallengesCreated.map((challenge: ChallengeCreated) => ({
             admin: challenge.admin as Address,
             address: challenge.challengeAddress as Address,
-            blockNumber: challenge.blockNumber as bigint,
+            blockNumber: challenge.blockNumber as string,
         }))
 
-        let challengesCreatedInfo: Challenge[] = [];
-
-        //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
-        for(const challenge of challengeCreatedAddresses){
-            const result = await readContracts(config, {
-                contracts: [
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'duration',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'bid',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'maxPlayers',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'description',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'groupMode',
-                    },
-                ],
-            })
-
-            const [duration, bid, maxPlayers, description, groupMode] = result.map((r) => r.result!)
-            
-
-            challengesCreatedInfo.push({
-                creator: challenge.admin,
-                contractAddress: challenge.address,
-                duration: duration as string,
-                bid: formatEther(bid as bigint),
-                maxPlayers: maxPlayers as string,
-                description: description as string,
-                timestampOfCreation: challenge.blockNumber,
-                groupMode: groupMode as boolean,
-            })
-        }
-
+        const challengesCreatedInfo = await buildChallengesObject(challengeAddresses);
         setChallengesCreated(challengesCreatedInfo)
 
 
 
-        // //FOR CHALLENGES JOINED
-        // const challengeJoinedAddresses = (Logs as GetLogsReturnType<typeof CHALLENGE_CREATED_ABI>)
-        //     .map((log) => ({
-        //         address: log.args!.challengeAddress as Address,
-        //         blockNumber: log.args!.blockNumber as bigint,
-        //     }))
+    //FOR CHALLENGES JOINED by current user
 
-        // let challengesJoinedInfo: Challenge[] = [];
-
-        // //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
-        // for(const challenge of challengeJoinedAddresses){
-    
-        //     const Logs = await retriveEventsFromBlock(challenge.address, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
-
-        //     const playerStates = new Map();
-    
-        //     for (const log of Logs) {
-        //         const player = log.args.player;
-        //         if (log.eventName === "PlayerJoined") {
-        //             playerStates.set(player, true); // true = currently joined
-        //         } else if (log.eventName === "PlayerWithdrawn") {
-        //             playerStates.set(player, false); // false = withdrawn
-        //         }
-        //     }
-        //     // Filter players who are still joined (value = true)
-        //     const activePlayers = Array.from(playerStates.entries())
-        //         .filter(([_, isJoined]) => isJoined)
-        //         .map(([player]) => player);
+        //Get All challenges
+        const AllChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challenges/getAllChallenges`);
 
 
-        //     for(const player of activePlayers){
-        //         if(player !== address){
-        //             continue
-        //         }
+        const results = await Promise.all(
+            AllChallenges.map(async (challenge) => {
+                const player = await readContract(config, {
+                    address: challenge.challengeAddress as Address,
+                    abi: contractAbi,
+                    functionName: 'Players',
+                    args: [address as Address],
+                });
 
-        //         const result = await readContracts(config, {
-        //             contracts: [
-        //                 {
-        //                     address: challenge.address,
-        //                     abi: contractAbi,
-        //                     functionName: 'duration',
-        //                 },
-        //                 {
-        //                     address: challenge.address,
-        //                     abi: contractAbi,
-        //                     functionName: 'bid',
-        //                 },
-        //                 {
-        //                     address: challenge.address,
-        //                     abi: contractAbi,
-        //                     functionName: 'maxPlayers',
-        //                 },
-        //                 {
-        //                     address: challenge.address,
-        //                     abi: contractAbi,
-        //                     functionName: 'description',
-        //                 },
-        //                 {
-        //                     address: challenge.address,
-        //                     abi: contractAbi,
-        //                     functionName: 'groupMode',
-        //                 },
-        //             ],
-        //         })
+                const hasJoined = player[0];
+                if (hasJoined) {
+                    // return a simplified object
+                    return {
+                        admin: challenge.admin as Address,
+                        address: challenge.challengeAddress as Address,
+                        blockNumber: challenge.blockNumber as string,
+                    };
+                }
 
-        //         const [duration, bid, maxPlayers, description, groupMode] = result.map((r) => r.result!)
-                
-        //         challengesJoinedInfo.push({
-        //             creator: address,
-        //             contractAddress: challenge.address,
-        //             duration: duration as string,
-        //             bid: formatEther(bid as bigint),
-        //             maxPlayers: maxPlayers as string,
-        //             description: description as string,
-        //             timestampOfCreation: challenge.blockNumber,
-        //             groupMode: groupMode as boolean,
-        //         })
+                return null; // user has not joined
+            })
+        );
 
-        //     }
+        const joinedChallengesAddresses = results.filter((c): c is ChallengeAddresses => c !== null);
 
-        // }
-
-        // setChallengesJoined(challengesJoinedInfo)
+        const joinedChallengesInfo = await buildChallengesObject(joinedChallengesAddresses);
+        setChallengesJoined(joinedChallengesInfo)
 
 
 
-        ////FOR RECENT CHALLENGES
+    //FOR RECENT CHALLENGES
 
         const amountToRetrieve = 2;//Hardcoded for now
-        const LatestChallenges = await retrieveChallenges(`/api/challenges/getLatestChallenges?number=${amountToRetrieve}`);
+        const LatestChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challenges/getLatestChallenges?number=${amountToRetrieve}`);
 
-        const latestChallengesAddresses = LatestChallenges.map((challenge: any) => ({
+        const latestChallengeAddresses = LatestChallenges.map((challenge: ChallengeCreated) => ({
             admin: challenge.admin as Address,
             address: challenge.challengeAddress as Address,
-            blockNumber: challenge.blockNumber as bigint,
+            blockNumber: challenge.blockNumber as string,
         }))
 
-
-        let latestChallengesInfo: Challenge[] = [];
-
-        //For each challenge, Retrieve details (duration, bid, maxPlayers, description) and store everything in challenges state variable
-        for(const challenge of latestChallengesAddresses){
-            const result = await readContracts(config, {
-                contracts: [
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'duration',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'bid',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'maxPlayers',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'description',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'groupMode',
-                    },
-                ],
-            })
-
-            const [duration, bid, maxPlayers, description, groupMode] = result.map((r) => r.result!)
-            
-
-            latestChallengesInfo.push({
-                creator: challenge.admin,
-                contractAddress: challenge.address,
-                duration: duration as string,
-                bid: formatEther(bid as bigint),
-                maxPlayers: maxPlayers as string,
-                description: description as string,
-                timestampOfCreation: challenge.blockNumber,
-                groupMode: groupMode as boolean,
-            })
-        }
-
+        const latestChallengesInfo = await buildChallengesObject(latestChallengeAddresses);
         setLatestChallenges(latestChallengesInfo)
-
 
     }
     
     
+    //Redirection when challenge address is entered
     function handleChallengeClick(challengeAddress: Address) {
         router.push(`/mychallenges/${challengeAddress}`);
     }
