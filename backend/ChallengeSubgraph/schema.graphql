@@ -5,4 +5,21 @@ type ChallengeCreated @entity(immutable: true) {
   blockNumber: BigInt! # uint256
   txHash: Bytes!         # transaction hash
   createdAt: BigInt!
+  
+  playersJoined: [PlayerJoined!]! @derivedFrom(field: "challenge")   # all joins
+  playersWithdrawn: [PlayerWithdrawn!]! @derivedFrom(field: "challenge")  # all withdraws
+}
+
+type PlayerJoined @entity(immutable: true) {
+  id: ID!
+  challenge: ChallengeCreated!
+  player: Bytes!
+  timestamp: BigInt!
+}
+
+type PlayerWithdrawn @entity(immutable: true) {
+  id: ID!
+  challenge: ChallengeCreated!
+  player: Bytes!
+  timestamp: BigInt!
 }

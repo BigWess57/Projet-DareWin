@@ -51,18 +51,6 @@ const ChallengeList = () => {
     //Get recent challenges and display them
     const [latestChallenges, setLatestChallenges] = useState<(Challenge)[]>([])
 
-//ABI types for events
-    const CHALLENGE_CREATED_ABI = parseAbiItem(
-        'event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber)'
-    );
-    const PLAYER_JOINED_ABI = parseAbiItem(
-        'event PlayerJoined(address player)'
-    );
-    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
-        'event PlayerWithdrawn(address player)'
-    );
-    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
-
 
 
     //Call Api router, that call GraphQL subgraph to retrieve created Challenges

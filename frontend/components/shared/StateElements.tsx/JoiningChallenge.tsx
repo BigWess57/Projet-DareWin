@@ -137,6 +137,12 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 abi: contractAbi,
                 functionName: 'ipfsCid',
             },
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'Players',
+                args: [address as Address],
+            },
         ],
         account: address as `0x${string}` | undefined
       })
@@ -148,119 +154,59 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     const [isAllowed, setIsAllowed] = useState<boolean>(false)
 
     //Events
-    const [events, setEvents] = useState<(Address | undefined)[]>([]);
+    // const [events, setEvents] = useState<(Address | undefined)[]>([]);
   
-    const PLAYER_JOINED_ABI = parseAbiItem(
-                'event PlayerJoined(address player)'
-    );
-    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
-        'event PlayerWithdrawn(address player)'
-    );
-    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
+    // const PLAYER_JOINED_ABI = parseAbiItem(
+    //             'event PlayerJoined(address player)'
+    // );
+    // const PLAYER_WITHDRAWN_ABI = parseAbiItem(
+    //     'event PlayerWithdrawn(address player)'
+    // );
+    // const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
     
-    const getEvents = async() => {
+    // const getEvents = async() => {
 
-        const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
+    //     const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
         
-        const playerStates = new Map();
+    //     const playerStates = new Map();
 
-        for (const log of Logs) {
-            const player = log.args.player;
-            if (log.eventName === "PlayerJoined") {
-                playerStates.set(player, true); // true = currently joined
-            } else if (log.eventName === "PlayerWithdrawn") {
-                playerStates.set(player, false); // false = withdrawn
-            }
-        }
-        // Filter players who are still joined (value = true)
-        const activePlayers = Array.from(playerStates.entries())
-            .filter(([_, isJoined]) => isJoined)
-            .map(([player]) => player);
+    //     for (const log of Logs) {
+    //         const player = log.args.player;
+    //         if (log.eventName === "PlayerJoined") {
+    //             playerStates.set(player, true); // true = currently joined
+    //         } else if (log.eventName === "PlayerWithdrawn") {
+    //             playerStates.set(player, false); // false = withdrawn
+    //         }
+    //     }
+    //     // Filter players who are still joined (value = true)
+    //     const activePlayers = Array.from(playerStates.entries())
+    //         .filter(([_, isJoined]) => isJoined)
+    //         .map(([player]) => player);
 
-        setEvents(activePlayers)
+    //     setEvents(activePlayers)
 
-        //Check if the current user has joined
-        for(const player of activePlayers){
-            if(address === player){
-                setUserHasJoined(true)
-                return
-            }
-        }
-        setUserHasJoined(false)
-    }
+    //     //Check if the current user has joined
+    //     for(const player of activePlayers){
+    //         if(address === player){
+    //             setUserHasJoined(true)
+    //             return
+    //         }
+    //     }
+    //     setUserHasJoined(false)
+    // }
 
 
     const refetchAll = async () => {
-        getEvents()
+        // getEvents()
         refetchStatus()
         refetch()
     }
 
     const joinChallenge = async () => {
-
-        // try{
-            //Check if allowance has already been set
-            // if(allowance as bigint < bid){
-            //     toast.loading('Pending...', {
-            //         id: 1,
-            //         description: "Autorisation de l'utilisation de vos tokens...",
-            //         action:null,
-            //     })
-            //     //Approve the use of needed amount of tokens
-            //     const approveHash = await writeContract(config, {
-            //         address: tokenAddress,
-            //         abi: tokenAbi,
-            //         functionName: 'approve',
-            //         args: [contractAddress, bid],
-            //         account: address as `0x${string}`,
-            //     })
-            //     //Wait for approval of transaction
-            //     await waitForTransactionReceipt(config, { hash: approveHash, confirmations: 1  })
-
-            //     toast.success("Success", {
-            //         id: 1,
-            //         description: "Autorisation accordée !",
-            //         duration: 3000,
-            //     })
-            // }
-
-            // toast.loading('Pending...', {
-            //     id: 2,
-            //     description: "En train de rejoindre...",
-            // })
-
-        //     //Ask user to joinChallenge
-        //     const joinHash = await writeContract(config, {
-        //         address: contractAddress,
-        //         abi: contractAbi,
-        //         functionName: 'joinChallenge',
-        //         account: address as `0x${string}`,
-        //     })
-        //     await waitForTransactionReceipt(config, { hash: joinHash, confirmations: 1 })
-
-        //     toast.success("Success", {
-        //         id: 2,
-        //         description: "Vous avez rejoint le challenge!",
-        //         duration: 3000,
-        //     })
-        //     refetchAll();
-        // } catch (err) {
-        //     console.error('Transaction failed ', err)
-        //     toast.dismiss();
-        //     toast.error("Error : Erreur pour rejoindre le challenge", {
-        //         duration: 3000,
-        //         // isClosable: true,
-        //     });
-        // }
         
         if(!address) return;
 
         const {deadline, v, r, s} = await GetRSVsig(address, tokenAddress, bid, contractAddress)
-
-        // console.log("deadline : ", deadline)
-        // console.log("v : ", v)
-        // console.log("r : ", r)
-        // console.log("s : ", s)
 
         let merkleProof;
         if (groupMode) {
@@ -363,25 +309,18 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         const mode = readData[2].result
         setGroupMode(mode as boolean)
 
-        // // is player allowed to join
-        // const merkleRoot = readData[3].result
-
-        // // runtime check: must be a hex string, 0x + 64 hex chars
-        // function isBytes32(value: unknown): value is `0x${string}` {
-        //     return (
-        //         typeof value === "string" &&
-        //         /^0x[0-9a-fA-F]{64}$/.test(value)
-        //     );
-        // }
-
-        // if (isBytes32(merkleRoot)) {
-        //     setChallengeMerkleRoot(merkleRoot);
-        // } else {
-        //     throw new Error(`Invalid bytes32 value: ${merkleRoot}`);
-        // }
         const ipfsCid = readData[3].result
         setChallengeCid(ipfsCid as string)
 
+        const player = readData[4].result
+        if (player == undefined){
+            toast.error("Error : Could not retrieve player info from contract", {
+                duration: 3000,
+            });
+            return;
+        }
+        const hasJoined = player[0];
+        setUserHasJoined(hasJoined)
 
         refetchAll();
     }, [readData, address])
@@ -492,13 +431,13 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 {challengeOwner && address && isAddressEqual(challengeOwner, address) && (
                     <button
                     onClick={startChallenge}
-                    disabled={events.length < 2}
-                    className={`
-                        px-4 py-2 rounded-lg font-semibold transition
-                        ${events.length < 2
-                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
-                    `}
+                    // disabled={events.length < 2}
+                    // className={`
+                    //     px-4 py-2 rounded-lg font-semibold transition
+                    //     ${events.length < 2
+                    //     ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    //     : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
+                    // `}
                     >
                         Démarrer le défi
                     </button>
@@ -509,13 +448,13 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
                 <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
                 <div className="flex flex-col gap-2 text-white">
-                {events?.length > 0 ? (
+                {/* {events?.length > 0 ? (
                     [...events].reverse().map((addr) => (
                         <Joined address={addr} key={addr} />
                     ))
                 ) : (
                     <div className="italic text-white/50">(aucun pour l'instant)</div>
-                )}
+                )} */}
                 </div>
             </div>
 
