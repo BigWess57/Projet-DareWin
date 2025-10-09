@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
         // listJson.rows (if present) will contain entries for pinned items
         const isPinned = !!(listJson?.rows && Array.isArray(listJson.rows) && listJson.rows.length > 0);
-console.log(isPinned)
+
         if (!isPinned) {
             return NextResponse.json({ ok: true, message: 'CID not pinned (no action)' }, { status: 200 });
         }

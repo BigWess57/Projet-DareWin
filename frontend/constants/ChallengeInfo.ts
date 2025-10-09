@@ -261,6 +261,19 @@ export const contractAbi=[
     },
     {
       "inputs": [],
+      "name": "challengeStartTimestamp",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "currentStatus",
       "outputs": [
         {
@@ -480,6 +493,19 @@ export const contractAbi=[
       "name": "voteForWinner",
       "outputs": [],
       "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "voteForWinnerStarted",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {

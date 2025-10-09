@@ -20,9 +20,7 @@ import Joined from "../Miscellaneous/Joined";
 import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToast";
 
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
-import { checkWhitelistFromIpfs } from "@/utils/checkWhitelistFromIPFS";
 import { GetRSVsig } from "@/utils/getSignatureForPermit";
-import { group } from "console";
 
 
 // small type guard — narrows unknown -> readonly `0x${string}`[]
@@ -105,12 +103,12 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const { data: readData, error: error, isPending: IsPending, refetch: refetch } = useReadContracts({
         contracts: [
-            {
-                address: tokenAddress,
-                abi: tokenAbi,
-                functionName: 'allowance',
-                args: [address, contractAddress],
-            },
+            // {
+            //     address: tokenAddress,
+            //     abi: tokenAbi,
+            //     functionName: 'allowance',
+            //     args: [address, contractAddress],
+            // },
             {
                 address: contractAddress,
                 abi: contractAbi,
@@ -148,10 +146,34 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
       })
 
 
-    const [allowance, setAllowance] = useState<bigint>(0n)
+    // const [allowance, setAllowance] = useState<bigint>(0n)
     const [challengeOwner, setChallengeOwner] = useState<Address>("0x0000000000000000000000000000000000000000")
     const [groupMode, setGroupMode] = useState<boolean>(false)
     const [isAllowed, setIsAllowed] = useState<boolean>(false)
+
+
+    const [players, setPlayers] = useState<(Address)[]>([]);
+
+    //Call Api router, that call GraphQL subgraph to retrieve created Challenges
+    const getAllPlayers = async (URL : string) => {
+        const res = await fetch(URL);
+        if (!res.ok) {
+            const errorText = await res.text(); // get the raw response body
+            console.error("Failed to fetch Players:", errorText);
+            // throw new Error(`Failed to fetch Players: ${res.status} ${res.statusText}`);
+        }
+        const { data: Players } = await res.json();
+
+        Players.forEach((player: any) => {
+            console.log("Player : ", player);
+        });
+        return Players;
+    }
+
+    const getPlayersForChallenge = async() => {
+        const CurrentPlayers = await getAllPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
+        setPlayers(CurrentPlayers);
+    }
 
     //Events
     // const [events, setEvents] = useState<(Address | undefined)[]>([]);
@@ -198,6 +220,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const refetchAll = async () => {
         // getEvents()
+        // getPlayersForChallenge()
         refetchStatus()
         refetch()
     }
@@ -257,6 +280,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     useEffect(() => {
         if(joinSuccess) {
             refetchAll()
+
+            if(!address) return;
+            //Update players list (add current user)
+            setPlayers(prev => [address, ...prev]);
         }
         if(joinReceiptError) {
             console.error('Transaction failed ', joinReceiptError.message)
@@ -270,6 +297,14 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     useEffect(() => {
         if(withdrawSuccess) {
             refetchAll()
+
+            if(!address) return;
+            //Update players list (remove current user)
+            setPlayers((prevPlayers) =>
+                prevPlayers.filter(
+                    (p) => p.toLowerCase() !== address.toLowerCase()
+                )
+            );
         }
         if(withdrawReceiptError) {
             console.error('Transaction failed ', withdrawReceiptError.message)
@@ -297,22 +332,18 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     useEffect(() => {
         if (!readData) return
 
-        // allowance
-        const a = readData[0].result
-        setAllowance(a as bigint)
-
         // owner
-        const owner = readData[1].result
+        const owner = readData[0].result
         setChallengeOwner(owner as Address)
 
         // group mode
-        const mode = readData[2].result
+        const mode = readData[1].result
         setGroupMode(mode as boolean)
 
-        const ipfsCid = readData[3].result
+        const ipfsCid = readData[2].result
         setChallengeCid(ipfsCid as string)
 
-        const player = readData[4].result
+        const player = readData[3].result
         if (player == undefined){
             toast.error("Error : Could not retrieve player info from contract", {
                 duration: 3000,
@@ -327,13 +358,25 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     
     useEffect(() => {
-        if(!address) return;
-        if(!challengeCid) return;
-        const connected = address;
-        checkWhitelistFromIpfs(challengeCid, connected).then(result => {
+        if(!address || !groupMode || !challengeCid) return;
+        
+        const connected = address.toLowerCase();
+
+        const params = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                cid: challengeCid,
+                address: connected,
+            }),
+        }
+
+        //Get proofs from IPFS, to know if the player is allowed to join
+        fetch(`/api/ipfsProofs/getProofs`, params).then(async (res) => {
+            const result = await res.json(); // <-- convert Response to JSON object
+            console.log(result)
             if (result.whitelisted && result.proof !== undefined) {
-                // show join button, send proof.result.proof with tx, etc.
-                // console.log('You are whitelisted — proof:', result.proof);
+
                 setIsAllowed(true);
 
                 if (!result.proof) {
@@ -355,6 +398,12 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         });
 
     }, [challengeCid, address])
+
+
+    useEffect(() => {
+        getPlayersForChallenge();
+    }, [address])
+
 
 
     //For displaying moving dots
@@ -431,13 +480,13 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 {challengeOwner && address && isAddressEqual(challengeOwner, address) && (
                     <button
                     onClick={startChallenge}
-                    // disabled={events.length < 2}
-                    // className={`
-                    //     px-4 py-2 rounded-lg font-semibold transition
-                    //     ${events.length < 2
-                    //     ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    //     : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
-                    // `}
+                    disabled={players.length < 2}
+                    className={`
+                        px-4 py-2 rounded-lg font-semibold transition
+                        ${players.length < 2
+                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
+                    `}
                     >
                         Démarrer le défi
                     </button>
@@ -448,13 +497,13 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
                 <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
                 <div className="flex flex-col gap-2 text-white">
-                {/* {events?.length > 0 ? (
-                    [...events].reverse().map((addr) => (
+                {players?.length > 0 ? (
+                    [...players].reverse().map((addr) => (
                         <Joined address={addr} key={addr} />
                     ))
                 ) : (
                     <div className="italic text-white/50">(aucun pour l'instant)</div>
-                )} */}
+                )}
                 </div>
             </div>
 

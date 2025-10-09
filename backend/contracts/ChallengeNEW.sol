@@ -44,8 +44,8 @@ contract ChallengeNew is Ownable{
     string public ipfsCid;
 
     uint64 public immutable duration;          
-    uint64 private challengeStartTimestamp;    
-    uint64 private voteForWinnerStarted;       
+    uint64 public challengeStartTimestamp;    
+    uint64 public voteForWinnerStarted;       
     uint24 public constant MINIMUM_DELAY_BEFORE_ENDING_VOTE = 1 hours; 
     uint8 public immutable maxPlayers;         
     uint8 private currentPlayerNumber;         

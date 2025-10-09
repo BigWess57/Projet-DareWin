@@ -10,7 +10,7 @@ import OngoingChallenge from "./StateElements.tsx/OngoingChallenge";
 import { toast } from "sonner";
 
 import { GetLogsReturnType, parseAbiItem } from "viem";
-import { useAccount, useReadContract } from "wagmi"
+import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { DurationContext } from "./RouteBaseElements/ChallengePage";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
@@ -59,32 +59,42 @@ const ChallengeState = () => {
         account: address as `0x${string}` | undefined,
     })
 
-    //Get the challenge start event
+    const { data: challengeStartTime, error: errorStartTime, isPending: IsStartTimePending, refetch: refetchStartTime } = useReadContract({
+        address: contractAddress,
+        abi: contractAbi,
+        functionName: 'challengeStartTimestamp',
+        account: address as `0x${string}` | undefined,
+    })
+
+
+    //Get the challenge start
     const [challengeStart, setChallengeStart] = useState<bigint>(0n);
 
     //ABI types for events
-    const CHALLENGE_STARTED_ABI = parseAbiItem(
-        "event ChallengeStarted(uint256 startingTime)"
-    );
+    // const CHALLENGE_STARTED_ABI = parseAbiItem(
+    //     "event ChallengeStarted(uint256 startingTime)"
+    // );
 
-    const getChallengeStartEvents = async() => {
+    // const getChallengeStartEvents = async() => {
 
-        const Logs = await retriveEventsFromBlock(contractAddress, "event ChallengeStarted(uint256 startingTime)") as GetLogsReturnType<typeof CHALLENGE_STARTED_ABI>
+    //     const Logs = await retriveEventsFromBlock(contractAddress, "event ChallengeStarted(uint256 startingTime)") as GetLogsReturnType<typeof CHALLENGE_STARTED_ABI>
         
-        if (Logs.length === 0) {
-            console.error("Could not get the start of the challenge")
-            toast.error("Error : Could not get the start of the challenge", {
-                duration: 3000,
-            });
-            setChallengeStart(0n);
-            return 0n;
-        }else{
-            const startingTime = Logs[0].args.startingTime || 0n;
-            setChallengeStart(startingTime)
-            return startingTime;
-        }
+    //     if (Logs.length === 0) {
+    //         console.error("Could not get the start of the challenge")
+    //         toast.error("Error : Could not get the start of the challenge", {
+    //             duration: 3000,
+    //         });
+    //         setChallengeStart(0n);
+    //         return 0n;
+    //     }else{
+    //         const startingTime = Logs[0].args.startingTime || 0n;
+    //         setChallengeStart(startingTime)
+    //         return startingTime;
+    //     }
         
-    }
+    // }
+
+    
 
     const [currentDisplayStatus, setCurrentDisplayStatus] = useState<WorkflowStatus>(WorkflowStatus.GatheringPlayers)
 
@@ -95,8 +105,8 @@ const ChallengeState = () => {
     const refreshDisplayStatus = async () => {
         //If current State is Ongoing challenge, get the start of the challenge. If the challenge is over, set the state to "Voting"
         if(status === WorkflowStatus.OngoingChallenge){
-            const startingTime = await getChallengeStartEvents();
-            if(calculateTimeLeft(startingTime) == 0 && startingTime !== 0n){
+            // const startingTime = await getChallengeStartEvents();
+            if(calculateTimeLeft(challengeStart) == 0 && challengeStart !== 0n){
                 setCurrentDisplayStatus(WorkflowStatus.VotingForWinner);
                 return;
             }
@@ -107,8 +117,14 @@ const ChallengeState = () => {
 
 /**************** Use Effect******** */
     useEffect(() => {
+        refetchStartTime()
         refreshDisplayStatus()
-    }, [status, duration])   
+    }, [status, duration])  
+    
+    useEffect(() => {
+        if(!challengeStartTime) return;
+        setChallengeStart(challengeStartTime);
+    }, [challengeStartTime])
 
 
 ///******Display *******/
@@ -139,13 +155,11 @@ const ChallengeState = () => {
                 )}
 
                 {currentDisplayStatus === WorkflowStatus.VotingForWinner && (
-                    <>
-                        <VotingForWinner refetchStatus={refetchStatus}/>
-                    </>
+                    <VotingForWinner refetchStatus={refetchStatus}/>
                 )}
 
                 {currentDisplayStatus === WorkflowStatus.ChallengeWon && (
-                    <ChallengeWon></ChallengeWon>
+                    <ChallengeWon/>
                 )}
                 {/* Fallback if none of the above matched */}
                 {!IsPending &&

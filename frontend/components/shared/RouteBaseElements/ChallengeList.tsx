@@ -134,7 +134,7 @@ const ChallengeList = () => {
         }
 
     //FOR CHALLENGES CREATED by current user
-        const ChallengesCreated: ChallengeCreated[] = await retrieveChallenges(`/api/challenges/getChallengesCreated?admin=${address}`);
+        const ChallengesCreated: ChallengeCreated[] = await retrieveChallenges(`/api/challengeFactory/getChallengesCreated?admin=${address}`);
 
         const challengeAddresses = ChallengesCreated.map((challenge: ChallengeCreated) => ({
             admin: challenge.admin as Address,
@@ -150,7 +150,7 @@ const ChallengeList = () => {
     //FOR CHALLENGES JOINED by current user
 
         //Get All challenges
-        const AllChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challenges/getAllChallenges`);
+        const AllChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challengeFactory/getAllChallenges`);
 
 
         const results = await Promise.all(
@@ -186,7 +186,7 @@ const ChallengeList = () => {
     //FOR RECENT CHALLENGES
 
         const amountToRetrieve = 2;//Hardcoded for now
-        const LatestChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challenges/getLatestChallenges?number=${amountToRetrieve}`);
+        const LatestChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challengeFactory/getLatestChallenges?number=${amountToRetrieve}`);
 
         const latestChallengeAddresses = LatestChallenges.map((challenge: ChallengeCreated) => ({
             admin: challenge.admin as Address,

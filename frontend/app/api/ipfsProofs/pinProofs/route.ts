@@ -1,11 +1,6 @@
 // import type { NextApiRequest, NextApiResponse } from 'next';
 import { NextResponse } from 'next/server';
 
-type PinResponse = {
-  ipfsHash?: string;
-  error?: string;
-};
-
 type ProofPayload = {
   root: string;
   proofs: Record<string, string[]>;
