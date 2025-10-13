@@ -1,4 +1,5 @@
 import { Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12 } from 'lucide-react'
+import loadConfig from 'next/dist/server/config'
 import { useState, useEffect } from 'react'
 
 export function ChallengeTimer({
@@ -20,10 +21,14 @@ export function ChallengeTimer({
        
     }
 
+    const [displayTimer, setDisplayTimer] = useState<boolean>(false)
     const [timeLeft, setTimeLeft] = useState<number>(calculateTimeLeft)
 
     useEffect(() => {
         const interval = setInterval(() => {
+            if(!displayTimer) {
+                setDisplayTimer(true);
+            }
             const amountTimeLeft = calculateTimeLeft()
             if(amountTimeLeft == 0){
                 refreshDisplay()
@@ -61,9 +66,13 @@ export function ChallengeTimer({
             <div className="text-white text-base">
                 Temps restant : 
             </div>
-            <div className="flex items-center text-xl font-mono text-cyan-400">
-                <Icon className="mr-5 w-8 h-8 text-cyan-400 animate-pulse" /> {hours}:{minutes}:{seconds}
-            </div>
+            {!displayTimer ? 
+                <div className='italic'>Loading...</div>
+            : 
+                <div className="flex items-center text-xl font-mono text-cyan-400">
+                    <Icon className="mr-5 w-8 h-8 text-cyan-400 animate-pulse" /> {hours}:{minutes}:{seconds}
+                </div>
+            }
         </div>
     )
 }

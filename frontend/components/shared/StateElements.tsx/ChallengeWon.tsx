@@ -225,7 +225,7 @@ const ChallengeWon = () => {
                 `}
               >
                 {hasWithdrawn
-                  ? "Vous avez déjà retiré votre récompense"
+                  ? "Vous avez déjà récupéré votre récompense"
                   : "Récupérer votre récompense"}
               </Button>
             </div>

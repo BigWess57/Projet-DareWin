@@ -21,6 +21,7 @@ import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToas
 
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { GetRSVsig } from "@/utils/getSignatureForPermit";
+import { getPlayers } from "@/utils/apiFunctions";
 
 
 // small type guard — narrows unknown -> readonly `0x${string}`[]
@@ -154,24 +155,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const [players, setPlayers] = useState<(Address)[]>([]);
 
-    //Call Api router, that call GraphQL subgraph to retrieve created Challenges
-    const getAllPlayers = async (URL : string) => {
-        const res = await fetch(URL);
-        if (!res.ok) {
-            const errorText = await res.text(); // get the raw response body
-            console.error("Failed to fetch Players:", errorText);
-            // throw new Error(`Failed to fetch Players: ${res.status} ${res.statusText}`);
-        }
-        const { data: Players } = await res.json();
-
-        Players.forEach((player: any) => {
-            console.log("Player : ", player);
-        });
-        return Players;
-    }
+    
 
     const getPlayersForChallenge = async() => {
-        const CurrentPlayers = await getAllPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
+        const CurrentPlayers = await getPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
         setPlayers(CurrentPlayers);
     }
 

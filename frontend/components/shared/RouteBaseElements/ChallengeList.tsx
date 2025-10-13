@@ -10,6 +10,7 @@ import { readContract, readContracts } from 'wagmi/actions';
 import { config } from '@/app/RainbowKitAndWagmiProvider';
 import ChallengePreview from '../ChallengePreview';
 import { useRouter } from 'next/navigation';
+import { retrieveChallenges } from '@/utils/apiFunctions';
 
 
 export type Challenge = {
@@ -53,22 +54,22 @@ const ChallengeList = () => {
 
 
 
-    //Call Api router, that call GraphQL subgraph to retrieve created Challenges
-    const retrieveChallenges = async (URL : string) => {
-        const res = await fetch(URL);
-        if (!res.ok) {
-            const errorText = await res.text(); // get the raw response body
-            console.error("Failed to fetch challenges:", errorText);
-            throw new Error(`Failed to fetch challenges: ${res.status} ${res.statusText}`);
-        }
-        const { data: Challenges } = await res.json();
+    
+    // const retrieveChallenges = async (URL : string) => {
+    //     const res = await fetch(URL);
+    //     if (!res.ok) {
+    //         const errorText = await res.text(); // get the raw response body
+    //         console.error("Failed to fetch challenges:", errorText);
+    //         throw new Error(`Failed to fetch challenges: ${res.status} ${res.statusText}`);
+    //     }
+    //     const { data: Challenges } = await res.json();
 
-        Challenges.forEach((challenge: any) => {
-            // console.log(log)
-            console.log("Challenge ID:", challenge.id, "by admin:", challenge.admin);
-        });
-        return Challenges;
-    }
+    //     Challenges.forEach((challenge: any) => {
+    //         // console.log(log)
+    //         console.log("Challenge ID:", challenge.id, "by admin:", challenge.admin);
+    //     });
+    //     return Challenges;
+    // }
 
     //Builds challenges object, for displaying
     const buildChallengesObject = async (challengeAddresses : ChallengeAddresses[]) => {

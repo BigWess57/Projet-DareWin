@@ -53,10 +53,13 @@ const OngoingChallenge = ({
           {startTimestampDisplay}
         </div>
 
-        <ChallengeTimer
-          startingTime={challengeStart}
-          duration={duration}
-          refreshDisplay={refreshDisplay}/>
+        {challengeStart && (
+          <ChallengeTimer
+            startingTime={challengeStart}
+            duration={duration}
+            refreshDisplay={refreshDisplay}
+          />
+        )}
 
       </div>
     </div>

@@ -40,6 +40,7 @@ templates:
       entities:
         - PlayerJoined
         - PlayerWithdrawn
+        - PlayerVoted
       abis:
         - name: ChallengeNew
           file: ./abis/ChallengeNew.json
@@ -48,4 +49,6 @@ templates:
           handler: handlePlayerJoined
         - event: PlayerWithdrawn(address)
           handler: handlePlayerWithdrawn
+        - event: PlayerVoted(address,address)
+          handler: handlePlayerVoted
       file: ./src/challenge-new.ts
