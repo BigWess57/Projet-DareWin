@@ -70,7 +70,7 @@
         "reveal": "always",
         "focus": false,
         "panel": "new",
-        "group": "groupC",
+        "group": "groupA",
         "close": false
       },
       "isBackground": true,

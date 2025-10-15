@@ -10,10 +10,6 @@ export const retrieveChallenges = async (URL : string) => {
     }
     const { data: Challenges } = await res.json();
 
-    Challenges.forEach((challenge: any) => {
-        // console.log(log)
-        console.log("Challenge ID:", challenge.id, "by admin:", challenge.admin);
-    });
     return Challenges;
 }
 
@@ -28,9 +24,6 @@ export const getPlayers = async (URL : string) => {
     }
     const { data: Players } = await res.json();
 
-    // Players.forEach((player: any) => {
-    //     console.log("Player : ", player);
-    // });
     return Players;
 }
 

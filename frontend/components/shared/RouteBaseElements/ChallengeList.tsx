@@ -8,9 +8,10 @@ import { useAccount } from 'wagmi';
 import { contractAbi } from '@/constants/ChallengeInfo';
 import { readContract, readContracts } from 'wagmi/actions';
 import { config } from '@/app/RainbowKitAndWagmiProvider';
-import ChallengePreview from '../ChallengePreview';
 import { useRouter } from 'next/navigation';
 import { retrieveChallenges } from '@/utils/apiFunctions';
+import ChallengePreview from '../Miscellaneous/ChallengePreview';
+import { ChallengeTabs } from '../Miscellaneous/ChallengeTabs';
 
 
 export type Challenge = {
@@ -48,28 +49,10 @@ const ChallengeList = () => {
     //Get challenges created and display them
     const [challengesCreated, setChallengesCreated] = useState<(Challenge)[]>([])
     //Get challenges joined and display them
-    const [challengesjoined, setChallengesJoined] = useState<(Challenge)[]>([])
+    const [challengesJoined, setChallengesJoined] = useState<(Challenge)[]>([])
     //Get recent challenges and display them
     const [latestChallenges, setLatestChallenges] = useState<(Challenge)[]>([])
 
-
-
-    
-    // const retrieveChallenges = async (URL : string) => {
-    //     const res = await fetch(URL);
-    //     if (!res.ok) {
-    //         const errorText = await res.text(); // get the raw response body
-    //         console.error("Failed to fetch challenges:", errorText);
-    //         throw new Error(`Failed to fetch challenges: ${res.status} ${res.statusText}`);
-    //     }
-    //     const { data: Challenges } = await res.json();
-
-    //     Challenges.forEach((challenge: any) => {
-    //         // console.log(log)
-    //         console.log("Challenge ID:", challenge.id, "by admin:", challenge.admin);
-    //     });
-    //     return Challenges;
-    // }
 
     //Builds challenges object, for displaying
     const buildChallengesObject = async (challengeAddresses : ChallengeAddresses[]) => {
@@ -186,7 +169,7 @@ const ChallengeList = () => {
 
     //FOR RECENT CHALLENGES
 
-        const amountToRetrieve = 2;//Hardcoded for now
+        const amountToRetrieve = 10;//Hardcoded for now
         const LatestChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challengeFactory/getLatestChallenges?number=${amountToRetrieve}`);
 
         const latestChallengeAddresses = LatestChallenges.map((challenge: ChallengeCreated) => ({
@@ -212,81 +195,12 @@ const ChallengeList = () => {
     }, [address])
 
     return (
-        <div className='p-10 flex flex-col gap-10'>
-
-            {/* created */}
-            <div>
-                <div className='text-2xl font-bold mb-4'>Créés : </div>
-                <div>
-                    {challengesCreated.length > 0 ? 
-                        (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {challengesCreated.map((challenge) => 
-                                <div 
-                                    key={challenge.contractAddress}
-                                    className='transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer'
-                                    onClick={() => handleChallengeClick(challenge.contractAddress)}
-                                >
-                                    <ChallengePreview challenge={challenge} />
-                                </div>
-                            )}
-                        </div>
-                        ) : (
-                            <div className='text-xl italic'>Aucun challenge créé.</div>
-                        )
-                    }
-                </div>
-            </div>
-
-            {/* joined */}
-            <div>
-                <div className='text-2xl font-bold mb-4'>Rejoints : </div>
-                <div>
-                    {challengesjoined.length > 0 ? 
-                        (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {challengesjoined.map((challenge) => 
-                                <div 
-                                    key={challenge.contractAddress}
-                                    className='transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer'
-                                    onClick={() => handleChallengeClick(challenge.contractAddress)}
-                                >
-                                    <ChallengePreview challenge={challenge} />
-                                </div>
-                                
-                            )}
-                        </div>
-                        ) : (
-                            <div className='text-xl italic'>Aucun challenge rejoint.</div>
-                        )
-                    }
-                </div>
-            </div>
-
-            {/* recent */}
-            <div>
-                <div className='text-2xl font-bold mb-4'>Challenges Récents : </div>
-                <div>
-                    {latestChallenges.length > 0 ? 
-                        (<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {latestChallenges.map((challenge) => 
-                                <div 
-                                    key={challenge.contractAddress}
-                                    className='transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg cursor-pointer'
-                                    onClick={() => handleChallengeClick(challenge.contractAddress)}
-                                >
-                                    <ChallengePreview challenge={challenge} />
-                                </div>
-                                
-                            )}
-                        </div>
-                        ) : (
-                            <div className='text-xl italic'>Aucun challenge trouvé.</div>
-                        )
-                    }
-                </div>
-            </div>
-            
-        </div>
-        
+        <ChallengeTabs 
+            challengesCreated={challengesCreated}
+            challengesJoined={challengesJoined}
+            latestChallenges={latestChallenges}
+            handleChallengeClick={handleChallengeClick}
+        />
     )
 }
 

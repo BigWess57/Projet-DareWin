@@ -280,6 +280,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
                 break;
             }
         }
+        
         //Set hasVoted, depending on if we found a matching address or not
         setHasVoted(setVoted);
 
@@ -305,6 +306,10 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
                 const { voter } = log.args;
                 if(voter === undefined) return;
 
+                if(address && isAddressEqual(voter, address)){
+                    setHasVoted(true);
+                }
+
                 setPlayersVoted((prev) => {
                     //store the voter only if not already stored
                     for (const voted of playersVoted) {
@@ -322,7 +327,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
             })
         },
         onError(error) {
-            console.log('Error watching PlayerVoted:', error)
+            console.error('Error watching PlayerVoted:', error)
         },
     })
 
@@ -419,8 +424,9 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 //For vote
     useEffect(() => {
         if(voteSuccess) {
-            getAllPlayersVoted(players);
+            // getAllPlayersVoted(players);
             refetchReadData();
+            setHasVoted(true);
         }
         if(voteReceiptError) {
             toast.error(voteReceiptError.message, {

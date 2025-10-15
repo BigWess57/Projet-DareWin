@@ -23,6 +23,7 @@ import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { GetRSVsig } from "@/utils/getSignatureForPermit";
 import { getPlayers } from "@/utils/apiFunctions";
 
+import { Loader2 } from "lucide-react";
 
 // small type guard — narrows unknown -> readonly `0x${string}`[]
 function isHexArray(x: unknown): x is `0x${string}`[] {
@@ -150,8 +151,9 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     // const [allowance, setAllowance] = useState<bigint>(0n)
     const [challengeOwner, setChallengeOwner] = useState<Address>("0x0000000000000000000000000000000000000000")
     const [groupMode, setGroupMode] = useState<boolean>(false)
-    const [isAllowed, setIsAllowed] = useState<boolean>(false)
 
+    const [isAllowed, setIsAllowed] = useState<boolean>(false)
+    const [isCheckingWhitelist, setIsCheckingWhitelist] = useState(false);
 
     const [players, setPlayers] = useState<(Address)[]>([]);
 
@@ -358,31 +360,41 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             }),
         }
 
+        setIsCheckingWhitelist(true); // start loading
+
         //Get proofs from IPFS, to know if the player is allowed to join
-        fetch(`/api/ipfsProofs/getProofs`, params).then(async (res) => {
-            const result = await res.json(); // <-- convert Response to JSON object
-            console.log(result)
-            if (result.whitelisted && result.proof !== undefined) {
+        fetch(`/api/ipfsProofs/getProofs`, params)
+            .then(async (res) => {
+                const result = await res.json(); // <-- convert Response to JSON object
 
-                setIsAllowed(true);
+                if (result.whitelisted && result.proof !== undefined) {
 
-                if (!result.proof) {
-                    // user not whitelisted or proof not loaded yet
-                    toast.error('No Merkle proof available for your address.');
-                    return;
+                    setIsAllowed(true);
+
+                    if (!result.proof) {
+                        // user not whitelisted or proof not loaded yet
+                        toast.error('No Merkle proof available for your address.');
+                        return;
+                    }
+
+                    if (!isHexArray(result.proof)) {
+                        toast.error('Invalid proof format.');
+                        return;
+                    }
+
+                    setChallengeMerkleProof(result.proof)
+                } else {
+                    console.warn('Not whitelisted:', result.reason);
+                    setIsAllowed(false);
                 }
-
-                if (!isHexArray(result.proof)) {
-                    toast.error('Invalid proof format.');
-                    return;
-                }
-
-                setChallengeMerkleProof(result.proof)
-            } else {
-                console.warn('Not whitelisted:', result.reason);
+            })
+            .catch((err) => {
+                console.error("Error fetching whitelist:", err);
                 setIsAllowed(false);
-            }
-        });
+            })
+            .finally(() => {
+                setIsCheckingWhitelist(false); // stop loading
+            });
 
     }, [challengeCid, address])
 
@@ -424,9 +436,16 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 </div>
                 {groupMode && (
                     <div className={`text-sm ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
-                    {isAllowed
-                        ? 'Vous etes autorisé a participer au challenge'
-                        : "Vous n'etes pas autorisé a participer au challenge"}
+                        {isCheckingWhitelist ? (
+                            <div className="flex items-center text-cyan-500 justify-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Chargement des adresses autorisées...</span>
+                            </div>
+                        ) : isAllowed === true ? (
+                            'Vous etes autorisé a participer au challenge'
+                        ) : isAllowed === false ? (
+                            "Vous n'etes pas autorisé a participer au challenge"
+                        ) : null}
                     </div>
                 )}
                 </div>

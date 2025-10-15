@@ -77,20 +77,7 @@ const Header = () => {
 
     return (
         <nav className="w-full flex items-center gap-6 px-8 py-4 bg-[#0B1126] border-b border-white/20">
-            {/* Logo + texte */}
-            {/* <div className="flex items-center gap-2">
-                <div
-                className="flex items-center justify-center h-10 w-10 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 text-xl font-bold text-white"
-                >
-                D
-                </div>
-                <h1 className="flex items-center text-lg font-bold tracking-wide">
-                <span className="text-cyan-400">DARE</span><span className="text-white">WIN</span>
-                <span className="ml-2 px-2 py-0.5 text-xs font-medium uppercase bg-[#1F2240] text-white rounded">
-                    BETA
-                </span>
-                </h1>
-            </div> */}
+
             <div className="relative h-[50px] w-[200px]">
                 <Image
                     src="/Logo DareWin allongé blanc.png"
