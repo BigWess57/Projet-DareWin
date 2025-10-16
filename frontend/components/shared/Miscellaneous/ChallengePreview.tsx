@@ -1,5 +1,5 @@
 import React from 'react'
-import { Challenge } from './RouteBaseElements/ChallengeList'
+import { Challenge } from '../RouteBaseElements/ChallengeList'
 
 
 

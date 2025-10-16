@@ -27,7 +27,7 @@ export function ChallengeTabs({
   handleChallengeClick,
 }: ChallengeTabsProps) {
 
-  const ITEMS_PER_PAGE = 1;
+  const ITEMS_PER_PAGE = 3;
 
   return (
     <div className="p-10 flex flex-col gap-10">
