@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/tabs";
 
 
+
 import ChallengePreview from "./ChallengePreview";
 import { Challenge } from "../RouteBaseElements/ChallengeList";
 import { Address } from "viem";
@@ -27,7 +28,15 @@ export function ChallengeTabs({
   handleChallengeClick,
 }: ChallengeTabsProps) {
 
-  const ITEMS_PER_PAGE = 3;
+  const ITEMS_PER_PAGE = 5; //Default value
+
+  const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
+
+  const handleItemsPerPageChange = (value: string) => {
+    const n = parseInt(value, 10);
+    setItemsPerPage(n);
+  };
+
 
   return (
     <div className="p-10 flex flex-col gap-10">
@@ -43,62 +52,65 @@ export function ChallengeTabs({
             mb-6
             "
         >
-            <TabsTrigger
-                value="created"
-                className="
-                    data-[state=active]:bg-white/10
-                    data-[state=active]:text-white
-                    text-white/70
-                    font-medium
-                    rounded-lg
-                    px-4 py-2
-                    transition
-                    hover:text-white
-                "
-            >
-                Créés
-            </TabsTrigger>
+          <TabsTrigger
+            value="created"
+            className="
+              data-[state=active]:bg-white/10
+              data-[state=active]:text-white
+              text-white/70
+              font-medium
+              rounded-lg
+              px-4 py-2
+              transition
+              hover:text-white
+            "
+          >
+            Créés
+          </TabsTrigger>
 
-            <TabsTrigger
-                value="joined"
-                className="
-                    data-[state=active]:bg-white/10
-                    data-[state=active]:text-white
-                    text-white/70
-                    font-medium
-                    rounded-lg
-                    px-4 py-2
-                    transition
-                    hover:text-white
-                "
-            >
-                Rejoints
-            </TabsTrigger>
+          <TabsTrigger
+            value="joined"
+            className="
+              data-[state=active]:bg-white/10
+              data-[state=active]:text-white
+              text-white/70
+              font-medium
+              rounded-lg
+              px-4 py-2
+              transition
+              hover:text-white
+            "
+          >
+            Rejoints
+          </TabsTrigger>
 
-            <TabsTrigger
-                value="recent"
-                className="
-                    data-[state=active]:bg-white/10
-                    data-[state=active]:text-white
-                    text-white/70
-                    font-medium
-                    rounded-lg
-                    px-4 py-2
-                    transition
-                    hover:text-white
-                "
-            >
-                Récents
-            </TabsTrigger>
+          <TabsTrigger
+            value="recent"
+            className="
+              data-[state=active]:bg-white/10
+              data-[state=active]:text-white
+              text-white/70
+              font-medium
+              rounded-lg
+              px-4 py-2
+              transition
+              hover:text-white
+            "
+          >
+            Récents
+          </TabsTrigger>
         </TabsList>
 
 
 
         <TabsContent value="created">
           <div className="text-2xl font-bold mb-4">Créés :</div>
+
           <PaginatedTabContent
+            key={itemsPerPage}
             items={challengesCreated}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
+            handleItemsPerPageChange={handleItemsPerPageChange}
             renderItem={(challenge) => (
               <div 
                 key={challenge.contractAddress} 
@@ -112,11 +124,15 @@ export function ChallengeTabs({
           />
         </TabsContent>
 
+
         <TabsContent value="joined">
           <div className="text-2xl font-bold mb-4">Rejoints :</div>
+
           <PaginatedTabContent
+            key={itemsPerPage}
             items={challengesJoined}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
+            handleItemsPerPageChange={handleItemsPerPageChange}
             renderItem={(challenge) => (
               <div 
                 key={challenge.contractAddress} 
@@ -130,11 +146,15 @@ export function ChallengeTabs({
           />
         </TabsContent>
 
+
         <TabsContent value="recent">
           <div className="text-2xl font-bold mb-4">Challenges Récents :</div>
+
           <PaginatedTabContent
+            key={itemsPerPage}
             items={latestChallenges}
-            itemsPerPage={ITEMS_PER_PAGE}
+            itemsPerPage={itemsPerPage}
+            handleItemsPerPageChange={handleItemsPerPageChange}
             renderItem={(challenge) => (
               <div 
                 key={challenge.contractAddress} 

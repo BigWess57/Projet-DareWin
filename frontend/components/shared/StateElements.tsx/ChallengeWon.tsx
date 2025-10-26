@@ -221,7 +221,7 @@ const ChallengeWon = () => {
                   w-full text-lg font-semibold rounded-xl px-4 py-3
                   ${hasWithdrawn 
                     ? "bg-gray-600 text-gray-300 cursor-not-allowed" 
-                    : "bg-gradient-to-r from-indigo-500 via-purple-600 to-blue-500 text-black shadow-lg hover:from-indigo-400 hover:via-purple-500 hover:to-blue-400 hover:scale-105 transition-all duration-200"}
+                    : "bg-gradient-to-r from-indigo-500 via-purple-600 to-blue-500 shadow-lg hover:from-indigo-400 hover:via-purple-500 hover:to-blue-400 hover:scale-105 transition-all duration-200"}
                 `}
               >
                 {hasWithdrawn

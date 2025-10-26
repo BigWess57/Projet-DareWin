@@ -8,16 +8,24 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 interface PaginatedTabContentProps {
   items: any[];
   itemsPerPage: number;
+  handleItemsPerPageChange: (value: string) => void;
   renderItem: (item: any) => React.ReactNode;
-  emptyMessage: string;
+  emptyMessage?: string;
 }
 
-const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsPerPage, renderItem, emptyMessage }) => {
+const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsPerPage, handleItemsPerPageChange, renderItem, emptyMessage = "No Items." }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const totalItems = items.length;
@@ -33,7 +41,7 @@ const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsP
                 {pagedItems.map(renderItem)}
             </div>
 
-            <div className="mt-6 flex justify-center gap-2">
+            <div className="mt-6 flex justify-between">
                 <Pagination>
                     <PaginationContent className="flex gap-2">
                         <PaginationItem>
@@ -95,6 +103,26 @@ const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsP
                         </PaginationItem>
                     </PaginationContent>
                 </Pagination>
+
+                <div className="min-w-50 flex items-center justify-end space-x-2">
+                    <span className="text-sm text-muted-foreground">Afficher par page:</span>
+                    <Select
+                        value={itemsPerPage.toString()}
+                        onValueChange={handleItemsPerPageChange}
+                    >
+                        <SelectTrigger className="w-[80px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className='bg-[#0B1126] text-white/90'>
+                            {[1,2,3,4,5,10,20,50].map((n) => (
+                            <SelectItem key={n} value={n.toString()}>
+                                {n}
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                
             </div>
         </>
       ) : (

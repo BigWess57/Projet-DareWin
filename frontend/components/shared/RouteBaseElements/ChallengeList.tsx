@@ -169,7 +169,7 @@ const ChallengeList = () => {
 
     //FOR RECENT CHALLENGES
 
-        const amountToRetrieve = 10;//Hardcoded for now
+        const amountToRetrieve = 100;//Hardcoded for now
         const LatestChallenges: ChallengeCreated[] = await retrieveChallenges(`/api/challengeFactory/getLatestChallenges?number=${amountToRetrieve}`);
 
         const latestChallengeAddresses = LatestChallenges.map((challenge: ChallengeCreated) => ({
