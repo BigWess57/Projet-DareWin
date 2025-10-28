@@ -12,14 +12,14 @@ export async function GET(req: Request) {
   const query = `
     query($number: Int!) {
       challengeCreateds(
-        orderBy: blockNumber
+        orderBy: timestamp
         orderDirection: desc
         first: $number
       ) {
         id
         admin
         challengeAddress
-        blockNumber
+        timestamp
         txHash
         createdAt
       }

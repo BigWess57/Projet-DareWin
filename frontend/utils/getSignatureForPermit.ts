@@ -1,4 +1,4 @@
-import { Abi, Address, parseSignature } from "viem";
+import { Address, parseSignature } from "viem";
 import { publicClient } from "./client";
 import { signTypedData } from "wagmi/actions";
 import { config } from "@/app/RainbowKitAndWagmiProvider";

@@ -12,7 +12,7 @@ async function main() {
     const signers = await ethers.getSigners()
 
     //Deploy DARE token first
-    const myToken = await ethers.deployContract("DareWinNew", [signers[0].address]);
+    const myToken = await ethers.deployContract("DareWin", [signers[0].address]);
     await myToken.deploymentTransaction()?.wait();
     console.log(`DARE token deployed to ${myToken.target}`)
   

@@ -2,12 +2,12 @@ import React, { useContext, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { contractAbi } from '@/constants/ChallengeInfo'
-import { retriveEventsFromBlock, wagmiEventRefreshConfig } from '@/utils/client'
+import { wagmiEventRefreshConfig } from '@/utils/client'
 
 import Event from "../Miscellaneous/Joined";
 
-import { Address, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem, ReadContractErrorType } from 'viem'
-import { useAccount, useReadContract, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
+import { Address, isAddressEqual, parseAbiItem, ReadContractErrorType } from 'viem'
+import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
@@ -46,33 +46,10 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     const [isRefetchingStatus, setIsRefetchingStatus] = useState<boolean>(false);
 
 
-    // //EVENTS ABI
-    // const PLAYER_JOINED_ABI = parseAbiItem(
-    //         'event PlayerJoined(address player)'
-    // );
-    // const PLAYER_WITHDRAWN_ABI = parseAbiItem(
-    //     'event PlayerWithdrawn(address player)'
-    // );
-    // const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
-
-    // const PLAYER_VOTED_ABI = parseAbiItem(
-    //     "event PlayerVoted(address voter, address votedFor)"
-    // );
-    // const CHALLENGE_ENDED_ABI = parseAbiItem(
-    //     "event ChallengeEnded(uint256 endTime)"
-    // );
 
 /***************** 
  * Functions for interaction with the blokchain 
  * **************/   
-
-    // Used to read the contract (voting delay)
-    // const { data: durationVote, error: error, isPending: IsPending, refetch: refetchVotingDuration } = useReadContract({
-    //     address: contractAddress,
-    //     abi: contractAbi,
-    //     functionName: 'MINIMUM_DELAY_BEFORE_ENDING_VOTE',
-    //     account: address as `0x${string}` | undefined,
-    // })
 
     const { data: readData, error: error, isPending: IsPending, refetch: refetchReadData } = useReadContracts({
         contracts: [
@@ -159,7 +136,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         })
     }
 
-
+    // Get players from GraphQL (through next server endpoint)
     const getAllPlayers = async() => {
         const CurrentPlayers = await getPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
         setPlayers(CurrentPlayers);
@@ -181,49 +158,8 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         return CurrentPlayers;
     }
 
-    //Events
-
-    // const getPlayersEvents = async() => {
-
-    //     const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
-
-    //     const playerStates = new Map();
-
-    //     for (const log of Logs) {
-    //         const player = log.args.player;
-    //         if (log.eventName === "PlayerJoined") {
-    //             playerStates.set(player, true); // true = currently joined
-    //         } else if (log.eventName === "PlayerWithdrawn") {
-    //             playerStates.set(player, false); // false = withdrawn
-    //         }
-    //     }
-    //     // Filter players who are still joined (value = true)
-    //     const players = Array.from(playerStates.entries())
-    //         .filter(([_, isJoined]) => isJoined)
-    //         .map(([player]) => player);
-
-    //     setPlayers(players)
-
-    //     //If current user is a player, set isPlayer to true
-    //     let found = false;
-    //     for (const player of players) {
-    //         if(player == undefined){
-    //             console.error("player could not be retrieved");
-    //             continue;
-    //         }
-    //         if (address && isAddressEqual(player, address)) {
-    //             found = true;
-    //             break;
-    //         }
-    //     }
-    //     setIsPlayer(found);
-
-    //     return players
-    // }
-
 
     //Helper function to check if everyone has voted
-    
     const checkEveryoneVoted = (
         players : (Address | undefined)[],
         playersVoted : (Address | undefined)[],
@@ -234,36 +170,8 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         }
     }
 
-    // //Get players voted events
-    // const getPlayersVotedEvents = async(playersArray : (Address | undefined)[]) => {
 
-    //     const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerVoted(address voter, address votedFor)") as GetLogsReturnType<typeof PLAYER_VOTED_ABI>
-
-    //     const VotedPlayers = Logs.map(
-    //         log => (log.args.voter)
-    //     )
-    //     setPlayersVoted(VotedPlayers)
-
-    //     let setVoted = false;
-    //     //If current player has voted, set hasVoted to true
-    //     for (const log of Logs) {
-    //         const { args } = log;
-    //         if(args.voter == undefined){
-    //             console.error("voter could not be retrieved");
-    //             continue;
-    //         }
-    //         if (args && address && isAddressEqual(args.voter, address)) {
-    //             setVoted = true;
-    //             break;
-    //         }
-    //     }
-    //     //Set hasVoted, depending on if we found a matching address or not
-    //     setHasVoted(setVoted);
-
-    //     //Check if everyone has voted
-    //     checkEveryoneVoted(playersArray, VotedPlayers)
-    // }
-
+    // Get players who voted from GraphQL (through next server endpoint)
     const getAllPlayersVoted = async(playersArray : (Address | undefined)[]) => {
         const VotedPlayers : Address[] = await getPlayers(`/api/challenges/getAllPlayersVoted?address=${contractAddress}`);
         setPlayersVoted(VotedPlayers);
@@ -290,7 +198,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     }
 
 
-    // In addition, Subscribe to the PlayerVoted event to act whenever there is a new one
+    // Subscribe to the PlayerVoted event to act whenever there is a new one
     useWatchContractEvent({
         address: contractAddress,
         abi: [
@@ -332,24 +240,6 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         },
     })
 
-    
-
-    // const getChallengeEndedEvents = async() => {
-
-    //     const Logs = await retriveEventsFromBlock(contractAddress, "event ChallengeEnded(uint256 endTime)") as GetLogsReturnType<typeof CHALLENGE_ENDED_ABI>
-
-    //     if (Logs.length === 0) {
-    //         setVotingStarted(0n);
-    //         return 0n;
-    //     }else{
-    //         const startingTime = Logs[0].args.endTime || 0n;
-    //         setVotingStarted(startingTime)
-    //         // console.log("setting start time :", startingTime)
-    //         return startingTime;
-    //     }
-    // }
-    
-
 
 
 /****** Other functions ******* */
@@ -385,14 +275,9 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 /******* Use effect ***** */
 
     useEffect(() => {
-        // getPlayersEvents().then((playersArray) => {
-        //     getPlayersVotedEvents(playersArray);
-        // });
         getAllPlayers().then((playersArray) => {
             getAllPlayersVoted(playersArray);
         });
-        // getChallengeEndedEvents();
-        // refetchVotingDuration();
         refetchReadData();
     }, [address])
 

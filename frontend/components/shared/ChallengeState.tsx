@@ -2,22 +2,16 @@
 import { useContext, useEffect, useState } from "react";
 
 import { contractAbi } from "@/constants/ChallengeInfo"
-import { retriveEventsFromBlock } from "@/utils/client";
 
 import JoiningChallenge from "./StateElements.tsx/JoiningChallenge";
 import OngoingChallenge from "./StateElements.tsx/OngoingChallenge";
 
-import { toast } from "sonner";
-
-import { GetLogsReturnType, parseAbiItem } from "viem";
-import { useAccount, useReadContract, useReadContracts } from "wagmi"
+import { useAccount, useReadContract } from "wagmi"
 import { DurationContext } from "./RouteBaseElements/ChallengePage";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
 import { ContractAddressContext } from "./RouteBaseElements/ChallengePage";
 
-
-// export const RefreshDisplayContext = createContext<(() => Promise<void>)>(async () => {});
 
 
 //State Enum
@@ -42,7 +36,6 @@ const ChallengeState = () => {
 /**********
  * Variables
  * *************/
-    // const [description, setDescription] = useState<string>("");    
     const duration = useContext(DurationContext)
     const contractAddress = useContext(ContractAddressContext)
 
@@ -69,32 +62,6 @@ const ChallengeState = () => {
 
     //Get the challenge start
     const [challengeStart, setChallengeStart] = useState<bigint>(0n);
-
-    //ABI types for events
-    // const CHALLENGE_STARTED_ABI = parseAbiItem(
-    //     "event ChallengeStarted(uint256 startingTime)"
-    // );
-
-    // const getChallengeStartEvents = async() => {
-
-    //     const Logs = await retriveEventsFromBlock(contractAddress, "event ChallengeStarted(uint256 startingTime)") as GetLogsReturnType<typeof CHALLENGE_STARTED_ABI>
-        
-    //     if (Logs.length === 0) {
-    //         console.error("Could not get the start of the challenge")
-    //         toast.error("Error : Could not get the start of the challenge", {
-    //             duration: 3000,
-    //         });
-    //         setChallengeStart(0n);
-    //         return 0n;
-    //     }else{
-    //         const startingTime = Logs[0].args.startingTime || 0n;
-    //         setChallengeStart(startingTime)
-    //         return startingTime;
-    //     }
-        
-    // }
-
-    
 
     const [currentDisplayStatus, setCurrentDisplayStatus] = useState<WorkflowStatus>(WorkflowStatus.GatheringPlayers)
 

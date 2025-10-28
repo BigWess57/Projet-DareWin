@@ -4,6 +4,9 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./DareWinTokenERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
+import "hardhat/console.sol";
 
 /// @title Challenge
 /// @notice Manages a DARE-token challenge: creation, participation, voting, and prize distribution.
@@ -19,20 +22,30 @@ contract Challenge is Ownable{
 
     /// @notice Structure representing a participating player
     struct Player {
-        /// @notice Player's address
-        address playerAddress;
+        /// @notice has Player joined
+        bool hasJoined;
+        /// @notice has Player voted
+        bool hasVoted;
+        /// @notice has Player withdrawn his prize
+        bool hasWithdrawn;
         /// @notice Number of votes received
-        uint8 voteCount;
+        uint128 voteCount;
     }
 
+    bytes32 public merkleRoot;
+    string public ipfsCid;
+
     uint64 public immutable duration;          
-    uint64 private challengeStartTimestamp;    
-    uint64 private voteForWinnerStarted;       
+    uint64 public challengeStartTimestamp;    
+    uint64 public voteForWinnerStarted;       
     uint24 public constant MINIMUM_DELAY_BEFORE_ENDING_VOTE = 1 hours; 
     uint8 public immutable maxPlayers;         
     uint8 private currentPlayerNumber;         
-    bool public immutable groupMode;           
-    uint8 public highestVotes;                 
+    bool public immutable groupMode;  
+
+    uint8 public highestVotes;    
+    uint8 public numberOfWinners;
+    uint256 public prizePerWinner;
 
     uint128 public immutable bid;              
     uint128 private immutable feeTierBronzeCap;
@@ -45,7 +58,6 @@ contract Challenge is Ownable{
     uint8 constant private FEE_TIER_SILVER = 4;
     uint8 constant private FEE_TIER_GOLD = 3;
     uint8 constant private FEE_TIER_PLATINUM = 2;
-    uint8 constant MAX_PLAYERS = 50;
 
 
     DareWin private immutable dareWinToken;
@@ -53,13 +65,7 @@ contract Challenge is Ownable{
     
     ChallengeStatus public currentStatus;
 
-    address[] public challengeWinners;
-
-    mapping (address => bool) public isAllowed;
-    mapping (address => bool) hasJoined;
-    mapping (address => bool) hasVoted;
-    Player[] public players;
-
+    mapping (address => Player) public Players;
 
     /// @notice Emitted when a player successfully joins
     /// @param player Address of the player who joined
@@ -89,7 +95,7 @@ contract Challenge is Ownable{
     /// @notice Emitted when a prize share is sent to a winner
     /// @param winnerAddress Address of the winner
     /// @param prizeShare Amount of tokens sent as prize
-    event PrizeSent(address winnerAddress, uint256 prizeShare);
+    event PrizeWithdrawn(address winnerAddress, uint256 prizeShare);
 
 
     /// @notice Initializes a new Challenge contract
@@ -101,27 +107,15 @@ contract Challenge is Ownable{
     /// @param _description Short description of the challenge
     /// @param _feeReceiver Address receiving the platform fee
     /// @param _groupMode If true, only allowed group can join
-    /// @param _group List of addresses allowed in group mode
-    constructor(address initialOwner, DareWin _tokenAddress, uint64 _duration, uint8 _maxPlayers, uint128 _bid, string memory _description, address _feeReceiver, bool _groupMode, address[] memory _group) Ownable(initialOwner) {
+    /// @param _merkleRoot merkle root of addresses allowed in group mode
+    constructor(address initialOwner, DareWin _tokenAddress, uint64 _duration, uint8 _maxPlayers, uint128 _bid, string memory _description, address _feeReceiver, bool _groupMode, bytes32 _merkleRoot, string memory _ipfsCid) Ownable(initialOwner) {
         require(_feeReceiver != address(0), "the feeReceiver cannot be address 0!");
+
         if(_groupMode){
-            require(
-                _group.length > 1,
-                "The predefined group of players is too small. There should be a minimum of 2 players per challenge"
-            );
-            require(
-                _group.length <= MAX_PLAYERS,
-                "No more than 50 players per challenge"
-            );
-            for (uint i; i < _group.length; i++) {
-                require(_group[i] != address(0), "address 0 cannot be a player!");
-                isAllowed[_group[i]] = true;
-            }
-        }else{
-            require(
-                _maxPlayers <= MAX_PLAYERS,
-                "No more than 50 players per challenge"
-            );
+            require(_merkleRoot != bytes32(0), "Merkle root required when groupMode is true");
+            require(bytes(_ipfsCid).length != 0, "IPFS Cid should not be empty here");
+            merkleRoot=_merkleRoot;
+            ipfsCid= _ipfsCid;
         }
 
         dareWinToken=_tokenAddress;
@@ -140,30 +134,10 @@ contract Challenge is Ownable{
         feeTierGoldCap = uint128(100000 * 10 ** dareWinToken.decimals());
     }
 
-    /// @notice Validates that the function is called in the specified challenge status
-    /// @param _expectedState The required state the challenge must be in
-    modifier isCorrectState(ChallengeStatus _expectedState) {
-        require(currentStatus == _expectedState, "Not allowed in this state");
-        _;
-    }
 
-
-    /// @notice Special modifier for voteForWinner function: Moves challenge to voting state once duration passes
-    modifier isChallengeOver(){
-        if(currentStatus == ChallengeStatus.OngoingChallenge){
-             require(challengeStartTimestamp + duration <= block.timestamp, "You are not allowed to vote now");
-
-            currentStatus = ChallengeStatus.VotingForWinner;
-            voteForWinnerStarted=uint64(block.timestamp);
-            emit ChallengeEnded(voteForWinnerStarted);
-        }
-        _;
-    }
-        
     /// @notice Calculates the platform fee share based on winner's token holdings
     /// @return Fee amount in DARE tokens
     function calculateFee(address winner, uint256 share) view internal returns(uint256){
-
         uint256 balanceWinner = dareWinToken.balanceOf(winner);
         if (balanceWinner <= feeTierBronzeCap) {
             return share*FEE_TIER_BRONZE/100;
@@ -176,116 +150,132 @@ contract Challenge is Ownable{
         }
     }
 
+
+    /// @notice Validates that the function is called in the specified challenge status
+    /// @param _expectedState The required state the challenge must be in
+    modifier isCorrectState(ChallengeStatus _expectedState) {
+        require(currentStatus == _expectedState, "Not allowed in this state");
+        _;
+    }
+
+    /// @notice Special modifier for voteForWinner function: Moves challenge to voting state once duration passes
+    modifier isChallengeOver(){
+        if(currentStatus == ChallengeStatus.OngoingChallenge){
+            require(challengeStartTimestamp + duration <= block.timestamp, "You are not allowed to vote now");
+
+            currentStatus = ChallengeStatus.VotingForWinner;
+            voteForWinnerStarted=uint64(block.timestamp);
+            emit ChallengeEnded(voteForWinnerStarted);
+        }
+        _;
+    }
+
+
+    function isWhitelisted(address _account, bytes32[] calldata _proof) internal view returns(bool) {
+        bytes32 leaf = keccak256(abi.encode(keccak256(abi.encode(_account))));
+        return MerkleProof.verify(_proof, merkleRoot, leaf);
+    }
+
     /// @notice Join the challenge by approving the bid
-    function joinChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {  
+    function joinChallenge(uint256 deadline, uint8 v, bytes32 r, bytes32 s, bytes32[] calldata _proof) external isCorrectState(ChallengeStatus.GatheringPlayers) { 
         if(groupMode){
-            require(isAllowed[msg.sender], "You are not allowed to join this challenge.");
+            require(isWhitelisted(msg.sender, _proof), "You are not allowed to join this challenge.");
         }else{
             require(currentPlayerNumber < maxPlayers, "This challenge is already full");
-        }
-        require(!hasJoined[msg.sender], "You already joined"); 
+        }        
+        require(!Players[msg.sender].hasJoined, "You already joined"); 
 
-        require(dareWinToken.allowance(msg.sender, address(this)) >= bid, "Need prior approval for token spending");
-        
-        hasJoined[msg.sender] = true;
-        ++currentPlayerNumber;
-        
-        players.push(Player(msg.sender, 0));
         emit PlayerJoined(msg.sender);
+        Players[msg.sender].hasJoined = true;
+        ++currentPlayerNumber;
+        dareWinToken.permit(msg.sender, address(this), bid, deadline, v, r, s);
+
+        require(
+            dareWinToken.transferFrom(msg.sender, address(this), bid),
+            "Transfer failed"
+        );
     }
 
     /// @notice Withdraw from challenge before it starts
     function withdrawFromChallenge() external isCorrectState(ChallengeStatus.GatheringPlayers) {
-        for (uint i; i < players.length; i++) {
-            if (players[i].playerAddress == msg.sender) {
-                players[i] = players[players.length - 1];
-                players.pop();
+        require(Players[msg.sender].hasJoined, "You have not joined the challenge.");
+        
+        Players[msg.sender].hasJoined = false;
+        --currentPlayerNumber;
 
-                hasJoined[msg.sender] = false;
-                --currentPlayerNumber;
+        emit PlayerWithdrawn(msg.sender);
 
-                emit PlayerWithdrawn(msg.sender);
-                return;
-            }
-        }
-        revert("You are not in players list");
+        require(
+            dareWinToken.transfer(msg.sender, bid),
+            "Transfer failed"
+        );
     }
 
     /// @notice Starts the challenge and collects all bids into the contract
     function startChallenge() external onlyOwner isCorrectState(ChallengeStatus.GatheringPlayers) {
-        require(players.length > 1, "Not enough players to start the challenge");
+        require(currentPlayerNumber > 1, "Not enough players to start the challenge");
 
         currentStatus = ChallengeStatus.OngoingChallenge;
         challengeStartTimestamp = uint64(block.timestamp);
         emit ChallengeStarted(challengeStartTimestamp);
-
-        for (uint i; i < players.length; ++i) {
-            require(
-                dareWinToken.transferFrom(players[i].playerAddress, address(this), bid),
-                "Transfer failed"
-            );
-        }
-
     }
 
     /// @notice Casts a vote for a given player after the challenge ends
     /// @param playerAddress Address of the player to vote for
     function voteForWinner(address playerAddress) external isChallengeOver isCorrectState(ChallengeStatus.VotingForWinner) {
-        require(!hasVoted[msg.sender], "You have already voted.");
-        require(hasJoined[msg.sender], "You are not a player. You cannot vote for winner.");
+        require(Players[msg.sender].hasJoined, "You are not a player. You cannot vote for winner.");
+        require(!Players[msg.sender].hasVoted, "You have already voted.");
 
-        uint players_length = players.length;
-        for(uint i = 0; i < players_length; i++){
-            if(playerAddress == players[i].playerAddress){
-                ++players[i].voteCount;
-                hasVoted[msg.sender] = true;
-                emit PlayerVoted(msg.sender ,playerAddress);
+        Players[playerAddress].voteCount++;
+        Players[msg.sender].hasVoted = true;
+        emit PlayerVoted(msg.sender ,playerAddress);
 
-                --currentPlayerNumber;
+        --currentPlayerNumber;
 
-                if (players[i].voteCount == highestVotes) {
-                    challengeWinners.push(playerAddress);
-                    return;
-                }
-                if (players[i].voteCount > highestVotes) {
-                    highestVotes = players[i].voteCount;
-                    delete challengeWinners;
-                    challengeWinners.push(playerAddress);
-                    return;
-                }
-            }
+        if (Players[playerAddress].voteCount == highestVotes) {
+            numberOfWinners++;
+        }
+        if (Players[playerAddress].voteCount > highestVotes) {
+            numberOfWinners = 1;
+            highestVotes++;
         }
     }
+
 
     /// @notice Concludes voting and distributes prizes and fees automatically
     function endWinnerVote() public isCorrectState(ChallengeStatus.VotingForWinner) {
         require(currentPlayerNumber==0 || (voteForWinnerStarted + MINIMUM_DELAY_BEFORE_ENDING_VOTE <= block.timestamp), "Not all player have voted for a winner yet (and minimum delay has not passed)");
-        uint winnerCount = challengeWinners.length;
-        require(winnerCount > 0, "Winner not set");
+
+        uint256 total = dareWinToken.balanceOf(address(this));
+        prizePerWinner = total / numberOfWinners;
+        uint256 remainder = total - (prizePerWinner * numberOfWinners);
+          
+        //Burn the tiny amount remaining
+        dareWinToken.burn(remainder);
 
         currentStatus = ChallengeStatus.ChallengeWon;
+    }
 
-        uint256 totalPrize = dareWinToken.balanceOf(address(this));
+    function withdrawPrize() public isCorrectState(ChallengeStatus.ChallengeWon) {
+        require(Players[msg.sender].voteCount == highestVotes, "You are not a winner");
+        require(!Players[msg.sender].hasWithdrawn, "You have already withdrawn your prize");
 
-        uint256 share = totalPrize / winnerCount;
-        require(share > 0, "Prize too small to distribute");
+        Players[msg.sender].hasWithdrawn = true;
+        
+        uint256 fee = calculateFee(msg.sender, prizePerWinner);
+        uint256 shareAfterFees = prizePerWinner - fee;
 
-        for (uint i = 0; i < winnerCount; i++) {
-            address winner = challengeWinners[i];
-            uint256 shareAfterFees = share - calculateFee(winner, share);
+        emit PrizeWithdrawn(msg.sender, shareAfterFees);
 
-            emit PrizeSent(winner, shareAfterFees);
-            require(
-                dareWinToken.transfer(winner, shareAfterFees),
-                "Token transfer failed"
-            );
-        }
-
-        uint256 fee = dareWinToken.balanceOf(address(this))/2;
         require(
-            dareWinToken.transfer(feeReceiver, fee), "Fee transfer failed"
+            dareWinToken.transfer(msg.sender, shareAfterFees),
+            "Transfer failed"
         );
 
-        dareWinToken.burn(dareWinToken.balanceOf(address(this)));
+        require(
+            dareWinToken.transfer(feeReceiver, fee/2), "Fee transfer failed"
+        );
+        //Burn the rest
+        dareWinToken.burn(fee - fee/2);
     }
 }

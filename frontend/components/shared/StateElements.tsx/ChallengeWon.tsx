@@ -1,14 +1,11 @@
 import React, { useContext, useEffect, useState } from 'react'
 
-import { Address, formatEther, GetLogsReturnType, parseAbiItem, parseEther, } from 'viem'
+import { Address, formatEther } from 'viem'
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 
 import { ContractAddressContext } from '../RouteBaseElements/ChallengePage'
-import { retriveEventsFromBlock } from '@/utils/client'
 
-import { Trophy } from 'lucide-react'
 import { contractAbi } from '@/constants/ChallengeInfo'
-import { Playwrite_ES } from 'next/font/google'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 
@@ -69,30 +66,6 @@ const ChallengeWon = () => {
       hash
   }) 
 
-  // type Winner = {
-  //   winnerAddress : Address,
-  //   prizeReceived : bigint
-  // }
-
-  //ABI types for events
-  // const PRIZE_SENT_ABI = parseAbiItem(
-  //     "event PrizeSent(address winnerAddress, uint256 prizeShare)"
-  // );
-
-  // //Events
-  // const [winners, setWinners] = useState<Winner[]>([])
-
-  // const getWinnersEvents = async() => {
-
-  //     const Logs = await retriveEventsFromBlock(contractAddress, "event PrizeSent(address winnerAddress, uint256 prizeShare)") as GetLogsReturnType<typeof PRIZE_SENT_ABI>
-
-  //     const winnersToStore = Logs.map(log => ({
-  //       winnerAddress: log.args.winnerAddress || "0x",
-  //       prizeReceived: log.args.prizeShare || 0n
-  //     }))
-
-  //     setWinners(winnersToStore)
-  // }
 
   const withdrawPrize = async () => {
     writeContract({
@@ -103,8 +76,7 @@ const ChallengeWon = () => {
     })
   }
 
-
-
+/********* useEffects ***********/
   useEffect(() => {
     // getWinnersEvents()
     if(!readData) return;
@@ -154,7 +126,6 @@ const ChallengeWon = () => {
       if(isSuccess) {
         toast.success("Succès", {
           description: "Vous avez récupéré votre récompense",
-          // className: "bg-lime-200"
         })
 
         setHasWithdrawn(true);
@@ -185,26 +156,6 @@ const ChallengeWon = () => {
         <h1 className="flex items-center gap-3 text-3xl font-bold">
           Le vote est terminé !
         </h1>
-        {/* {!hasJoined ?
-          (<div>
-            <div className='italic'> Vous ne participez pas a ce défi </div>
-          </div>)
-          :
-          (isWinner ?
-            <div>
-              <div> Vous avez gagné ! </div>
-              <div> Votre Récompense : {formatEther(prize)} DARE </div>
-              <Button disabled={hasWithdrawn} onClick={withdrawPrize}> {hasWithdrawn ? "Vous avez déja retiré votre récompense" : "Retirer votre récompense"}</Button>
-            </div>
-            :
-            <div>
-              <div> Vous avez perdu ... </div>
-            </div>
-          )
-        }
-        <div>
-          <div>{numberOfWinners} joueurs ont gagné ce défi et remporté {formatEther(prize)} DARE !</div>
-        </div> */}
         <div className="w-full max-w-md space-y-6 text-center">
           {!hasJoined ? (
             <div className="text-lg italic text-white/80">
@@ -248,51 +199,6 @@ const ChallengeWon = () => {
             !
           </div>
         </div>
-
-
-        {/* Message et liste des gagnants */}
-        {/* {winners.length > 0 && (
-          <div className="w-full max-w-md space-y-4 text-center">
-            {winners.length === 1 ? (
-              <div className="space-y-2">
-                <div className="flex items-center text-lg">
-                  <div>Gagnant :</div>
-                  <div><Trophy className="ml-3 w-5 h-5 text-yellow-400" /></div>
-                  <span className="ml-2 font-mono font-semibold text-cyan-400">
-                    {winners[0].winnerAddress}
-                  </span>
-                </div>
-                <div className="text-white/80">
-                  Prix reçu :
-                  <span className="ml-2 font-semibold text-yellow-300">
-                    {formatEther(winners[0].prizeReceived)} DARE
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="text-lg font-semibold">Gagnants :</div>
-                <ul className="space-y-1">
-                  {winners.map((winner, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-center gap-2 text-white"
-                    >
-                      <Trophy className="w-5 h-5 text-yellow-400" />
-                      <span className="font-mono">{winner.winnerAddress}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="text-white/80">
-                  Chaque joueur reçoit :
-                  <span className="ml-2 font-semibold text-yellow-300">
-                    {formatEther(winners[0].prizeReceived)} DARE
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-        )} */}
       </div>
     </>
   )

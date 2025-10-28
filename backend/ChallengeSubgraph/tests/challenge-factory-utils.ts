@@ -1,11 +1,11 @@
 import { newMockEvent } from "matchstick-as"
 import { ethereum, Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { ChallengeCreated } from "../generated/ChallengeFactoryNew/ChallengeFactoryNew"
+import { ChallengeCreated } from "../generated/ChallengeFactory/ChallengeFactory"
 
 export function createChallengeCreatedEvent(
   admin: Address,
   challengeAddress: Address,
-  blockNumber: BigInt,
+  timestamp: BigInt,
   // logIndex: i32 = 1
 ): ChallengeCreated {
   // Create a new mock event
@@ -27,8 +27,8 @@ export function createChallengeCreatedEvent(
   )
   challengeCreatedEvent.parameters.push(
     new ethereum.EventParam(
-      "blockNumber",
-      ethereum.Value.fromUnsignedBigInt(blockNumber)
+      "timestamp",
+      ethereum.Value.fromUnsignedBigInt(timestamp)
     )
   )
 

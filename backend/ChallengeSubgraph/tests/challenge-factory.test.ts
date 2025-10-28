@@ -8,9 +8,9 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigInt } from "@graphprotocol/graph-ts"
 import { ChallengeCreated } from "../generated/schema"
-import { ChallengeCreated as ChallengeCreatedEvent } from "../generated/ChallengeFactoryNew/ChallengeFactoryNew"
-import { handleChallengeCreated } from "../src/challenge-factory-new"
-import { createChallengeCreatedEvent } from "./challenge-factory-new-utils"
+import { ChallengeCreated as ChallengeCreatedEvent } from "../generated/ChallengeFactory/ChallengeFactory"
+import { handleChallengeCreated } from "../src/challenge-factory"
+import { createChallengeCreatedEvent } from "./challenge-factory-utils"
 import { store, log } from "@graphprotocol/graph-ts"
 
 // Tests structure (matchstick-as >=0.5.0)
@@ -41,12 +41,12 @@ describe("Describe entity assertions", () => {
   test("ChallengeCreated created and stored", () => {
     let admin = Address.fromString("0x0000000000000000000000000000000000000001") 
     let challengeAddress = Address.fromString( "0x0000000000000000000000000000000000000001" ) 
-    let blockNumber = BigInt.fromI32(234) 
+    let timestamp = BigInt.fromI32(234) 
 
     let newChallengeCreatedEvent = createChallengeCreatedEvent( 
       admin, 
       challengeAddress, 
-      blockNumber 
+      timestamp 
     ) 
     handleChallengeCreated(newChallengeCreatedEvent)
 
@@ -68,7 +68,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "ChallengeCreated",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
-      "blockNumber",
+      "timestamp",
       "234"
     )
 
@@ -89,13 +89,13 @@ describe("Describe entity assertions", () => {
       Address.fromString("0x0000000000000000000000000000000000000001"),
       Address.fromString("0x0000000000000000000000000000000000000002")
     ]
-    let blocks = [BigInt.fromI32(100), BigInt.fromI32(101)]
+    let timestamps = [BigInt.fromI32(100), BigInt.fromI32(101)]
 
     for (let i = 0; i < 2; i++) {
       let event = createChallengeCreatedEvent(
         admins[i],
         challenges[i],
-        blocks[i]
+        timestamps[i]
       )
       handleChallengeCreated(event)
     }
@@ -146,7 +146,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "ChallengeCreated",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-0",
-      "blockNumber",
+      "timestamp",
       "100"
     )
 
@@ -166,7 +166,7 @@ describe("Describe entity assertions", () => {
     assert.fieldEquals(
       "ChallengeCreated",
       "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-1",
-      "blockNumber",
+      "timestamp",
       "101"
     )
   })
@@ -177,9 +177,9 @@ describe("Describe entity assertions", () => {
 
     let admin = Address.fromString("0x1111111111111111111111111111111111111111")
     let challengeAddress = Address.fromString("0x2222222222222222222222222222222222222222")
-    let blockNumber = BigInt.fromI32(123)
+    let timestamp = BigInt.fromI32(123)
 
-    let event = createChallengeCreatedEvent(admin, challengeAddress, blockNumber)
+    let event = createChallengeCreatedEvent(admin, challengeAddress, timestamp)
     handleChallengeCreated(event)
 
     let id = event.transaction.hash.toHex() + "-" + event.logIndex.toString()
@@ -198,10 +198,10 @@ describe("Describe entity assertions", () => {
       Address.fromString("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
       Address.fromString("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
     ]
-    let blocks = [BigInt.fromI32(200), BigInt.fromI32(201)]
+    let timestamps = [BigInt.fromI32(200), BigInt.fromI32(201)]
 
     for (let i = 0; i < 2; i++) {
-      let event = createChallengeCreatedEvent(admin, challenges[i], blocks[i])
+      let event = createChallengeCreatedEvent(admin, challenges[i], timestamps[i])
       handleChallengeCreated(event)
     }
 

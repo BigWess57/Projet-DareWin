@@ -2,7 +2,7 @@ import {
   PlayerJoined as PlayerJoinedEvent,
   PlayerWithdrawn as PlayerWithdrawnEvent,
   PlayerVoted as PlayerVotedEvent,
-} from "../generated/templates/ChallengeTemplate/ChallengeNew"
+} from "../generated/templates/ChallengeTemplate/Challenge"
 import {
   PlayerJoined,
   PlayerWithdrawn,

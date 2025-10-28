@@ -4,9 +4,8 @@ const {
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
-// const helpers = require("@nomicfoundation/hardhat-network-helpers")
+const { StandardMerkleTree } = require("@openzeppelin/merkle-tree")
 
-const { durationSlot, maxPlayersSlot, bidSlot } = require("./utils/constants");
 
 describe("tests Challenge contract", function () {
 
@@ -25,6 +24,13 @@ describe("tests Challenge contract", function () {
     const platinum = 2n; //2 % (>100000 tokens)
 
 
+    async function getTimestampPlusOneHourInSeconds() {
+        // returns current timestamp in seconds
+        // return Math.floor(Date.now() / 1000);
+        const latestBlock = await ethers.provider.getBlock('latest');
+        const now = latestBlock.timestamp;            // already in seconds (BigInt or number)
+        return Number(now) + 3600;
+    }
 
 
     //Just deployment (base state)
@@ -48,32 +54,32 @@ describe("tests Challenge contract", function () {
         //Send a bit more to 2nd signer
         await token.transfer(signers[1].address, ethers.parseUnits("50000", await token.decimals()));
 
-        // totalFee = (3*bronze + silver + platinum)/5;
-
         const bid = ethers.parseUnits("1000", await token.decimals());
 
         //Challenge Deployment
         const Challenge = await ethers.getContractFactory('Challenge'); 
 
         let challenge;
+        let merkleTree;
         if(mode == "link"){
-            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, []);
+            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash, "ipfsCid");
         }else if(mode == "group"){
-            //array of players to store
-            const players = [signers[0].address, signers[1].address, signers[2].address, signers[3].address, signers[4].address]
-            
-            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, players);
+            //Make merkle tree from players array
+            //array of players to store (for merkle root)
+            const playersAllowed = [
+                [signers[0].address],
+                [signers[1].address],
+                [signers[2].address],
+                [signers[3].address],
+                [signers[4].address]
+            ]
+
+            merkleTree = StandardMerkleTree.of(playersAllowed, ["address"]);
+
+            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root, "ipfsCid");
         }
-        
 
-        //Players approve the right for the contract to use their tokens
-        await token.approve(challenge.target, bid);
-        await token.connect(signers[1]).approve(challenge.target, bid);
-        await token.connect(signers[2]).approve(challenge.target, bid);
-        await token.connect(signers[3]).approve(challenge.target, bid);
-        await token.connect(signers[4]).approve(challenge.target, bid);
-
-        return { challenge, signers, token, bid };
+        return { challenge, signers, token, bid, merkleTree };
     }
 
     //Ongoing challenge (LINK MODE)
@@ -82,11 +88,17 @@ describe("tests Challenge contract", function () {
         const { challenge, signers, token, bid } = await deployedChallengeFixtureBase();
 
         //5 players join
-        await challenge.joinChallenge();
-        await challenge.connect(signers[1]).joinChallenge();
-        await challenge.connect(signers[2]).joinChallenge();
-        await challenge.connect(signers[3]).joinChallenge();
-        await challenge.connect(signers[4]).joinChallenge();
+        const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+        const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+        const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+        const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
+        const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
+        
+        await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+        await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
+        await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
+        await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
+        await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, []);
 
         await challenge.startChallenge();
         return { challenge, signers, token, bid };
@@ -117,18 +129,85 @@ describe("tests Challenge contract", function () {
         return { challenge, signers, token, bid };
     }
 
-
-
     //declaration de la variable d'etat
     const ChallengeStatus = {
       GatheringPlayers: 0,
-    //   WaitingForChallenge: 1,
       OngoingChallenge: 1,
-    //   WaitingForVote: 3,
       VotingForWinner: 2,
       ChallengeWon: 3,
     };
 
+
+
+
+    //Helper function for permit
+    async function GetRSVsig(signer, token, bid, challenge) {
+        //For permit
+        // set token deadline
+        const deadline = await getTimestampPlusOneHourInSeconds();
+    
+        // get the current nonce for the deployer address
+        const nonces = await token.nonces(signer.address);
+        const chain = await ethers.provider.getNetwork();
+
+        // set the domain parameters
+        const domain = {
+            name: await token.name(),
+            version: "1",
+            chainId: chain.chainId,
+            verifyingContract: token.target
+        };
+    
+        // set the Permit type parameters
+        const types = {
+            Permit: [{
+                    name: "owner",
+                    type: "address"
+                },
+                {
+                    name: "spender",
+                    type: "address"
+                },
+                {
+                    name: "value",
+                    type: "uint256"
+                },
+                {
+                    name: "nonce",
+                    type: "uint256"
+                },
+                {
+                    name: "deadline",
+                    type: "uint256"
+                },
+            ],
+        };
+
+
+        // set the Permit type values
+        const values = {
+            owner: signer.address,
+            spender: challenge.target,
+            value: bid,
+            nonce: nonces,
+            deadline: deadline,
+        };
+
+        // sign the Permit type data with the deployer's private key
+        const signature = await signer.signTypedData(domain, types, values);
+
+        // split the signature into its components
+        const sig = ethers.Signature.from(signature)
+
+        const v = sig.v ?? (27 + sig.yParity); // 27/28
+
+        return  {
+            v,
+            r: sig.r,
+            s: sig.s,
+            deadline,
+        };
+    }
 
 
 /**************  TESTS ****************/
@@ -154,7 +233,27 @@ describe("tests Challenge contract", function () {
             const Challenge = await ethers.getContractFactory('Challenge'); 
 
             await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, [])
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash, "ipfsCid")
+            ).to.not.be.reverted
+        })
+
+        it('should juste deploy the contract in Group mode', async function() { 
+            
+            const playersAllowed = [
+                [signers[0].address],
+                [signers[1].address],
+                [signers[2].address],
+                [signers[3].address],
+                [signers[4].address]
+            ]
+
+            merkleTree = StandardMerkleTree.of(playersAllowed, ["address"]);
+
+            const Challenge = await ethers.getContractFactory('Challenge');
+
+            //Challenge Deployment
+            await expect(
+                challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root, "ipfsCid")
             ).to.not.be.reverted
         })
 
@@ -163,23 +262,24 @@ describe("tests Challenge contract", function () {
             const Challenge = await ethers.getContractFactory('Challenge'); 
 
             await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, "0x0000000000000000000000000000000000000000", false, [])
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, "0x0000000000000000000000000000000000000000", false, ethers.ZeroHash, "ipfsCid")
             ).to.be.revertedWith("the feeReceiver cannot be address 0!")
         })
 
-        it('GROUP MODE : should not be possible to deploy if one player in the array is address 0', async function() { 
+        it('GROUP MODE : should not be possible to deploy if the merkle root is 0', async function() { 
             //Challenge Deployment
             const Challenge = await ethers.getContractFactory('Challenge'); 
 
-            const playersArray = [signers[0].address, signers[1].address, "0x0000000000000000000000000000000000000000"]
             await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, playersArray)
-            ).to.be.revertedWith("address 0 cannot be a player!")
+                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, ethers.ZeroHash, "ipfsCid")
+            ).to.be.revertedWith("Merkle root required when groupMode is true")
         })
 
     })
 
-    //state gathering players
+
+
+
     describe('gathering players state', function() { 
         let challenge;
         let signers;
@@ -189,88 +289,75 @@ describe("tests Challenge contract", function () {
             ({challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase));
         });
 
-        it('should store a player in the players array (sending enough money)', async function() {
- 
-            await expect(challenge.joinChallenge())
-            .to.not.be.reverted;
-            await expect(challenge.connect(signers[1]).joinChallenge())
-            .to.not.be.reverted;
+        it('should allow a player to join, and sends the money to the challenge contract correctly', async function() {
+            const { v, r, s, deadline } = await GetRSVsig(signers[0], token, bid, challenge);
 
-            const player1 = await challenge.players(0);
-            expect(player1[0]).to.equal(signers[0].address);
+            expect(
+                await token.balanceOf(challenge)
+            ).to.equal(0)
 
-            const player2 = await challenge.players(1);
-            expect(player2[0]).to.equal(signers[1].address);
-        })
+            await expect(
+                challenge.joinChallenge(deadline, v, r, s, [])
+            )
+            .to.not.be.reverted;
+            
+            expect(
+                await token.balanceOf(challenge)
+            ).to.equal(bid)
+        })       
 
         it('FOR LINK MODE : should not allow any more participants to join if the max is already reached', async function() {
-            await challenge.joinChallenge();
-            await challenge.connect(signers[1]).joinChallenge();
-            await challenge.connect(signers[2]).joinChallenge();
-            await challenge.connect(signers[3]).joinChallenge();
-            await challenge.connect(signers[4]).joinChallenge();
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
+            const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
+            const { v: v6, r: r6, s: s6, deadline: deadline6 } = await GetRSVsig(signers[5], token, bid, challenge);
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
+            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
+            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
+            await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, []);
 
-            const player1 = await challenge.players(0);
-            expect(player1[0]).to.equal(signers[0].address);
-
-            const player2 = await challenge.players(1);
-            expect(player2[0]).to.equal(signers[1].address);
-
-            const player3 = await challenge.players(2);
-            expect(player3[0]).to.equal(signers[2].address);
-
-            const player4 = await challenge.players(3);
-            expect(player4[0]).to.equal(signers[3].address);
-
-            const player5 = await challenge.players(4);
-            expect(player5[0]).to.equal(signers[4].address);
-
-            await expect(challenge.connect(signers[5]).joinChallenge()).to.be.revertedWith("This challenge is already full");
+            await expect(
+                challenge.connect(signers[5]).joinChallenge(deadline6, v6, r6, s6, [])
+            ).to.be.revertedWith("This challenge is already full");
 
         })
 
 
         it('should not allow a participant to join twice', async function()  {
-            await challenge.joinChallenge();
-            await expect(challenge.joinChallenge()).to.be.revertedWith("You already joined");
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, [])).to.be.revertedWith("You already joined");
         })
 
-        it('should not allow a player to join if he did not approve enough tokens', async function() {
-            //signer 5 approves not enough tokens
-            await token.connect(signers[5]).approve(challenge.target, bid-1n);
-
-            await expect(
-                challenge.connect(signers[5]).joinChallenge()
-            ).to.be.revertedWith("Need prior approval for token spending");
-        })
-
-        it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues', async function() {
+        it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues. Money should be sent back to him', async function() {
             //5 players join
-            await challenge.joinChallenge();
-            await challenge.connect(signers[1]).joinChallenge();
-            await challenge.connect(signers[2]).joinChallenge();
-            await challenge.connect(signers[3]).joinChallenge();
-            await challenge.connect(signers[4]).joinChallenge();
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
+            const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
+            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
+            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
+            await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, []);
 
             //one player withdraws from challenge
+            expect(
+                await token.balanceOf(signers[2].address)
+            ).to.equal(0);
+
             await challenge.connect(signers[2]).withdrawFromChallenge();
 
-            const player1 = await challenge.players(0);
-            expect(player1[0]).to.equal(signers[0].address);
-
-            const player2 = await challenge.players(1);
-            expect(player2[0]).to.equal(signers[1].address);
-
-            const player3 = await challenge.players(2);
-            expect(player3[0]).to.equal(signers[4].address);
-
-            const player4 = await challenge.players(3);
-            expect(player4[0]).to.equal(signers[3].address);
-
-            //the 3rd player should not be in the array anymore, this should revert
-            await expect(
-                challenge.players(4)
-            ).to.be.reverted;
+            //His balance should be 1000
+            expect(
+                await token.balanceOf(signers[2].address)
+            ).to.equal(bid);
 
             //Admin successfully starts challenge
             await challenge.startChallenge();
@@ -284,54 +371,51 @@ describe("tests Challenge contract", function () {
             //try to withdraw without having joined, reverts
             await expect(
                challenge.withdrawFromChallenge()
-            ).to.be.revertedWith("You are not in players list");
+            ).to.be.revertedWith("You have not joined the challenge.");
+        })
+
+        it('should not allow a player to join, and then withdraw twice', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.withdrawFromChallenge();
+            //try to withdraw without having joined, reverts
+            await expect(
+               challenge.withdrawFromChallenge()
+            ).to.be.revertedWith("You have not joined the challenge.");
         })
 
         it('should allow a player to join, withdraw and then join again the challenge', async function() {
-            await challenge.joinChallenge();
+            //Needed twice, because of the nonce
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
             await challenge.withdrawFromChallenge();
+
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[0], token, bid, challenge);
             await expect(
-               challenge.joinChallenge()
+               challenge.joinChallenge(deadline2, v2, r2, s2, [])
             ).to.not.be.reverted
         })
 
         it('should not allow to start the challenge if there is less than 2 players', async function() {
-            challenge.joinChallenge();
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+
             await expect(
                 challenge.startChallenge()
             ).to.be.revertedWith("Not enough players to start the challenge")
         })
 
 
-        it("should revert startChallenge() if a participant doesnt have enough tokens", async function() {
-            await challenge.joinChallenge()
-            //signer 0 sends tokens to signer 6, but not enough
-            await token.transfer(signers[6], bid-1n);
-            await token.connect(signers[6]).approve(challenge.target, bid);
-            await challenge.connect(signers[6]).joinChallenge()
-
-            await expect(
-                challenge.startChallenge()
-            ).to.be.revertedWithCustomError(token, "ERC20InsufficientBalance");
-        })
-        it("should revert startChallenge() if a participant did not approve enough tokens", async function() {
-            await challenge.joinChallenge()
-
-            //signer 0 sends tokens to signer 6, but not enough
-            await token.transfer(signers[6], bid);
-            await token.connect(signers[6]).approve(challenge.target, bid);
-            await challenge.connect(signers[6]).joinChallenge()
-            //lowers approval amount
-            await token.connect(signers[6]).approve(challenge.target, bid-1n);
-
-            await expect(
-                challenge.startChallenge()
-            ).to.be.revertedWithCustomError(token, "ERC20InsufficientAllowance");
-        })
-
         it("should allow the admin to go to the next state", async function() {
-            await challenge.joinChallenge();
-            await challenge.connect(signers[1]).joinChallenge();
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
             await challenge.startChallenge();
             expect(
                await challenge.currentStatus()
@@ -341,12 +425,12 @@ describe("tests Challenge contract", function () {
     });
 
     describe("gathering players state (FOR GROUP MODE SPECIFIC TESTS)", function () {
-
         let challenge;
         let signers;
         let bid;
         let token;
-        
+        let merkleTree;
+
         //Function for using the group fixture with 'loadFixture'
         async function groupModeFixture() {
             return await deployedChallengeFixtureBase('group');
@@ -354,40 +438,49 @@ describe("tests Challenge contract", function () {
 
         beforeEach(async function () {
             //Deploying in group mode
-            ({challenge, signers, bid, token} = await loadFixture(groupModeFixture));
+            ({challenge, signers, bid, token, merkleTree} = await loadFixture(groupModeFixture));
         });
 
-        it('FOR GROUP MODE : the stored array of players should be correct', async function() {
-            await challenge.connect(signers[0]).joinChallenge()
-            await challenge.connect(signers[1]).joinChallenge()
-            await challenge.connect(signers[2]).joinChallenge()
-            await challenge.connect(signers[3]).joinChallenge()
-            
-            const player1 = await challenge.players(0);
-            expect(player1[0]).to.equal(signers[0].address);
+        it('FOR GROUP MODE : should still allow players to join', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
+            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
 
-            const player2 = await challenge.players(1);
-            expect(player2[0]).to.equal(signers[1].address);
+            //Get merkle proof for each player
+            const proof1 = merkleTree.getProof([signers[0].address]);
+            const proof2 = merkleTree.getProof([signers[1].address]);
+            const proof3 = merkleTree.getProof([signers[2].address]);
+            const proof4 = merkleTree.getProof([signers[3].address]);
 
-            const player3 = await challenge.players(2);
-            expect(player3[0]).to.equal(signers[2].address);
-
-            const player4 = await challenge.players(3);
-            expect(player4[0]).to.equal(signers[3].address);
-
+            //join with proof
+            await expect(
+                challenge.connect(signers[0]).joinChallenge(deadline1, v1, r1, s1, proof1)
+            ).to.not.be.reverted;
+            await expect(
+                challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, proof2)
+            ).to.not.be.reverted;
+            await expect(
+                challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, proof3)
+            ).to.not.be.reverted;
+            await expect(
+                challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, proof4)
+            ).to.not.be.reverted;
         })
 
         it('FOR GROUP MODE : should not allow a player to join if he is not among those chosen by the admin at creation', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[5], token, bid, challenge);
+
+            const proof1 = merkleTree.getProof([signers[0].address]);
+
             await expect(
-                challenge.connect(signers[5]).joinChallenge()
+                challenge.connect(signers[5]).joinChallenge(deadline1, v1, r1, s1, proof1)
             ).to.be.revertedWith("You are not allowed to join this challenge.")
         })
     })
 
 
-
-    
-    //state OngoingChallenge
+    // state OngoingChallenge
     describe('ongoing challenge state', function() { 
         let challenge;
         let signers;
@@ -401,6 +494,7 @@ describe("tests Challenge contract", function () {
     });
 
 
+
     //state Voting for winner
     describe('voting for winner state', function() { 
         let challenge;
@@ -409,11 +503,10 @@ describe("tests Challenge contract", function () {
             ({challenge, signers} = await loadFixture(VotingForWinnerFixture));
         });
 
-        it('should allow a player to vote (for another player). check that the vote is registered', async function(){
-            await challenge.voteForWinner(signers[1].address);
-
-            const player2 = await challenge.players(1);
-            expect(player2[1]).to.equal(1);
+        it('should allow a player to vote (for another player).', async function(){
+            await expect(
+                challenge.voteForWinner(signers[1].address)
+            ).to.not.be.reverted;
         })
 
         it('should not allow a non player to vote', async function(){
@@ -473,57 +566,9 @@ describe("tests Challenge contract", function () {
 
     });
 
-    ///Automated Vote Ending (chainlink automation)
-    // describe("Automated vote ending with chainlink", function() {
-    //     let challenge;
-    //     let signers;
-    //     let bid;
-    //     let token;
-    //     beforeEach(async function () {
-    //         ({challenge, signers, bid, token} = await loadFixture(VotingForWinnerFixture));
-    //     });
-
-    //     it("should end the vote 'Automatically', after everyone has voted", async function() {
-
-    //         await challenge.voteForWinner(signers[1].address)
-    //         await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
-    //         await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
-    //         await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
-    //         await challenge.connect(signers[4]).voteForWinner(signers[2].address)
-
-    //         // Vérifier que checkUpkeep renvoie true
-    //         const [upkeepNeeded] = await challenge.checkUpkeep("0x");
-    //         expect(upkeepNeeded).to.be.true;
-    //         // Simuler l'appel performUpkeep (manuellement ou via impersonation)
-    //         await challenge.performUpkeep("0x");
-    //         // Vérifier que le statut a changé
-    //         expect(await challenge.currentStatus()).to.equal(ChallengeStatus.ChallengeWon);
-    //     })
-
-    //     it("should end the vote 'Automatically', after voting time has passed", async function() {
-
-    //         await challenge.voteForWinner(signers[1].address)
-    //         await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
-    //         await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
-    //         await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
-
-    //         //Pass enough time
-    //         await time.increase(votingDelay);
-
-    //         // Vérifier que checkUpkeep renvoie true
-    //         const [upkeepNeeded] = await challenge.checkUpkeep("0x");
-    //         expect(upkeepNeeded).to.be.true;
-    //         // Simuler l'appel performUpkeep (manuellement ou via impersonation)
-    //         await challenge.performUpkeep("0x");
-    //         // Vérifier que le statut a changé
-    //         expect(await challenge.currentStatus()).to.equal(ChallengeStatus.ChallengeWon);
-    //     })
-        
-    // })
 
 
 
-//Ending vote
     describe('challenge won state', function() { 
         let challenge;
         let signers;
@@ -534,7 +579,7 @@ describe("tests Challenge contract", function () {
         });
         
 
-        it('winner should receive prize when endWinnerVote() is triggered', async function(){
+        it('winner should be able to retrieve prize when endWinnerVote() is triggered', async function(){
             //Players voting
             await challenge.voteForWinner(signers[1].address)
             await challenge.connect(signers[1]).voteForWinner(signers[2].address) 
@@ -547,6 +592,8 @@ describe("tests Challenge contract", function () {
             //End vote
             await challenge.endWinnerVote();
 
+            await challenge.connect(signers[2]).withdrawPrize();
+
             //Check balance after
             const balanceAfter = await token.balanceOf(signers[2].address);
 
@@ -557,7 +604,65 @@ describe("tests Challenge contract", function () {
             expect(diff).to.equal(expectedDiff); // substract fees too
         })
 
-        it('if more tokens (signers[1] gold tier here) winner should receive more tokens', async function(){
+        it('winner should NOT be able to retrieve prize multiple times', async function(){
+            //Players voting
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //End vote
+            await challenge.endWinnerVote();
+
+            await challenge.connect(signers[2]).withdrawPrize();
+
+            await expect(
+                challenge.connect(signers[2]).withdrawPrize()
+            ).to.be.revertedWith("You have already withdrawn your prize");
+            
+        })
+
+        it("When there is a tie, should allow both winners to receive prize", async function () {
+            //Players voting
+            await challenge.voteForWinner(signers[2].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[1].address)
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address)
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address)
+            await challenge.connect(signers[4]).voteForWinner(signers[4].address)
+
+            //Check balance before for both winners
+            const balanceBefore1 = await token.balanceOf(signers[1].address);
+            const balanceBefore2 = await token.balanceOf(signers[2].address);
+
+            //End vote
+            await challenge.endWinnerVote();
+
+            await challenge.connect(signers[1]).withdrawPrize();
+            //Check balance after (winner1)
+            const balanceAfter1 = await token.balanceOf(signers[1].address);
+
+            const diff1 = balanceAfter1 - balanceBefore1;
+            const expectedDiff1 = bid*5n/2n - bid*5n/2n*gold/100n;
+
+            expect(
+                diff1
+            ).to.equal(expectedDiff1);
+
+            await challenge.connect(signers[2]).withdrawPrize();
+            //Check balance after (winner2)
+            const balanceAfter2 = await token.balanceOf(signers[2].address);
+
+            const diff2 = balanceAfter2 - balanceBefore2;
+
+            const expectedDiff2 = bid*5n/2n - bid*5n/2n*bronze/100n;
+
+            expect(
+                diff2
+            ).to.equal(expectedDiff2); //substract fees too
+        });
+
+        it('if more tokens (signers[1] gold tier here), winner should receive more tokens', async function(){
             //Players voting
             await challenge.voteForWinner(signers[1].address)
             await challenge.connect(signers[1]).voteForWinner(signers[1].address) 
@@ -570,6 +675,7 @@ describe("tests Challenge contract", function () {
             //End vote
             await challenge.endWinnerVote();
 
+            await challenge.connect(signers[1]).withdrawPrize();
             //Check balance after
             const balanceAfter = await token.balanceOf(signers[1].address);
 
@@ -592,6 +698,7 @@ describe("tests Challenge contract", function () {
             //End vote
             await challenge.endWinnerVote();
 
+            await challenge.connect(signers[2]).withdrawPrize();
             const balanceAfter = await token.balanceOf(signers[0].address);
 
             const diff = balanceAfter - balanceBefore;
@@ -614,6 +721,7 @@ describe("tests Challenge contract", function () {
             //End vote
             await challenge.endWinnerVote();
 
+            await challenge.connect(signers[0]).withdrawPrize();
             const finalTotalSupply = await token.totalSupply();
 
             const diff = initialTotalSupply - finalTotalSupply;
@@ -623,50 +731,10 @@ describe("tests Challenge contract", function () {
                 diff
             ).to.equal(expectedBurntAmount);
         });
-
-        it("When there is a tie, should allow both winners to receive prize", async function () {
-            //Players voting
-            await challenge.voteForWinner(signers[2].address)
-            await challenge.connect(signers[1]).voteForWinner(signers[1].address)
-            await challenge.connect(signers[2]).voteForWinner(signers[2].address)
-            await challenge.connect(signers[3]).voteForWinner(signers[1].address)
-            await challenge.connect(signers[4]).voteForWinner(signers[4].address)
-
-            //Check balance before for both winners
-            const balanceBefore1 = await token.balanceOf(signers[1].address);
-            const balanceBefore2 = await token.balanceOf(signers[2].address);
-
-            //End vote
-            await challenge.endWinnerVote();
-
-            const winner1 = await challenge.challengeWinners(0)
-            const winner2 = await challenge.challengeWinners(1)
-
-            expect(winner1).to.equal(signers[2].address);
-            expect(winner2).to.equal(signers[1].address);
-
-            //Check balance after (winner1)
-            const balanceAfter1 = await token.balanceOf(signers[1].address);
-
-            const diff1 = balanceAfter1 - balanceBefore1;
-            const expectedDiff1 = bid*5n/2n - bid*5n/2n*gold/100n;
-
-            expect(
-                diff1
-            ).to.equal(expectedDiff1);
-
-            //Check balance after (winner2)
-            const balanceAfter2 = await token.balanceOf(signers[2].address);
-
-            const diff2 = balanceAfter2 - balanceBefore2;
-
-            const expectedDiff2 = bid*5n/2n - bid*5n/2n*bronze/100n;
-
-            expect(
-                diff2
-            ).to.equal(expectedDiff2); //substract fees too
-        });
     })
+
+
+
 
     //Check only owner functions
     describe('Owner functions', function() {
@@ -700,6 +768,11 @@ describe("tests Challenge contract", function () {
                     challenge.endWinnerVote()
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
+            it('should not allow withdrawPrize() in GatheringPlayers state', async function() {
+                await expect(
+                    challenge.withdrawPrize()
+                ).to.be.revertedWith("Not allowed in this state");
+            })
         })
 
 
@@ -707,13 +780,15 @@ describe("tests Challenge contract", function () {
             let challenge;
             let signers;
             let bid;
+            let token;
             beforeEach(async function () {
-                ({challenge, signers} = await loadFixture(OngoingChallengeFixture));
+                ({challenge, signers, bid, token} = await loadFixture(OngoingChallengeFixture));  
             });
 
             it('should not allow joinChallenge() in OngoingChallenge state', async function() {
+                const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
                 await expect(
-                    challenge.joinChallenge()
+                    challenge.joinChallenge(deadline1, v1, r1, s1, [])
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
             it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
@@ -749,6 +824,11 @@ describe("tests Challenge contract", function () {
                     challenge.endWinnerVote()
                 ).to.be.revertedWith("Not allowed in this state");
             })
+            it('should not allow withdrawPrize() in OnGoingChallenge state', async function() {
+                await expect(
+                    challenge.withdrawPrize()
+                ).to.be.revertedWith("Not allowed in this state");
+            })
         })
 
 
@@ -756,13 +836,15 @@ describe("tests Challenge contract", function () {
             let challenge;
             let signers;
             let bid;
+            let token;
             beforeEach(async function () {
-                ({challenge, signers, bid} = await loadFixture(VotingForWinnerFixture));
+                ({challenge, signers, bid, token} = await loadFixture(VotingForWinnerFixture));
             });
 
             it('should not allow joinChallenge() in VotingForWinner state', async function() {
+                const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
                 await expect(
-                    challenge.joinChallenge()
+                    challenge.joinChallenge(deadline1, v1, r1, s1, [])
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
             it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
@@ -775,6 +857,11 @@ describe("tests Challenge contract", function () {
                     challenge.startChallenge()
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
+            it('should not allow withdrawPrize() in VotingForWinner state', async function() {
+                await expect(
+                    challenge.withdrawPrize()
+                ).to.be.revertedWith("Not allowed in this state");
+            })
         })
 
         
@@ -782,14 +869,16 @@ describe("tests Challenge contract", function () {
             let challenge;
             let signers;
             let bid;
+            let token;
             beforeEach(async function () {
-                ({challenge, signers, bid} = await loadFixture(EndingVoteFixture));
+                ({challenge, signers, bid, token} = await loadFixture(EndingVoteFixture));
                 await challenge.endWinnerVote();
             });
 
             it('should not allow joinChallenge() in ChallengeWon state', async function() {
+                const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
                 await expect(
-                    challenge.joinChallenge()
+                    challenge.joinChallenge(deadline1, v1, r1, s1, [])
                 ).to.be.revertedWith("Not allowed in this state");
             }) 
             it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
@@ -821,25 +910,31 @@ describe("tests Challenge contract", function () {
     describe('Events', function() { 
 
         it("should emit an event when a Player Joined", async function() {
-            const {challenge, signers, bid} = await loadFixture(deployedChallengeFixtureBase)
-            await expect(challenge.joinChallenge())
+            const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, []))
                 .to.emit(challenge, "PlayerJoined")
                 .withArgs(signers[0].address); 
         })
 
         it("should emit an event when a Player Withdraws from challenge", async function() {
-            const {challenge, signers, bid} = await loadFixture(deployedChallengeFixtureBase)
-            await challenge.joinChallenge();
+            const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
             await expect(challenge.withdrawFromChallenge())
                 .to.emit(challenge, "PlayerWithdrawn")
                 .withArgs(signers[0].address); 
         })
 
         it("should emit an event when ChallengeStarted", async function() {
-            const {challenge, signers} = await loadFixture(deployedChallengeFixtureBase)
+            const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
 
-            await challenge.joinChallenge();
-            await challenge.connect(signers[1]).joinChallenge();
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
 
             await expect(challenge.startChallenge())
                 .to.emit(challenge, "ChallengeStarted")
@@ -864,12 +959,16 @@ describe("tests Challenge contract", function () {
 
         it("should emit an event when a prize is sent", async function() {
             const {challenge, signers, bid} = await loadFixture(EndingVoteFixture)
-            
+
+            await challenge.endWinnerVote()
+
             const expectedPrize = bid*5n - 5n*bid*BigInt(gold)/100n;
 
-            await expect(await challenge.endWinnerVote())
-                .to.emit(challenge, "PrizeSent")
+            await expect(
+                await challenge.connect(signers[1]).withdrawPrize()
+            ).to.emit(challenge, "PrizeWithdrawn")
                 .withArgs(signers[1].address, expectedPrize)
         })
     })
+    
 })

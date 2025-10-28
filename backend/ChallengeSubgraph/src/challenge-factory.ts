@@ -1,7 +1,6 @@
 import {
   ChallengeCreated as ChallengeCreatedEvent,
-  ChallengeFactoryNew
-} from "../generated/ChallengeFactoryNew/ChallengeFactoryNew"
+} from "../generated/ChallengeFactory/ChallengeFactory"
 import {
   ChallengeCreated
 } from "../generated/schema"
@@ -18,7 +17,7 @@ export function handleChallengeCreated(event: ChallengeCreatedEvent): void {
   // event params as defined in the ABI
   entity.admin = event.params.admin
   entity.challengeAddress = event.params.challengeAddress
-  entity.blockNumber = event.params.blockNumber
+  entity.timestamp = event.params.timestamp
 
   // metadata
   entity.txHash = event.transaction.hash

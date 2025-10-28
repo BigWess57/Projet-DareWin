@@ -8,12 +8,12 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: ChallengeFactoryNew
-    network: mainnet #base-sepolia
+    name: ChallengeFactory
+    network: base-sepolia #mainnet
     source:
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853" #"0xAfC2b14a40aFb10859f5DDDe49B1ea1c13eCAdD0" 
-      abi: ChallengeFactoryNew
-      startBlock: 0 #32901597
+      address: "0x7086C28Fa981a489498fA4651A4D3104b92bC788" #"0xa513E6E4b8f2a923D98304ec87F64353C4D5C853" 
+      abi: ChallengeFactory
+      startBlock: 32955178 #0
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -21,18 +21,18 @@ dataSources:
       entities:
         - ChallengeCreated
       abis:
-        - name: ChallengeFactoryNew
-          file: ./abis/ChallengeFactoryNew.json
+        - name: ChallengeFactory
+          file: ./abis/ChallengeFactory.json
       eventHandlers:
         - event: ChallengeCreated(indexed address,address,uint256)
           handler: handleChallengeCreated
-      file: ./src/challenge-factory-new.ts
+      file: ./src/challenge-factory.ts
 templates:
   - name: ChallengeTemplate
     kind: ethereum/contract
-    network: mainnet #base-sepolia
+    network: base-sepolia #mainnet
     source:
-      abi: ChallengeNew  # ABI of each challenge contract
+      abi: Challenge  # ABI of each challenge contract
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -42,8 +42,8 @@ templates:
         - PlayerWithdrawn
         - PlayerVoted
       abis:
-        - name: ChallengeNew
-          file: ./abis/ChallengeNew.json
+        - name: Challenge
+          file: ./abis/Challenge.json
       eventHandlers:
         - event: PlayerJoined(address)
           handler: handlePlayerJoined
@@ -51,4 +51,4 @@ templates:
           handler: handlePlayerWithdrawn
         - event: PlayerVoted(address,address)
           handler: handlePlayerVoted
-      file: ./src/challenge-new.ts
+      file: ./src/challenge.ts

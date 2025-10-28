@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from 'react'
 
-// import { factoryAddress } from '@/constants/ChallengeFactoryInfo';
-import { retriveEventsFromBlock } from '@/utils/client';
-
-import { Address, formatEther, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem } from 'viem';
+import { Address, formatEther } from 'viem';
 import { useAccount } from 'wagmi';
 import { contractAbi } from '@/constants/ChallengeInfo';
 import { readContract, readContracts } from 'wagmi/actions';
 import { config } from '@/app/RainbowKitAndWagmiProvider';
 import { useRouter } from 'next/navigation';
 import { retrieveChallenges } from '@/utils/apiFunctions';
-import ChallengePreview from '../Miscellaneous/ChallengePreview';
 import { ChallengeTabs } from '../Miscellaneous/ChallengeTabs';
 
 
@@ -29,7 +25,7 @@ type ChallengeCreated = {
     id: string
     admin: Address
     challengeAddress: Address
-    blockNumber: string
+    timestamp: string
     txHash: string
     createdAt: string
 }
@@ -37,7 +33,7 @@ type ChallengeCreated = {
 type ChallengeAddresses = {
     admin: Address,
     address: Address,
-    blockNumber: string,
+    timestamp: string,
 }
 
 const ChallengeList = () => {
@@ -101,7 +97,7 @@ const ChallengeList = () => {
                 bid: formatEther(bid as bigint),
                 maxPlayers: maxPlayers as string,
                 description: description as string,
-                timestampOfCreation: challenge.blockNumber,
+                timestampOfCreation: challenge.timestamp,
                 groupMode: groupMode as boolean,
             })
         }
@@ -123,7 +119,7 @@ const ChallengeList = () => {
         const challengeAddresses = ChallengesCreated.map((challenge: ChallengeCreated) => ({
             admin: challenge.admin as Address,
             address: challenge.challengeAddress as Address,
-            blockNumber: challenge.blockNumber as string,
+            timestamp: challenge.timestamp as string,
         }))
 
         const challengesCreatedInfo = await buildChallengesObject(challengeAddresses);
@@ -152,7 +148,7 @@ const ChallengeList = () => {
                     return {
                         admin: challenge.admin as Address,
                         address: challenge.challengeAddress as Address,
-                        blockNumber: challenge.blockNumber as string,
+                        timestamp: challenge.timestamp as string,
                     };
                 }
 
@@ -175,7 +171,7 @@ const ChallengeList = () => {
         const latestChallengeAddresses = LatestChallenges.map((challenge: ChallengeCreated) => ({
             admin: challenge.admin as Address,
             address: challenge.challengeAddress as Address,
-            blockNumber: challenge.blockNumber as string,
+            timestamp: challenge.timestamp as string,
         }))
 
         const latestChallengesInfo = await buildChallengesObject(latestChallengeAddresses);

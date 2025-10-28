@@ -2,36 +2,33 @@ import { useContext, useEffect, useState } from "react";
 
 import { toast } from "sonner"
 
-import { Address, GetLogsReturnType, isAddressEqual, parseAbiItem, zeroHash } from "viem"
+import { Address, isAddressEqual, parseAbiItem } from "viem"
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
 
 import { contractAbi } from "@/constants/ChallengeInfo"
-import { /*tokenAddress, */tokenAbi} from "@/constants/TokenInfo"
 
-import { retriveEventsFromBlock, wagmiEventRefreshConfig } from '@/utils/client';
+import { wagmiEventRefreshConfig } from '@/utils/client';
 
 import { BidContext } from "../RouteBaseElements/ChallengePage";
  import { ReadContractErrorType } from "wagmi/actions";
 
-import { config } from "@/app/RainbowKitAndWagmiProvider";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 import { ContractAddressContext } from "../RouteBaseElements/ChallengePage";
 import Joined from "../Miscellaneous/Joined";
 import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToast";
 
-import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
 import { GetRSVsig } from "@/utils/getSignatureForPermit";
 import { getPlayers } from "@/utils/apiFunctions";
 
 import { Loader2 } from "lucide-react";
 import { tokenAddress } from "@/config/networks";
 
+
 // small type guard — narrows unknown -> readonly `0x${string}`[]
 function isHexArray(x: unknown): x is `0x${string}`[] {
   if (!Array.isArray(x)) return false;
   return x.every(item => typeof item === 'string' && /^0x[0-9a-fA-F]+$/.test(item));
 }
-
 
 
 const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
@@ -88,6 +85,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         hash: withdrawHash
     }) 
 
+
     //For start challenge transaction
     const { data: startHash, isPending: isStarting, writeContract: startContract, } = useWriteContract({
         mutation: {
@@ -108,12 +106,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const { data: readData, error: error, isPending: IsPending, refetch: refetch } = useReadContracts({
         contracts: [
-            // {
-            //     address: tokenAddress,
-            //     abi: tokenAbi,
-            //     functionName: 'allowance',
-            //     args: [address, contractAddress],
-            // },
             {
                 address: contractAddress,
                 abi: contractAbi,
@@ -124,17 +116,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 abi: contractAbi,
                 functionName: 'groupMode',
             },
-            // {
-            //     address: contractAddress,
-            //     abi: contractAbi,
-            //     functionName: 'isAllowed',
-            //     args: [address as Address],
-            // },
-            // {
-            //     address: contractAddress,
-            //     abi: contractAbi,
-            //     functionName: 'merkleRoot',
-            // },
             {
                 address: contractAddress,
                 abi: contractAbi,
@@ -161,61 +142,12 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     const [players, setPlayers] = useState<(Address)[]>([]);
 
     
-
+      //Get players from GraphQL (through next server endpoint)
     const getPlayersForChallenge = async() => {
         const CurrentPlayers = await getPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
         setPlayers(CurrentPlayers);
     }
 
-    //Events
-    // const [events, setEvents] = useState<(Address | undefined)[]>([]);
-  
-    // const PLAYER_JOINED_ABI = parseAbiItem(
-    //             'event PlayerJoined(address player)'
-    // );
-    // const PLAYER_WITHDRAWN_ABI = parseAbiItem(
-    //     'event PlayerWithdrawn(address player)'
-    // );
-    // const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
-    
-    // const getEvents = async() => {
-
-    //     const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
-        
-    //     const playerStates = new Map();
-
-    //     for (const log of Logs) {
-    //         const player = log.args.player;
-    //         if (log.eventName === "PlayerJoined") {
-    //             playerStates.set(player, true); // true = currently joined
-    //         } else if (log.eventName === "PlayerWithdrawn") {
-    //             playerStates.set(player, false); // false = withdrawn
-    //         }
-    //     }
-    //     // Filter players who are still joined (value = true)
-    //     const activePlayers = Array.from(playerStates.entries())
-    //         .filter(([_, isJoined]) => isJoined)
-    //         .map(([player]) => player);
-
-    //     setEvents(activePlayers)
-
-    //     //Check if the current user has joined
-    //     for(const player of activePlayers){
-    //         if(address === player){
-    //             setUserHasJoined(true)
-    //             return
-    //         }
-    //     }
-    //     setUserHasJoined(false)
-    // }
-
-
-    // const refetchAll = async () => {
-    //     // getEvents()
-    //     // getPlayersForChallenge()
-    //     refetchStatus()
-    //     refetch()
-    // }
 
     const joinChallenge = async () => {
         
@@ -369,7 +301,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     }, [startSuccess, startReceiptError])
 
 
-
+    // Getting data from the contract
     useEffect(() => {
         if (!readData) return
 
@@ -417,7 +349,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         //Get proofs from IPFS, to know if the player is allowed to join
         fetch(`/api/ipfsProofs/getProofs`, params)
             .then(async (res) => {
-                const result = await res.json(); // <-- convert Response to JSON object
+                const result = await res.json();
 
                 if (result.whitelisted && result.proof !== undefined) {
 

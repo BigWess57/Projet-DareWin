@@ -1,5 +1,4 @@
 import { Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12 } from 'lucide-react'
-import loadConfig from 'next/dist/server/config'
 import { useState, useEffect } from 'react'
 
 export function ChallengeTimer({

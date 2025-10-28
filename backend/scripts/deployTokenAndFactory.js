@@ -9,7 +9,7 @@ async function main() {
     /********* Deploy DARE token first **********/
     /********************************************/
 
-    const DareWinToken = await ethers.deployContract("DareWinNew", [signers[0].address]);
+    const DareWinToken = await ethers.deployContract("DareWin", [signers[0].address]);
 
     const isLocalhost = network.name.includes('localhost');
     if(typeof network.name === "string"){
@@ -57,9 +57,7 @@ async function main() {
     }
 
     //Deploy the challenge factory
-    const ChallengeFactory = await ethers.deployContract("ChallengeFactoryNew", [DareWinToken.target, signers[0].address]);
-    // const challengeFactory = await ethers.getContractFactory("ChallengeFactory");
-    // const ChallengeFactory = challengeFactory.attach("0xF5b33B18eF224357aFB475Cbc75cae3084da46FA")
+    const ChallengeFactory = await ethers.deployContract("ChallengeFactory", [DareWinToken.target, signers[0].address]);
     console.log('deploiement de la Challenge Factory en cours...');
 
     if(!isLocalhost){

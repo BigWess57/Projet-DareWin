@@ -11,13 +11,13 @@ export async function GET(req: Request) {
     query($admin: String) {
       challengeCreateds(
         where: { admin: $admin }
-        orderBy: blockNumber
+        orderBy: timestamp
         orderDirection: desc
       ) {
         id
         admin
         challengeAddress
-        blockNumber
+        timestamp
         txHash
         createdAt
       }

@@ -15,9 +15,7 @@ export default function myChallenges() {
 
   const [challengeAddress, setChallengeAddress] = useState("")
 
-  const navigate = () => {
-    console.log('testenet')
-    
+  const navigate = () => {    
     if (!isAddress(challengeAddress)) {
       toast.error("Error : Incorrect address", {
           duration: 3000,

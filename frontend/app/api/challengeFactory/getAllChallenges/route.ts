@@ -8,13 +8,13 @@ export async function GET(req: Request) {
   const query = `
     query {
       challengeCreateds(
-        orderBy: blockNumber
+        orderBy: timestamp
         orderDirection: desc
       ) {
         id
         admin
         challengeAddress
-        blockNumber
+        timestamp
         txHash
         createdAt
       }
