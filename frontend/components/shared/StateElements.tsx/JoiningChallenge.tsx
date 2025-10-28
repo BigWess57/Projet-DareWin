@@ -3,12 +3,12 @@ import { useContext, useEffect, useState } from "react";
 import { toast } from "sonner"
 
 import { Address, GetLogsReturnType, isAddressEqual, parseAbiItem, zeroHash } from "viem"
-import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from "wagmi"
+import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
 
 import { contractAbi } from "@/constants/ChallengeInfo"
-import { tokenAddress, tokenAbi} from "@/constants/TokenInfo"
+import { /*tokenAddress, */tokenAbi} from "@/constants/TokenInfo"
 
-import { retriveEventsFromBlock } from '@/utils/client';
+import { retriveEventsFromBlock, wagmiEventRefreshConfig } from '@/utils/client';
 
 import { BidContext } from "../RouteBaseElements/ChallengePage";
  import { ReadContractErrorType } from "wagmi/actions";
@@ -24,6 +24,7 @@ import { GetRSVsig } from "@/utils/getSignatureForPermit";
 import { getPlayers } from "@/utils/apiFunctions";
 
 import { Loader2 } from "lucide-react";
+import { tokenAddress } from "@/config/networks";
 
 // small type guard — narrows unknown -> readonly `0x${string}`[]
 function isHexArray(x: unknown): x is `0x${string}`[] {
@@ -44,6 +45,8 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const [challengeCid, setChallengeCid] = useState<string>("")
     const [challengeMerkleProof, setChallengeMerkleProof] = useState<readonly `0x${string}`[]>()
+
+    const [isRefetchingStatus, setIsRefetchingStatus] = useState<boolean>(false);
 
     /***************** 
  * Functions for interaction with the blockchain 
@@ -207,12 +210,12 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     // }
 
 
-    const refetchAll = async () => {
-        // getEvents()
-        // getPlayersForChallenge()
-        refetchStatus()
-        refetch()
-    }
+    // const refetchAll = async () => {
+    //     // getEvents()
+    //     // getPlayersForChallenge()
+    //     refetchStatus()
+    //     refetch()
+    // }
 
     const joinChallenge = async () => {
         
@@ -261,6 +264,25 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         })
     }
     
+    
+
+    useWatchContractEvent({
+        address: contractAddress,
+        abi: [
+            parseAbiItem(
+                'event ChallengeStarted(uint256 startingTime)',
+            ),
+        ],
+        eventName: 'ChallengeStarted',
+        config: wagmiEventRefreshConfig,
+        poll: true,
+        pollingInterval: 5_000,
+        onLogs: (logs) => {
+            // This will trigger immediately when the event is emitted
+            refetchStatus();
+        },
+    })
+
 
 
  /********** Use effects *************/
@@ -268,11 +290,18 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     //For joining
     useEffect(() => {
         if(joinSuccess) {
-            refetchAll()
+            setUserHasJoined(true)
 
             if(!address) return;
             //Update players list (add current user)
             setPlayers(prev => [address, ...prev]);
+
+            // Refetch after delay as backup
+            const timer = setTimeout(() => {
+                refetch()
+            }, 2000)
+            
+            return () => clearTimeout(timer)
         }
         if(joinReceiptError) {
             console.error('Transaction failed ', joinReceiptError.message)
@@ -285,7 +314,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     //For withdraw
     useEffect(() => {
         if(withdrawSuccess) {
-            refetchAll()
+            setUserHasJoined(false)
 
             if(!address) return;
             //Update players list (remove current user)
@@ -294,6 +323,13 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                     (p) => p.toLowerCase() !== address.toLowerCase()
                 )
             );
+
+            // Refetch after delay as backup
+            const timer = setTimeout(() => {
+                refetch()
+            }, 2000)
+            
+            return () => clearTimeout(timer)
         }
         if(withdrawReceiptError) {
             console.error('Transaction failed ', withdrawReceiptError.message)
@@ -306,7 +342,23 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     //For start challenge
     useEffect(() => {
         if(startSuccess) {
-            refetchAll()
+            //set display at loading
+            setIsRefetchingStatus(true)
+
+            // Refetch after delay as backup
+            const timer = setTimeout(async () => {
+                try {
+                    await refetchStatus();
+                } catch (error) {
+                    console.error('Failed to refetch status:', error);
+                } finally {
+                    setIsRefetchingStatus(false);
+                }
+            }, 2000)
+            return () => {
+                clearTimeout(timer);
+                setIsRefetchingStatus(false);
+            }
         }
         if(startReceiptError) {
             console.error('Transaction failed ', startReceiptError.message)
@@ -342,7 +394,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         const hasJoined = player[0];
         setUserHasJoined(hasJoined)
 
-        refetchAll();
+        refetchStatus();
     }, [readData, address])
 
     
@@ -419,104 +471,118 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         return () => clearInterval(interval);
     }, []);
 
+
 /************
  * Display
  *************/
-    return (
-        <div className="space-y-6 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl">
 
-            {/* Statut d’attente */}
-            <div className="flex items-center justify-between bg-[#0B1126] p-4 rounded-lg border border-cyan-500/20">
-                <p className="flex items-center gap-2 text-xl font-semibold text-white/90">
-                🚀 En attente de joueurs{dots}
-                </p>
-                <div className="flex flex-col items-end space-y-1 text-sm">
-                <div className="text-white/60">
-                    Mode : <span className="font-semibold text-cyan-400">{groupMode ? 'Friend Group' : 'Public'}</span>
-                </div>
-                {groupMode && (
-                    <div className={`text-sm ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
-                        {isCheckingWhitelist ? (
-                            <div className="flex items-center text-cyan-500 justify-center gap-2">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>Chargement des adresses autorisées...</span>
-                            </div>
-                        ) : isAllowed === true ? (
-                            'Vous etes autorisé a participer au challenge'
-                        ) : isAllowed === false ? (
-                            "Vous n'etes pas autorisé a participer au challenge"
-                        ) : null}
-                    </div>
-                )}
-                </div>
-            </div>
-
-            {/* Header d’état + Actions */}
-            <div className="flex items-center justify-between space-x-4">
-                {/* Boutons JOIN / LEAVE */}
-                {!userHasJoined ? (
-                    <button
-                    onClick={joinChallenge}
-                    disabled={groupMode && !isAllowed}
-                    className={`
-                        w-1/3 px-4 py-3 rounded-lg font-medium transition
-                        ${groupMode && !isAllowed
-                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
-                    `}
-                    >
-                    REJOINDRE
-                    </button>
-                ) : (
-                    <button
-                    onClick={withdrawFromChallenge}
-                    disabled={groupMode && !isAllowed}
-                    className={`
-                        w-1/3 px-4 py-3 rounded-lg font-medium transition
-                        ${groupMode && !isAllowed
-                        ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:brightness-110'}
-                    `}
-                    >
-                    QUITTER
-                    </button>
-                )}
-
-                {/* Bouton Start Challenge (propriétaire uniquement) */}
-                {challengeOwner && address && isAddressEqual(challengeOwner, address) && (
-                    <button
-                    onClick={startChallenge}
-                    disabled={players.length < 2}
-                    className={`
-                        px-4 py-2 rounded-lg font-semibold transition
-                        ${players.length < 2
-                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
-                    `}
-                    >
-                        Démarrer le défi
-                    </button>
-                )}
-            </div>
-
-            {/* Liste des joueurs */}
-            <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
-                <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
-                <div className="flex flex-col gap-2 text-white">
-                {players?.length > 0 ? (
-                    [...players].reverse().map((addr) => (
-                        <Joined address={addr} key={addr} />
-                    ))
-                ) : (
-                    <div className="italic text-white/50">(aucun pour l'instant)</div>
-                )}
-                </div>
-            </div>
-
-            <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage="Vous avez rejoint le challenge avec succès!" />
-            <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Le challenge a démarré avec succès!" />
-            <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage="Vous avez quitté le challenge" />
+    const LoadingSpinner = () => (
+        <div className="flex flex-col items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
+            <p className="text-gray-600">Updating challenge status...</p>
         </div>
+    );
+
+    return (
+        <>
+            {isRefetchingStatus ? (
+                <LoadingSpinner/>
+            ) : (
+                <div className="space-y-6 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl">
+                    {/* Statut d’attente */}
+                    <div className="flex items-center justify-between bg-[#0B1126] p-4 rounded-lg border border-cyan-500/20">
+                        <p className="flex items-center gap-2 text-xl font-semibold text-white/90">
+                        🚀 En attente de joueurs{dots}
+                        </p>
+                        <div className="flex flex-col items-end space-y-1 text-sm">
+                        <div className="text-white/60">
+                            Mode : <span className="font-semibold text-cyan-400">{groupMode ? 'Friend Group' : 'Public'}</span>
+                        </div>
+                        {groupMode && (
+                            <div className={`text-sm ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
+                                {isCheckingWhitelist ? (
+                                    <div className="flex items-center text-cyan-500 justify-center gap-2">
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Chargement des adresses autorisées...</span>
+                                    </div>
+                                ) : isAllowed === true ? (
+                                    'Vous etes autorisé a participer au challenge'
+                                ) : isAllowed === false ? (
+                                    "Vous n'etes pas autorisé a participer au challenge"
+                                ) : null}
+                            </div>
+                        )}
+                        </div>
+                    </div>
+
+                    {/* Header d’état + Actions */}
+                    <div className="flex items-center justify-between space-x-4">
+                        {/* Boutons JOIN / LEAVE */}
+                        {!userHasJoined ? (
+                            <button
+                            onClick={joinChallenge}
+                            disabled={groupMode && !isAllowed}
+                            className={`
+                                w-1/3 px-4 py-3 rounded-lg font-medium transition
+                                ${groupMode && !isAllowed
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
+                            `}
+                            >
+                            REJOINDRE
+                            </button>
+                        ) : (
+                            <button
+                            onClick={withdrawFromChallenge}
+                            disabled={groupMode && !isAllowed}
+                            className={`
+                                w-1/3 px-4 py-3 rounded-lg font-medium transition
+                                ${groupMode && !isAllowed
+                                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:brightness-110'}
+                            `}
+                            >
+                            QUITTER
+                            </button>
+                        )}
+
+                        {/* Bouton Start Challenge (propriétaire uniquement) */}
+                        {challengeOwner && address && isAddressEqual(challengeOwner, address) && (
+                            <button
+                            onClick={startChallenge}
+                            disabled={players.length < 2}
+                            className={`
+                                px-4 py-2 rounded-lg font-semibold transition
+                                ${players.length < 2
+                                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
+                            `}
+                            >
+                                Démarrer le défi
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Liste des joueurs */}
+                    <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
+                        <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
+                        <div className="flex flex-col gap-2 text-white">
+                        {players?.length > 0 ? (
+                            [...players].reverse().map((addr) => (
+                                <Joined address={addr} key={addr} />
+                            ))
+                        ) : (
+                            <div className="italic text-white/50">(aucun pour l'instant)</div>
+                        )}
+                        </div>
+                    </div>
+
+                    <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage="Vous avez rejoint le challenge avec succès!" />
+                    <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Le challenge a démarré avec succès!" />
+                    <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage="Vous avez quitté le challenge" />
+                </div>
+            )}
+        </>
     )
 }
 

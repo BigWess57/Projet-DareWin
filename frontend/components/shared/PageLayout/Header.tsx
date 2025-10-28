@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import Link from "next/link";
 
-import { tokenAbi, tokenAddress, feeTierBronzeCap, feeTierSilverCap, feeTierGoldCap, TierBronzeFee, TierSilverFee, TierGoldFee, TierPlatinumFee} from "@/constants/TokenInfo";
+import { tokenAbi/*, tokenAddress*/, feeTierBronzeCap, feeTierSilverCap, feeTierGoldCap, TierBronzeFee, TierSilverFee, TierGoldFee, TierPlatinumFee} from "@/constants/TokenInfo";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { formatEther } from "viem";
@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation';
 
 import { Home, Zap, PencilRuler } from 'lucide-react'
 import { FeeTierExplanation } from '../Miscellaneous/FeeTierExplanation';
+import { tokenAddress } from '@/config/networks';
 
 const Header = () => {
 

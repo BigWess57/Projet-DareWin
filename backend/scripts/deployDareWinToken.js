@@ -13,7 +13,7 @@ async function main() {
 
     if(!isLocalhost){
         console.log('Attente de quelques blocs avant verification');
-        await DareWinToken.deploymentTransaction()?.wait(5);
+        await DareWinToken.deploymentTransaction()?.wait(3);
     }
     console.log(`DARE Token deployed to ${DareWinToken.target}`)
 
@@ -21,7 +21,6 @@ async function main() {
         console.log( 'Vérification du contrat intelligent du Token...' )
         // await verify(DareWinToken.target.toString(), [signers[0].address])
         await verify(DareWinToken.target, [signers[0].address])
-        console.log( 'Contrat vérifié!' )
     }
 }
 

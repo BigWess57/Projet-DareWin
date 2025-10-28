@@ -4,15 +4,16 @@ import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagm
 
 import ChallengeForm, { ChallengeFormValues } from "../Miscellaneous/ChallengeForm"
 import { CopyAction } from '../Miscellaneous/CopyAction'
-import { factoryAbi, factoryAddress } from '@/constants/ChallengeFactoryInfo'
+import { factoryAbi/*, factoryAddress*/ } from '@/constants/ChallengeFactoryInfo'
 
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
-import { isAddressEqual, parseAbiItem, parseEther, zeroHash } from 'viem'
+import { decodeEventLog, isAddressEqual, parseAbiItem, parseEther, zeroHash } from 'viem'
 import { publicClient } from '@/utils/client'
 import { _toLowerCase } from 'zod/v4/core'
 
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
+import { factoryAddress } from "@/config/networks"
 
 
 
@@ -60,7 +61,7 @@ const ChallengeFactory = () => {
     })
 
     //Used to check the current transaction state
-    const { isLoading: isConfirming, isSuccess, error: errorConfirmation, } = useWaitForTransactionReceipt({
+    const { data: receipt, isLoading: isConfirming, isSuccess, error: errorConfirmation, } = useWaitForTransactionReceipt({
         hash
     })
 
@@ -150,12 +151,19 @@ const ChallengeFactory = () => {
     const getChallengeCreatedEvents = async() => {
         
         const latestBlockNumber = await publicClient.getBlockNumber();
+
+        //free alchemy tier on Sepolia/Holesky, Only allows to look back 500 blocks with get_Logs()
         const block500Before = latestBlockNumber > 499n ? latestBlockNumber - 499n : 0n;
+        //free alchemy tier on BASE Sepolia, Only allows to look back 10 blocks with get_Logs()
+        const block10Before = latestBlockNumber > 9n ? latestBlockNumber - 9n : 0n;
+
+        console.log(block10Before)
+        console.log(latestBlockNumber)
 
         const Logs = await publicClient.getLogs({
             address: factoryAddress,
             event: parseAbiItem("event ChallengeCreated(address indexed admin, address challengeAddress, uint256 blockNumber)"),
-            fromBlock: block500Before,
+            fromBlock: block10Before, //block500Before
             toBlock: 'latest'
         })
         
@@ -179,6 +187,53 @@ const ChallengeFactory = () => {
         }
     }
 
+    const getContractAddressFromLogs = (receipt: any) => {
+        if (!receipt?.logs) return null
+        
+        // Replace with your actual event ABI
+        const contractCreatedEventAbi = {
+            "anonymous": false,
+            "inputs": [
+            {
+                "indexed": true,
+                "name": "admin",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "challengeAddress",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "name": "blockNumber",
+                "type": "uint256"
+            }
+            ],
+            "name": "ChallengeCreated",
+            "type": "event"
+        } as const
+
+        for (const log of receipt.logs) {
+            try {
+                const decoded = decodeEventLog({
+                    abi: [contractCreatedEventAbi],
+                    data: log.data,
+                    topics: log.topics
+                })
+                console.log(decoded)
+                if (decoded.eventName === 'ChallengeCreated') {
+                    return decoded.args.challengeAddress
+                }
+            } catch {
+            // Skip logs that don't match
+            }
+        }
+        return null
+    }
+
+/****** Use effects ******/
+
     useEffect(() => {
         if (isConfirming) {
             // Affiche le toast "loading" et garde son ID
@@ -190,22 +245,41 @@ const ChallengeFactory = () => {
         }
         if (isSuccess) {
             // Remplace toast "loading" by toast success with same ID
-            getChallengeCreatedEvents().then((challengeAddress) => {
-                if(challengeAddress == null){
-                    toast.warning("Warning!", {
-                        id: 1,
-                        description: "Challenge successfully created, but could not retrieve contract address. Check 'My challenges' tab",
-                        duration: 3000,
-                    })
-                }else{
-                    toast.success("Transaction Successful!", {
-                        id: 1,
-                        description: "Challenge créé avec succes a l'adresse " + challengeAddress,
-                        action:<CopyAction address={challengeAddress}/>,
-                        duration: 5000,
-                    })
-                }
-            })
+            // getChallengeCreatedEvents().then((challengeAddress) => {
+            //     if(challengeAddress == null){
+            //         toast.warning("Warning!", {
+            //             id: 1,
+            //             description: "Challenge successfully created, but could not retrieve contract address. Check 'My challenges' tab",
+            //             duration: 3000,
+            //         })
+            //     }else{
+            //         toast.success("Transaction Successful!", {
+            //             id: 1,
+            //             description: "Challenge créé avec succes a l'adresse " + challengeAddress,
+            //             action:<CopyAction address={challengeAddress}/>,
+            //             duration: 5000,
+            //         })
+            //     }
+            // })
+
+            const newContractAddress = getContractAddressFromLogs(receipt);
+
+            if(!newContractAddress){
+                toast.warning("Warning!", {
+                    id: 1,
+                    description: "Challenge successfully created, but could not retrieve contract address. Check 'My challenges' tab",
+                    duration: 3000,
+                })
+                return;
+            }else{
+                toast.success("Transaction Successful!", {
+                    id: 1,
+                    description: "Challenge créé avec succes a l'adresse " + newContractAddress,
+                    action:<CopyAction address={newContractAddress}/>,
+                    duration: 5000,
+                })
+            }
+
         }
         if(errorConfirmation) {
             //Unpin content on Ipfs if challenge creation has failed

@@ -156,7 +156,14 @@ const ChallengeWon = () => {
           description: "Vous avez récupéré votre récompense",
           // className: "bg-lime-200"
         })
-        refetch()
+
+        setHasWithdrawn(true);
+
+        // Refetch after delay as backup
+        const timer = setTimeout(() => {
+            refetch()
+        }, 2000)
+        return () => clearTimeout(timer)
       }
       if(withdrawReceiptError) {
           console.error('Transaction failed ', withdrawReceiptError.message)
@@ -165,7 +172,6 @@ const ChallengeWon = () => {
           });
       }
   }, [isSuccess, withdrawReceiptError])
-
 
 
   return (
@@ -179,7 +185,6 @@ const ChallengeWon = () => {
         <h1 className="flex items-center gap-3 text-3xl font-bold">
           Le vote est terminé !
         </h1>
-
         {/* {!hasJoined ?
           (<div>
             <div className='italic'> Vous ne participez pas a ce défi </div>

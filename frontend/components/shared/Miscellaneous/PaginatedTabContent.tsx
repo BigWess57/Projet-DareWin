@@ -114,7 +114,7 @@ const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsP
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className='bg-[#0B1126] text-white/90'>
-                            {[1,2,3,4,5,10,20,50].map((n) => (
+                            {[5,10,20,50].map((n) => (
                             <SelectItem key={n} value={n.toString()}>
                                 {n}
                             </SelectItem>

@@ -9,11 +9,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: ChallengeFactoryNew
-    network: mainnet
+    network: mainnet #base-sepolia
     source:
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
+      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853" #"0xAfC2b14a40aFb10859f5DDDe49B1ea1c13eCAdD0" 
       abi: ChallengeFactoryNew
-      startBlock: 0
+      startBlock: 0 #32901597
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -30,7 +30,7 @@ dataSources:
 templates:
   - name: ChallengeTemplate
     kind: ethereum/contract
-    network: mainnet
+    network: mainnet #base-sepolia
     source:
       abi: ChallengeNew  # ABI of each challenge contract
     mapping:

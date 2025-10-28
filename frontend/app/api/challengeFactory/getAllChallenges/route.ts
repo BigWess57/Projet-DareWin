@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
+import { currentSubgraphURL } from "@/config/networks"
 
-const SUBGRAPH_URL = process.env.SUBGRAPH_URL || "http://localhost:8000/subgraphs/name/challenge"
+const SUBGRAPH_URL = currentSubgraphURL || "http://localhost:8000/subgraphs/name/challenge"
 
 export async function GET(req: Request) {
 

@@ -126,6 +126,19 @@ const ChallengeState = () => {
         setChallengeStart(challengeStartTime);
     }, [challengeStartTime])
 
+    //When retrieving challenge status
+    useEffect(() => {
+        if(status){
+            console.log("Status retrieved : ", status) 
+        }
+        if(IsPending){
+            console.log("Status retrieval is pending...")
+        }
+        if(error){
+            console.error("ERROR retrieving status : ", error)
+        }
+    }, [status, error, IsPending])
+
 
 ///******Display *******/
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
-import { factoryAddress } from '@/constants/ChallengeFactoryInfo';
+// import { factoryAddress } from '@/constants/ChallengeFactoryInfo';
 import { retriveEventsFromBlock } from '@/utils/client';
 
 import { Address, formatEther, GetLogsReturnType, isAddressEqual, parseAbi, parseAbiItem } from 'viem';

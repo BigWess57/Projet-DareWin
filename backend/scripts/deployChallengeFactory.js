@@ -13,8 +13,8 @@ async function main() {
     if(isLocalhost){
         DareWinToken = DareWin.attach("0x5fbdb2315678afecb367f032d93f642f64180aa3")
     }else {
-        //enter Right address DEPENDING ON NETWORK (SEPOLIA, HOLESKY...)
-        DareWinToken = DareWin.attach("0x7f0f1C236e8000A752FbbCF371031B0A7b0cD604")
+        //enter Right address DEPENDING ON NETWORK (SEPOLIA, HOLESKY...). Here BASE
+        DareWinToken = DareWin.attach("0x1B0dBd67C416EC91FB94862359c200129F5B6335")
     }   
 
     //Send tokens to other signers (if localhost)
@@ -40,14 +40,13 @@ async function main() {
 
     if(!isLocalhost){
         console.log('Attente de quelques blocs avant verification');
-        await ChallengeFactory.deploymentTransaction()?.wait(5);
+        await ChallengeFactory.deploymentTransaction()?.wait(3);
     }
     console.log(`ChallengeFactory deployed to ${ChallengeFactory.target}`)
 
     if(!isLocalhost) {
         console.log( 'Vérification du contrat intelligent ChallengeFactory...' )
         await verify(ChallengeFactory.target.toString(), [DareWinToken.target, signers[0].address])
-        console.log( 'Contrat vérifié!' )
     }
 
 }  

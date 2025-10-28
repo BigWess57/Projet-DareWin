@@ -43,6 +43,7 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
     //Has voting duration ended?
     const [votingDurationEnded, setVotingDurationEnded] = useState<boolean>(false);
     
+    const [isRefetchingStatus, setIsRefetchingStatus] = useState<boolean>(false);
 
 
     // //EVENTS ABI
@@ -438,7 +439,23 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
 //For ending vote
     useEffect(() => {
         if(voteEndSuccess) {
-            refetchStatus()
+            //set display at loading
+            setIsRefetchingStatus(true)
+
+            // Refetch after delay as backup
+            const timer = setTimeout(async () => {
+                try {
+                    await refetchStatus();
+                } catch (error) {
+                    console.error('Failed to refetch status:', error);
+                } finally {
+                    setIsRefetchingStatus(false);
+                }
+            }, 2000)
+            return () => {
+                clearTimeout(timer);
+                setIsRefetchingStatus(false);
+            }
         }
         if(voteEndReceiptError) {
             toast.error(voteEndReceiptError.message, {
@@ -447,117 +464,130 @@ const VotingForWinner = ({refetchStatus} : {refetchStatus: (options?: RefetchOpt
         }
     }, [voteEndSuccess, voteEndReceiptError])
 
-
+    
 /****** Display *******/
-    return (
 
-        <div className="space-y-8 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl text-white">
-            {hasEveryoneVoted ? (
-                // 🎉 All voted
-                <div className="flex flex-col items-center justify-center p-10 space-y-6">
-                <h1 className="text-3xl font-bold">Vote terminé ! Tout le monde a voté</h1>
-                <button
-                    onClick={endWinnerVote}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-semibold hover:brightness-110 transition"
-                >
-                    Révéler le(s) gagnant(s)
-                </button>
-                </div>
-            ) : (
-                <>
-                {/* Top bar: prompt + vote button + timer/status */}
-                <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-                    {/* Prompt & Vote */}
-                    <div className="space-y-4">
-                    <p className="text-2xl font-semibold flex items-center gap-2">
-                        🗳️ C’est l’heure de voter !
-                    </p>
-                    <Button
-                        disabled={!selectedPlayer || hasVoted || !isPlayer}
-                        onClick={voteForWinner}
-                        className={`px-5 py-2 rounded-lg font-medium transition
-                        ${!isPlayer
-                            ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                            : hasVoted
-                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
-                        `}
-                    >
-                        {hasVoted
-                        ? "Vous avez déjà voté"
-                        : !isPlayer
-                            ? "Vous n'êtes pas un joueur"
-                            : "Voter"}
-                    </Button>
-                    </div>
-
-                    {/* Timer / Status */}
-                    <div className="text-center space-y-2">
-                    {playersVoted.length > 0 ? (
-                        !votingDurationEnded ? (
-                        votingStarted > 0n ? (
-                            <div className="space-y-1">
-                            <ChallengeTimer
-                                startingTime={votingStarted}
-                                duration={votingDuration ? BigInt(votingDuration) : 0n}
-                                refreshDisplay={endVoteTimerDisplay}
-                            />
-                            </div>
-                        ) : (
-                            <div className="italic text-white/50">Initialisation du timer…</div>
-                        )
-                        ) : (
-                        <div className="space-y-2">
-                            <div className="text-white/80">Vote terminé ! (vous pouvez toujours voter si ce n'est pas fait)</div>
-                            <button
-                            onClick={endWinnerVote}
-                            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-medium hover:brightness-110 transition"
-                            >
-                                Révéler le(s) gagnant(s)
-                            </button>
-                        </div>
-                        )
-                    ) : (
-                        <div className="text-xl italic text-white/60">En attente du premier vote…</div>
-                    )}
-                    </div>
-                </div>
-
-                {/* Players list with checkboxes */}
-                <div className="p-6 bg-[#0B1126] border border-white/10 rounded-lg space-y-4">
-                    <h2 className="text-lg font-semibold text-white/80">Joueurs :</h2>
-                    <div className="flex flex-col gap-3">
-                    {players?.length > 0 ? (
-                        players.map((addr) => (
-                        <label
-                            key={addr}
-                            htmlFor={`select-${addr}`}
-                            className="flex items-center gap-3 p-2 bg-[#1A1F33] rounded-lg hover:bg-[#22283F] transition"
-                        >
-                            <Checkbox
-                                disabled={hasVoted || !isPlayer}
-                                id={`select-${addr}`}
-                                checked={selectedPlayer == addr}
-                                onCheckedChange={(checked) => {
-                                    setSelectedPlayer( (checked && addr != undefined) ? addr : null)
-                                }}
-                                className="h-5 w-5 text-cyan-400 bg-[#0B1126] border border-white/20 rounded transition"
-                            />
-                            <div className="flex-1 text-sm font-mono text-white truncate">
-                            <Event address={addr} />
-                            </div>
-                        </label>
-                        ))
-                    ) : (
-                        <div className="italic text-white/50">(Aucun joueur trouvé)</div>
-                    )}
-                    </div>
-                </div>
-                </>
-            )}
-            <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage="You successfully voted!" />
-            <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage="You successfully reveiled the winner!" />
+    const LoadingSpinner = () => (
+        <div className="flex flex-col items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
+            <p className="text-gray-600">Updating challenge status...</p>
         </div>
+    );
+
+    return (
+        <>
+            {isRefetchingStatus ? (
+                <LoadingSpinner/>
+            ) : (
+                <div className="space-y-8 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl text-white">
+                    {hasEveryoneVoted ? (
+                        // 🎉 All voted
+                        <div className="flex flex-col items-center justify-center p-10 space-y-6">
+                        <h1 className="text-3xl font-bold">Vote terminé ! Tout le monde a voté</h1>
+                        <button
+                            onClick={endWinnerVote}
+                            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-semibold hover:brightness-110 transition"
+                        >
+                            Révéler le(s) gagnant(s)
+                        </button>
+                        </div>
+                    ) : (
+                        <>
+                        {/* Top bar: prompt + vote button + timer/status */}
+                        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                            {/* Prompt & Vote */}
+                            <div className="space-y-4">
+                            <p className="text-2xl font-semibold flex items-center gap-2">
+                                🗳️ C’est l’heure de voter !
+                            </p>
+                            <Button
+                                disabled={!selectedPlayer || hasVoted || !isPlayer}
+                                onClick={voteForWinner}
+                                className={`px-5 py-2 rounded-lg font-medium transition
+                                ${!isPlayer
+                                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                                    : hasVoted
+                                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
+                                `}
+                            >
+                                {hasVoted
+                                ? "Vous avez déjà voté"
+                                : !isPlayer
+                                    ? "Vous n'êtes pas un joueur"
+                                    : "Voter"}
+                            </Button>
+                            </div>
+
+                            {/* Timer / Status */}
+                            <div className="text-center space-y-2">
+                            {playersVoted.length > 0 ? (
+                                !votingDurationEnded ? (
+                                votingStarted > 0n ? (
+                                    <div className="space-y-1">
+                                    <ChallengeTimer
+                                        startingTime={votingStarted}
+                                        duration={votingDuration ? BigInt(votingDuration) : 0n}
+                                        refreshDisplay={endVoteTimerDisplay}
+                                    />
+                                    </div>
+                                ) : (
+                                    <div className="italic text-white/50">Initialisation du timer…</div>
+                                )
+                                ) : (
+                                <div className="space-y-2">
+                                    <div className="text-white/80">Vote terminé ! (vous pouvez toujours voter si ce n'est pas fait)</div>
+                                    <button
+                                    onClick={endWinnerVote}
+                                    className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-medium hover:brightness-110 transition"
+                                    >
+                                        Révéler le(s) gagnant(s)
+                                    </button>
+                                </div>
+                                )
+                            ) : (
+                                <div className="text-xl italic text-white/60">En attente du premier vote…</div>
+                            )}
+                            </div>
+                        </div>
+
+                        {/* Players list with checkboxes */}
+                        <div className="p-6 bg-[#0B1126] border border-white/10 rounded-lg space-y-4">
+                            <h2 className="text-lg font-semibold text-white/80">Joueurs :</h2>
+                            <div className="flex flex-col gap-3">
+                            {players?.length > 0 ? (
+                                players.map((addr) => (
+                                <label
+                                    key={addr}
+                                    htmlFor={`select-${addr}`}
+                                    className="flex items-center gap-3 p-2 bg-[#1A1F33] rounded-lg hover:bg-[#22283F] transition"
+                                >
+                                    <Checkbox
+                                        disabled={hasVoted || !isPlayer}
+                                        id={`select-${addr}`}
+                                        checked={selectedPlayer == addr}
+                                        onCheckedChange={(checked) => {
+                                            setSelectedPlayer( (checked && addr != undefined) ? addr : null)
+                                        }}
+                                        className="h-5 w-5 text-cyan-400 bg-[#0B1126] border border-white/20 rounded transition"
+                                    />
+                                    <div className="flex-1 text-sm font-mono text-white truncate">
+                                    <Event address={addr} />
+                                    </div>
+                                </label>
+                                ))
+                            ) : (
+                                <div className="italic text-white/50">(Aucun joueur trouvé)</div>
+                            )}
+                            </div>
+                        </div>
+                        </>
+                    )}
+                    <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage="You successfully voted!" />
+                    <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage="You successfully reveiled the winner!" />
+                </div>
+            )}
+        </>
     )
 }
 

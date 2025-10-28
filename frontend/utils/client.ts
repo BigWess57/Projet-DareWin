@@ -1,25 +1,24 @@
 import { createConfig } from 'wagmi';
 import { AbiEvent, Address, createPublicClient, GetLogsReturnType, http, parseAbi, parseAbiItem } from "viem";
-import { hardhat, sepolia, holesky } from "viem/chains";
 
-export const SepoliaRPC = process.env.NEXT_PUBLIC_SEPOLIA_ALCHEMY_RPC || "";
-export const HoleskyRPC = process.env.NEXT_PUBLIC_HOLESKY_ALCHEMY_RPC || "";
+import { currentChain, currentRPC } from '../config/networks';
 
 export const publicClient = createPublicClient({
-    chain: hardhat,//sepolia, //holesky
-    transport: http(/*HoleskyRPC*/),
-})
+  chain: currentChain,
+  transport: http(currentRPC),
+});
 
 export const wagmiEventRefreshConfig = createConfig({
   syncConnectedChain: true,
-  chains: [hardhat],//sepolia, //holesky
+  chains: [currentChain],
   transports: {
-    // [holesky.id]: http(HoleskyRPC),
-    [hardhat.id]: http(),
+    [currentChain.id]: http(currentRPC),
   },
 });
 
-//function to calculate the latestblock -500
+
+
+// function to calculate the latestblock -500
 export const retriveEventsFromBlock = async (contractAddress : Address, event1 : string, event2 : string | null = null): Promise<GetLogsReturnType> => {
     const latest = await publicClient.getBlockNumber();
     const MAX_RANGE = 499n;

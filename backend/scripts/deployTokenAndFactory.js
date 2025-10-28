@@ -20,15 +20,21 @@ async function main() {
 
     if(!isLocalhost){
         console.log('Attente de quelques blocs avant verification');
-        await DareWinToken.deploymentTransaction()?.wait(5);
+        await DareWinToken.deploymentTransaction()?.wait(3);
     }
     console.log(`DARE Token deployed to ${DareWinToken.target}`)
 
     if(!isLocalhost) {
         console.log( 'Vérification du contrat intelligent du Token...' )
         // await verify(DareWinToken.target.toString(), [signers[0].address])
-        await verify(DareWinToken.target, [signers[0].address])
-        console.log( 'Contrat vérifié!' )
+        try{
+            await verify(DareWinToken.target, [signers[0].address])
+            // await verify("0x93C1101D99048DFF77844B32081729f39F501903", [signers[0].address])
+        }
+        catch{
+            console.error('Could not verify the contract.')
+        }
+        
     }
 
     /**************************************************/
@@ -58,14 +64,22 @@ async function main() {
 
     if(!isLocalhost){
         console.log('Attente de quelques blocs avant verification');
-        await ChallengeFactory.deploymentTransaction()?.wait(5);
+        await ChallengeFactory.deploymentTransaction()?.wait(3);
     }
     console.log(`ChallengeFactory deployed to ${ChallengeFactory.target}`)
 
     if(!isLocalhost) {
         console.log( 'Vérification du contrat intelligent ChallengeFactory...' )
-        await verify(ChallengeFactory.target.toString(), [DareWinToken.target, signers[0].address])
-        console.log( 'Contrat vérifié!' )
+
+        try {
+            await verify(ChallengeFactory.target.toString(), [DareWinToken.target, signers[0].address])
+            // await verify("0x411F9f26C89CFe22a5f952A1995C4250f383A387", ["0x93C1101D99048DFF77844B32081729f39F501903", signers[0].address])
+        }
+        catch {
+            console.error('Could not verify the contract.')
+        }
+        
+        
     }
 
 }
