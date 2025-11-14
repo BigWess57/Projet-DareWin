@@ -17,7 +17,7 @@ services:
       postgres_db: graph-node
       ipfs: 'ipfs:5001'
       # point to hardhat running on host
-      ethereum: 'mainnet:http://host.docker.internal:8545'
+      ethereum: 'hardhat:http://host.docker.internal:8545'
       RUST_LOG: info
   ipfs:
     image: ipfs/kubo:latest
