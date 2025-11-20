@@ -24,7 +24,7 @@ module.exports = {
     ]
   },
   gasReporter: {
-    enabled: false
+    enabled: true
   },
   mocha: {
     reporter: "mochawesome",

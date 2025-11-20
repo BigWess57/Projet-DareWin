@@ -135,7 +135,7 @@ const ChallengeState = () => {
                 )}
 
                 {currentDisplayStatus === WorkflowStatus.VotingForWinner && (
-                    <VotingForWinner refetchStatus={refetchStatus}/>
+                    <VotingForWinner status={status} refetchStatus={refetchStatus}/>
                 )}
 
                 {currentDisplayStatus === WorkflowStatus.ChallengeWon && (

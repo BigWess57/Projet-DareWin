@@ -1,5 +1,6 @@
 //File containing functions calling API router from next
 
+
 // call GraphQL subgraph to retrieve created Challenges
 export const retrieveChallenges = async (URL : string) => {
     const res = await fetch(URL);
@@ -14,8 +15,13 @@ export const retrieveChallenges = async (URL : string) => {
 }
 
 
+export type PlayerEvent = {
+  player: string;
+  eventType: 'PlayerJoined' | 'PlayerWithdrawn';
+};
+
 // call GraphQL subgraph to retrieve players from challenge (all, voted...), depending on request
-export const getPlayers = async (URL : string) => {
+export const getPlayers = async (URL : string): Promise<PlayerEvent[]> => {
     const res = await fetch(URL);
     if (!res.ok) {
         const errorText = await res.text(); // get the raw response body

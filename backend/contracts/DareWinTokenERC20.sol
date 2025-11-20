@@ -7,12 +7,12 @@ import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20P
 
 contract DareWin is ERC20, ERC20Burnable, ERC20Permit {
 
-    uint256 public immutable MAX_SUPPLY;
+    uint256 public immutable maxSupply;
 
     constructor(address initialOwner) ERC20("DareWin", "DARE") ERC20Permit("DareWin") {
-        _mint(initialOwner, 1000000000 * 10 ** decimals());
+        _mint(initialOwner, 1 gwei * 10 ** decimals());
 
-        // //Max supply 1B
-        MAX_SUPPLY = 1000000000 * 10 ** decimals();
+        ////Max supply 1B
+        maxSupply = 1 gwei * 10 ** decimals();
     }
 }

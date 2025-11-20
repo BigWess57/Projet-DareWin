@@ -51,8 +51,10 @@ describe("tests Challenge contract", function () {
             expect(bal).to.equal(amountToDistribute);
         }
 
-        //Send a bit more to 2nd signer
+        //Send a bit more to 2nd signer (gold tier)
         await token.transfer(signers[1].address, ethers.parseUnits("50000", await token.decimals()));
+        //Send a bit more to 4th signer (silver tier)
+        await token.transfer(signers[3].address, ethers.parseUnits("20000", await token.decimals()));
 
         const bid = ethers.parseUnits("1000", await token.decimals());
 
@@ -257,23 +259,159 @@ describe("tests Challenge contract", function () {
             ).to.not.be.reverted
         })
 
-        it('should not be possible to deploy with a feeReceiver address to 0', async function() { 
-            //Challenge Deployment
-            const Challenge = await ethers.getContractFactory('Challenge'); 
 
-            await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, "0x0000000000000000000000000000000000000000", false, ethers.ZeroHash, "ipfsCid")
-            ).to.be.revertedWith("the feeReceiver cannot be address 0!")
-        })
+        describe("Constructor Validation Tests", function () {
+            let signers;
+            let token;
+            let bid;
 
-        it('GROUP MODE : should not be possible to deploy if the merkle root is 0', async function() { 
-            //Challenge Deployment
-            const Challenge = await ethers.getContractFactory('Challenge'); 
+            beforeEach(async function () {
+                signers = await ethers.getSigners();
+                const DareWinToken = await ethers.getContractFactory('DareWin');
+                token = await DareWinToken.deploy(signers[0].address);
+                bid = ethers.parseUnits("1000", await token.decimals());
+            });
 
-            await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, ethers.ZeroHash, "ipfsCid")
-            ).to.be.revertedWith("Merkle root required when groupMode is true")
-        })
+            it('should revert with ZeroAddressToken when token address is zero', async function() {
+                const Challenge = await ethers.getContractFactory('Challenge');
+                await expect(
+                    Challenge.deploy(
+                        signers[0].address,
+                        "0x0000000000000000000000000000000000000000", // Invalid token
+                        duration,
+                        maxPlayers,
+                        bid,
+                        description,
+                        signers[0].address,
+                        false,
+                        ethers.ZeroHash,
+                        "ipfsCid"
+                    )
+                ).to.be.revertedWithCustomError(Challenge, "ZeroAddressToken");
+            });
+
+            it('should revert with ZeroAddressFeeReceiver when feeReceiver address is 0', async function() {
+                const Challenge = await ethers.getContractFactory('Challenge');
+                await expect(
+                    Challenge.deploy(
+                        signers[0].address,
+                        token.target, // Invalid token
+                        duration,
+                        maxPlayers,
+                        bid,
+                        description,
+                        "0x0000000000000000000000000000000000000000",
+                        false,
+                        ethers.ZeroHash,
+                        "ipfsCid"
+                    )
+                ).to.be.revertedWithCustomError(Challenge, "ZeroAddressFeeReceiver");
+            })
+
+            it('should revert with InvalidDuration when duration is 0', async function() {
+                const Challenge = await ethers.getContractFactory('Challenge');
+                await expect(
+                    Challenge.deploy(
+                        signers[0].address,
+                        token.target,
+                        0n, // Invalid duration
+                        maxPlayers,
+                        bid,
+                        description,
+                        signers[0].address,
+                        false,
+                        ethers.ZeroHash,
+                        "ipfsCid"
+                    )
+                ).to.be.revertedWithCustomError(Challenge, "InvalidDuration");
+            });
+
+            it('should revert with InsufficientPlayers when maxPlayers = 1 (< 2) in LINK mode', async function() {
+                const Challenge = await ethers.getContractFactory('Challenge');
+                await expect(
+                    Challenge.deploy(
+                        signers[0].address,
+                        token.target,
+                        duration,
+                        1n, // Invalid: less than 2
+                        bid,
+                        description,
+                        signers[0].address,
+                        false,
+                        ethers.ZeroHash,
+                        "ipfsCid"
+                    )
+                ).to.be.revertedWithCustomError(Challenge, "InsufficientPlayers");
+            });
+            it('should revert with InsufficientPlayers when maxPlayers = 0 (< 2) in LINK mode', async function() {
+                const Challenge = await ethers.getContractFactory('Challenge');
+                await expect(
+                    Challenge.deploy(
+                        signers[0].address,
+                        token.target,
+                        duration,
+                        0n, // Invalid: less than 2
+                        bid,
+                        description,
+                        signers[0].address,
+                        false,
+                        ethers.ZeroHash,
+                        "ipfsCid"
+                    )
+                ).to.be.revertedWithCustomError(Challenge, "InsufficientPlayers");
+            });
+
+            it('should revert with InsufficientBid when bid is 0', async function() {
+                const Challenge = await ethers.getContractFactory('Challenge');
+                await expect(
+                    Challenge.deploy(
+                        signers[0].address,
+                        token.target,
+                        duration,
+                        maxPlayers,
+                        0n, // Invalid bid
+                        description,
+                        signers[0].address,
+                        false,
+                        ethers.ZeroHash,
+                        "ipfsCid"
+                    )
+                ).to.be.revertedWithCustomError(Challenge, "InsufficientBid");
+            });
+
+            it('GROUP MODE: should revert with IPFSCidEmpty when IPFS CID is empty', async function() {
+                const playersAllowed = [
+                    [signers[0].address],
+                    [signers[1].address]
+                ];
+                const merkleTree = StandardMerkleTree.of(playersAllowed, ["address"]);
+                
+                const Challenge = await ethers.getContractFactory('Challenge');
+                await expect(
+                    Challenge.deploy(
+                        signers[0].address,
+                        token.target,
+                        duration,
+                        maxPlayers,
+                        bid,
+                        description,
+                        signers[0].address,
+                        true, // Group mode
+                        merkleTree.root,
+                        "" // Empty IPFS CID
+                    )
+                ).to.be.revertedWithCustomError(Challenge, "IPFSCidEmpty");
+            });
+
+            it('GROUP MODE : should revert with MerkleRootRequired if the merkle root is 0', async function() { 
+                const Challenge = await ethers.getContractFactory('Challenge'); 
+
+                await expect(
+                    Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, ethers.ZeroHash, "ipfsCid")
+                ).to.be.revertedWithCustomError(Challenge, "MerkleRootRequired")
+            })
+
+        });
 
     })
 
@@ -304,7 +442,15 @@ describe("tests Challenge contract", function () {
             expect(
                 await token.balanceOf(challenge)
             ).to.equal(bid)
-        })       
+        })
+        it('should not allow a player to join if the permit is wrong', async function() {
+            const { v, r, s, deadline } = await GetRSVsig(signers[1], token, bid, challenge);
+
+            await expect(
+                challenge.connect(signers[0]).joinChallenge(deadline, v, r, s, [])
+            )
+            .to.be.revertedWithCustomError(token, "ERC20InsufficientAllowance");
+        })        
 
         it('FOR LINK MODE : should not allow any more participants to join if the max is already reached', async function() {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
@@ -313,7 +459,7 @@ describe("tests Challenge contract", function () {
             const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
             const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
             const { v: v6, r: r6, s: s6, deadline: deadline6 } = await GetRSVsig(signers[5], token, bid, challenge);
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.joinChallenge(deadline1, v1, r1, s1, []);  
             await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
             await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
             await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
@@ -321,7 +467,7 @@ describe("tests Challenge contract", function () {
 
             await expect(
                 challenge.connect(signers[5]).joinChallenge(deadline6, v6, r6, s6, [])
-            ).to.be.revertedWith("This challenge is already full");
+            ).to.be.revertedWithCustomError(challenge, "ChallengeFull");
 
         })
 
@@ -330,7 +476,17 @@ describe("tests Challenge contract", function () {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
 
             await challenge.joinChallenge(deadline1, v1, r1, s1, []);
-            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, [])).to.be.revertedWith("You already joined");
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, [])).to.be.revertedWithCustomError(challenge, "AlreadyJoined");
+        })
+
+        it('should allow a player to join even if his permit has been frontran (avoid DoS)', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            //Frontrun the permit call
+            await token.permit(signers[0].address, challenge, bid, deadline1, v1, r1, s1);
+            await expect(
+                challenge.connect(signers[0]).joinChallenge(deadline1, v1, r1, s1, [])
+            ).to.not.be.reverted;
         })
 
         it('should allow a player to withdraw from the challenge (before start), while letting the challenge start when required without issues. Money should be sent back to him', async function() {
@@ -371,7 +527,7 @@ describe("tests Challenge contract", function () {
             //try to withdraw without having joined, reverts
             await expect(
                challenge.withdrawFromChallenge()
-            ).to.be.revertedWith("You have not joined the challenge.");
+            ).to.be.revertedWithCustomError(challenge, "NotJoined");
         })
 
         it('should not allow a player to join, and then withdraw twice', async function() {
@@ -382,7 +538,7 @@ describe("tests Challenge contract", function () {
             //try to withdraw without having joined, reverts
             await expect(
                challenge.withdrawFromChallenge()
-            ).to.be.revertedWith("You have not joined the challenge.");
+            ).to.be.revertedWithCustomError(challenge, "NotJoined");
         })
 
         it('should allow a player to join, withdraw and then join again the challenge', async function() {
@@ -406,7 +562,7 @@ describe("tests Challenge contract", function () {
 
             await expect(
                 challenge.startChallenge()
-            ).to.be.revertedWith("Not enough players to start the challenge")
+            ).to.be.revertedWithCustomError(challenge, "InsufficientPlayersToStart")
         })
 
 
@@ -475,7 +631,7 @@ describe("tests Challenge contract", function () {
 
             await expect(
                 challenge.connect(signers[5]).joinChallenge(deadline1, v1, r1, s1, proof1)
-            ).to.be.revertedWith("You are not allowed to join this challenge.")
+            ).to.be.revertedWithCustomError(challenge, "NotWhitelisted")
         })
     })
 
@@ -512,22 +668,34 @@ describe("tests Challenge contract", function () {
         it('should not allow a non player to vote', async function(){
             await expect(
                challenge.connect(signers[5]).voteForWinner(signers[1].address)
-            ).to.be.revertedWith("You are not a player. You cannot vote for winner.");
+            ).to.be.revertedWithCustomError(challenge, "NotAPlayer");
         })
 
         it('should not allow a player to vote twice', async function() {
             await challenge.voteForWinner(signers[1].address);
             await expect(
                challenge.voteForWinner(signers[1].address)
-            ).to.be.revertedWith("You have already voted.");
+            ).to.be.revertedWithCustomError(challenge, "AlreadyVoted");
         })
+
+        it('should revert with InvalidVoteTarget when voting for non-player', async function() {
+            await expect(
+                challenge.voteForWinner(signers[5].address) // signer[5] never joined
+            ).to.be.revertedWithCustomError(challenge, "InvalidVoteTarget");
+        });
+
+        it('should revert with InvalidVoteTarget when voting for zero address', async function() {
+            await expect(
+                challenge.voteForWinner(ethers.ZeroAddress)
+            ).to.be.revertedWithCustomError(challenge, "InvalidVoteTarget");
+        });
 
         it("should not allow to go to next state (ChallengeWon) if everyone has not voted (and minimum delay hasn't passed)", async function(){
             await challenge.voteForWinner(signers[1].address)
             await challenge.connect(signers[1]).voteForWinner(signers[1].address)
             await expect(
                challenge.endWinnerVote()
-            ).to.be.revertedWith("Not all player have voted for a winner yet (and minimum delay has not passed)");
+            ).to.be.revertedWithCustomError(challenge, "VotingStillOngoing");
         })
 
         it("should allow ANYONE to go to next state (ChallengeWon) if everyone has not voted but minimum delay has passed", async function(){
@@ -561,7 +729,7 @@ describe("tests Challenge contract", function () {
             await time.increase(votingDelay);
 
             //Any player can end vote, because everyone has voted
-            await expect(challenge.connect(signers[1]).endWinnerVote()).to.be.revertedWith('Not allowed in this state');
+            await expect(challenge.connect(signers[1]).endWinnerVote()).to.be.revertedWithCustomError(challenge, "InvalidState");
         })
 
     });
@@ -604,6 +772,40 @@ describe("tests Challenge contract", function () {
             expect(diff).to.equal(expectedDiff); // substract fees too
         })
 
+        it('should revert with NotAWinner when non-winner tries to withdraw', async function() {
+            // signers[2] has 2 votes, signers[1] has 3 votes (winner)
+            // signers[0] has 0 votes, signers[3] has 0 votes, signers[4] has 0 votes
+            //Players voting
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //End vote
+            await challenge.endWinnerVote();
+
+            await expect(
+                challenge.connect(signers[0]).withdrawPrize()
+            ).to.be.revertedWithCustomError(challenge, "NotAWinner");
+        });
+
+        it('should revert with NotAWinner when player with votes (but not highest) tries to withdraw', async function() {
+            // In EndingVoteFixture, signers[2] has 2 votes but signers[1] has 3 (highest)
+            //Players voting
+            await challenge.voteForWinner(signers[1].address)
+            await challenge.connect(signers[1]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[2]).voteForWinner(signers[2].address) 
+            await challenge.connect(signers[3]).voteForWinner(signers[1].address) 
+            await challenge.connect(signers[4]).voteForWinner(signers[2].address) 
+
+            //End vote
+            await challenge.endWinnerVote();
+            await expect(
+                challenge.connect(signers[1]).withdrawPrize()
+            ).to.be.revertedWithCustomError(challenge, "NotAWinner");
+        });
+
         it('winner should NOT be able to retrieve prize multiple times', async function(){
             //Players voting
             await challenge.voteForWinner(signers[1].address)
@@ -619,21 +821,21 @@ describe("tests Challenge contract", function () {
 
             await expect(
                 challenge.connect(signers[2]).withdrawPrize()
-            ).to.be.revertedWith("You have already withdrawn your prize");
+            ).to.be.revertedWithCustomError(challenge, "PrizeAlreadyWithdrawn");
             
         })
 
         it("When there is a tie, should allow both winners to receive prize", async function () {
             //Players voting
-            await challenge.voteForWinner(signers[2].address)
+            await challenge.voteForWinner(signers[3].address)
             await challenge.connect(signers[1]).voteForWinner(signers[1].address)
-            await challenge.connect(signers[2]).voteForWinner(signers[2].address)
+            await challenge.connect(signers[2]).voteForWinner(signers[3].address)
             await challenge.connect(signers[3]).voteForWinner(signers[1].address)
             await challenge.connect(signers[4]).voteForWinner(signers[4].address)
 
             //Check balance before for both winners
             const balanceBefore1 = await token.balanceOf(signers[1].address);
-            const balanceBefore2 = await token.balanceOf(signers[2].address);
+            const balanceBefore2 = await token.balanceOf(signers[3].address);
 
             //End vote
             await challenge.endWinnerVote();
@@ -649,13 +851,13 @@ describe("tests Challenge contract", function () {
                 diff1
             ).to.equal(expectedDiff1);
 
-            await challenge.connect(signers[2]).withdrawPrize();
+            await challenge.connect(signers[3]).withdrawPrize();
             //Check balance after (winner2)
-            const balanceAfter2 = await token.balanceOf(signers[2].address);
+            const balanceAfter2 = await token.balanceOf(signers[3].address);
 
             const diff2 = balanceAfter2 - balanceBefore2;
 
-            const expectedDiff2 = bid*5n/2n - bid*5n/2n*bronze/100n;
+            const expectedDiff2 = bid*5n/2n - bid*5n/2n*silver/100n;
 
             expect(
                 diff2
@@ -761,17 +963,17 @@ describe("tests Challenge contract", function () {
             it('should not allow voteForWinner() in GatheringPlayers state', async function() {
                 await expect(
                     challenge.voteForWinner(signers[1].address)
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow endWinnerVote() in GatheringPlayers state', async function() {
                 await expect(
                     challenge.endWinnerVote()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow withdrawPrize() in GatheringPlayers state', async function() {
                 await expect(
                     challenge.withdrawPrize()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             })
         })
 
@@ -789,22 +991,22 @@ describe("tests Challenge contract", function () {
                 const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
                 await expect(
                     challenge.joinChallenge(deadline1, v1, r1, s1, [])
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
                 await expect(
                     challenge.withdrawFromChallenge()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow startChallenge() in OngoingChallenge state', async function() {
                 await expect(
                     challenge.startChallenge()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow voteForWinner() in OngoingChallenge state (if the challenge is not over)', async function() {
                 await expect(
                     challenge.voteForWinner(signers[1].address)
-                ).to.be.revertedWith("You are not allowed to vote now");
+                ).to.be.revertedWithCustomError(challenge, "VotingNotAllowed");
             }) 
             it('should allow voteForWinner() in OngoingChallenge state (if the challenge is over). state should become "VotingForWinner" after first player votes at the end of the challenge. ', async function() {
                 expect(await challenge.currentStatus()).to.equal(ChallengeStatus.OngoingChallenge);
@@ -822,12 +1024,12 @@ describe("tests Challenge contract", function () {
             it('should not allow endWinnerVote() in OngoingChallenge state', async function() {
                 await expect(
                     challenge.endWinnerVote()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             })
             it('should not allow withdrawPrize() in OnGoingChallenge state', async function() {
                 await expect(
                     challenge.withdrawPrize()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             })
         })
 
@@ -845,22 +1047,22 @@ describe("tests Challenge contract", function () {
                 const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
                 await expect(
                     challenge.joinChallenge(deadline1, v1, r1, s1, [])
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
                 await expect(
                     challenge.withdrawFromChallenge()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow startChallenge() in VotingForWinner state', async function() {
                 await expect(
                     challenge.startChallenge()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow withdrawPrize() in VotingForWinner state', async function() {
                 await expect(
                     challenge.withdrawPrize()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             })
         })
 
@@ -879,27 +1081,27 @@ describe("tests Challenge contract", function () {
                 const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
                 await expect(
                     challenge.joinChallenge(deadline1, v1, r1, s1, [])
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow withdrawFromChallenge() in OngoingChallenge state', async function() {
                 await expect(
                     challenge.withdrawFromChallenge()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow startChallenge() in ChallengeWon state', async function() {
                 await expect(
                     challenge.startChallenge()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             })  
             it('should not allow voteForWinner() in ChallengeWon state', async function() {
                 await expect(
                     challenge.voteForWinner(signers[1].address)
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
             it('should not allow endWinnerVote() in ChallengeWon state', async function() {
                 await expect(
                     challenge.endWinnerVote()
-                ).to.be.revertedWith("Not allowed in this state");
+                ).to.be.revertedWithCustomError(challenge, "InvalidState");
             }) 
         })
         

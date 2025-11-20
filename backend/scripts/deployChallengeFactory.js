@@ -14,7 +14,7 @@ async function main() {
         DareWinToken = DareWin.attach("0x5fbdb2315678afecb367f032d93f642f64180aa3")
     }else {
         //enter Right address DEPENDING ON NETWORK (SEPOLIA, HOLESKY...). Here BASE
-        DareWinToken = DareWin.attach("0x1B0dBd67C416EC91FB94862359c200129F5B6335")
+        DareWinToken = DareWin.attach("0xF5b33B18eF224357aFB475Cbc75cae3084da46FA")
     }   
 
     //Send tokens to other signers (if localhost)

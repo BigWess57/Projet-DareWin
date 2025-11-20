@@ -16,6 +16,36 @@
     "type": "constructor"
   },
   {
+    "inputs": [],
+    "name": "ChallengeDeploymentFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InsufficientBid",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InsufficientPlayers",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidDuration",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddressFeeReceiver",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddressToken",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -43,33 +73,14 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "challenges",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint64",
         "name": "duration",
         "type": "uint64"
       },
       {
-        "internalType": "uint8",
+        "internalType": "uint32",
         "name": "maxPlayers",
-        "type": "uint8"
+        "type": "uint32"
       },
       {
         "internalType": "uint128",
@@ -105,22 +116,30 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "start",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "count",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
-    "name": "getChallenges",
+    "name": "isChallenge",
     "outputs": [
       {
-        "internalType": "address[]",
-        "name": "out",
-        "type": "address[]"
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalChallengesCreated",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",

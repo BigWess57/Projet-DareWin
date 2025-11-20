@@ -10,7 +10,8 @@ const SUPPORTED_CHAINS = {
 type ChainKey = keyof typeof SUPPORTED_CHAINS;
 
 const CHAIN_RPC_URLS: Record<ChainKey, string> = {
-  baseSepolia: process.env.NEXT_PUBLIC_BASE_SEPOLIA_ALCHEMY_RPC || "",
+  // baseSepolia: process.env.NEXT_PUBLIC_BASE_SEPOLIA_ALCHEMY_RPC || "",
+  baseSepolia: process.env.NEXT_PUBLIC_BASE_SEPOLIA_PUBLIC_RPC || "",
   sepolia: process.env.NEXT_PUBLIC_SEPOLIA_ALCHEMY_RPC || "",
   holesky: process.env.NEXT_PUBLIC_HOLESKY_ALCHEMY_RPC || "",
   hardhat: "",
@@ -18,14 +19,14 @@ const CHAIN_RPC_URLS: Record<ChainKey, string> = {
 
 // Contract addresses for each chain
 export const TOKEN_ADDRESSES: Record<ChainKey, `0x${string}`> = {
-  baseSepolia: "0xc6D0F551813f93E76c37C45fcAd48271b8EDa1AD",
+  baseSepolia: "0xF5b33B18eF224357aFB475Cbc75cae3084da46FA",
   sepolia: "0xB32F99D77195738d7dfE0502Bc0EDc6F1158ECD3", 
   holesky: "0x93C1101D99048DFF77844B32081729f39F501903",
   hardhat: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
 };
 
 export const FACTORY_ADDRESSES: Record<ChainKey, `0x${string}`> = {
-  baseSepolia: "0x7086C28Fa981a489498fA4651A4D3104b92bC788",
+  baseSepolia: "0xcC562Bf0F37835EEE3754fB5bdD50fa3935BA36B",
   sepolia: "0xc665D2331f7CA33869F5F0EE563c5C5C2554D919",
   holesky: "0x411F9f26C89CFe22a5f952A1995C4250f383A387",
   hardhat: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
@@ -34,7 +35,7 @@ export const FACTORY_ADDRESSES: Record<ChainKey, `0x${string}`> = {
 
 //subgraph URL for each chain
 export const SUBGRAPH_URLS: Record<ChainKey, string> = {
-  baseSepolia: "https://api.studio.thegraph.com/query/1704762/challenge-subgraph/v0.0.1",
+  baseSepolia: "https://api.studio.thegraph.com/query/1704762/challenge-subgraph/version/latest",
   sepolia: "",
   holesky: "",
   hardhat: "http://localhost:8000/subgraphs/name/challenge",

@@ -1,5 +1,5 @@
 specVersion: 1.3.0
-description: A subgraph to index data for CreateChallenge Events
+description: A subgraph to index data for Challenge Events
 features:
   - ipfsOnEthereumContracts
 indexerHints:
@@ -9,11 +9,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: ChallengeFactory
-    network: hardhat
+    network: base-sepolia
     source:
       abi: ChallengeFactory
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
-      startBlock: 0
+      address: "0xcC562Bf0F37835EEE3754fB5bdD50fa3935BA36B"
+      startBlock: 33951225
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -30,7 +30,7 @@ dataSources:
 templates:
   - name: ChallengeTemplate
     kind: ethereum/contract
-    network: hardhat
+    network: base-sepolia
     source:
       abi: Challenge
     mapping:
@@ -40,7 +40,6 @@ templates:
       entities:
         - PlayerJoined
         - PlayerWithdrawn
-        - PlayerVoted
       abis:
         - name: Challenge
           file: ./abis/Challenge.json
@@ -49,6 +48,4 @@ templates:
           handler: handlePlayerJoined
         - event: PlayerWithdrawn(address)
           handler: handlePlayerWithdrawn
-        - event: PlayerVoted(address,address)
-          handler: handlePlayerVoted
       file: ./src/challenge.ts

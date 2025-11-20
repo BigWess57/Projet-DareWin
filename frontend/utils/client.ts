@@ -18,11 +18,11 @@ export const wagmiEventRefreshConfig = createConfig({
 
 
 
-// function to calculate the latestblock -500
+// function to calculate the latestblock - 300
 export const retriveEventsFromBlock = async (contractAddress : Address, event1 : string, event2 : string | null = null): Promise<GetLogsReturnType> => {
     const latest = await publicClient.getBlockNumber();
     const MAX_RANGE = 499n;
-    let from = latest > 1999n ? latest - 1999n : 0n;
+    let from = latest > 999n ? latest - 999n : 0n;
     // let from = BigInt(fromBlock); // bloc de départ
     const allLogs = [];
 

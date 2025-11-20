@@ -1,0 +1,25 @@
+# Test configuration
+testMode: assertion  # Use assertion mode to catch assert() failures
+testLimit: 50000     # Number of transactions to run
+seqLen: 100          # Length of transaction sequences
+
+# Coverage guidance
+coverage: true       # Enable coverage-guided fuzzing
+coverageFormats: ["txt", "html"]
+
+# Optimization
+shrinkLimit: 5000    # Iterations for call sequence shrinking
+seed: 1234           # Random seed for reproducibility (optional)
+
+# Transaction parameters
+deployer: "0x10000" # Address that deploys contracts
+sender: ["0x10000", "0x20000", "0x30000"]  # Addresses that send transactions
+
+# Gas limits
+gasLimit: 12500000   # Gas limit for each transaction
+
+# Solc compiler settings (if needed)
+solcArgs: "--optimize --optimize-runs 200"
+
+# Filter functions to test (optional)
+# filterFunctions: ["createRandomChallenge", "createValidChallenge"]

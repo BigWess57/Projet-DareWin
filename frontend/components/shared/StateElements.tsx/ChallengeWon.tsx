@@ -42,7 +42,7 @@ const ChallengeWon = () => {
         {
             address: contractAddress,
             abi: contractAbi,
-            functionName: 'Players',
+            functionName: 'players',
             args: [address as Address],
         },
     ],
@@ -112,7 +112,7 @@ const ChallengeWon = () => {
     //Check if he is a winner
     const currentVotecount = player[3]
 
-    if(currentVotecount == BigInt(highestVotes)){
+    if(currentVotecount == highestVotes){
       setIsWinner(true);
       return
     }

@@ -6,9 +6,9 @@
     }
   },
   "base-sepolia": {
-    "Contract": {
-      "address": "0x7086C28Fa981a489498fA4651A4D3104b92bC788",
-      "startBlock": 32955178
+    "ChallengeFactory": {  
+      "address": "0xcC562Bf0F37835EEE3754fB5bdD50fa3935BA36B",
+      "startBlock": 33951225
     }
   }
 }

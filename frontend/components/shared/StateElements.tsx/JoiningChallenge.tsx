@@ -1,13 +1,13 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
 import { toast } from "sonner"
 
-import { Address, isAddressEqual, parseAbiItem } from "viem"
+import { Address, getAddress, GetLogsReturnType, isAddressEqual, parseAbiItem } from "viem"
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
 
 import { contractAbi } from "@/constants/ChallengeInfo"
 
-import { wagmiEventRefreshConfig } from '@/utils/client';
+import { retriveEventsFromBlock, wagmiEventRefreshConfig } from '@/utils/client';
 
 import { BidContext } from "../RouteBaseElements/ChallengePage";
  import { ReadContractErrorType } from "wagmi/actions";
@@ -18,10 +18,11 @@ import Joined from "../Miscellaneous/Joined";
 import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToast";
 
 import { GetRSVsig } from "@/utils/getSignatureForPermit";
-import { getPlayers } from "@/utils/apiFunctions";
+import { getPlayers, PlayerEvent } from "@/utils/apiFunctions";
 
 import { Loader2 } from "lucide-react";
 import { tokenAddress } from "@/config/networks";
+import { boolean } from "zod";
 
 
 // small type guard — narrows unknown -> readonly `0x${string}`[]
@@ -124,7 +125,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             {
                 address: contractAddress,
                 abi: contractAbi,
-                functionName: 'Players',
+                functionName: 'players',
                 args: [address as Address],
             },
         ],
@@ -141,11 +142,62 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     const [players, setPlayers] = useState<(Address)[]>([]);
 
+    const [loadingPlayers, setLoadingPlayers] = useState<boolean>(false)
+
     
-      //Get players from GraphQL (through next server endpoint)
+    const PLAYER_JOINED_ABI = parseAbiItem(
+        'event PlayerJoined(address player)'
+    );
+    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
+        'event PlayerWithdrawn(address player)'
+    );
+    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI]
+    
+
     const getPlayersForChallenge = async() => {
-        const CurrentPlayers = await getPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
-        setPlayers(CurrentPlayers);
+        try {
+            setLoadingPlayers(true)
+
+            //Get players from GraphQL (through next server endpoint)
+            const graphQLEvents = await getPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
+
+            // Additionnally, GET RECENT ENTRIES BY RPC (In case TheGraph is slow)
+            const Logs = await retriveEventsFromBlock(contractAddress, "event PlayerJoined(address player)", "event PlayerWithdrawn(address player)") as GetLogsReturnType<typeof EVENT_ABIS[number]>
+            
+            // Convert RPC logs to same format as GraphQL events
+            const rpcEvents : PlayerEvent[] = Logs.map(log => ({
+                player: log.args.player as Address,
+                eventType: log.eventName === "PlayerJoined" ? "PlayerJoined" as const : "PlayerWithdrawn" as const,
+            })).filter(event => event.player !== undefined);
+
+            // Combine both event sources
+            const allEvents = [...graphQLEvents, ...rpcEvents];
+
+            // Process events chronologically to determine current state
+            const playerStates = new Map<string, boolean>();
+            
+            for (const event of allEvents) {
+                const playerLower = event.player.toLowerCase();
+                
+                if (event.eventType === "PlayerJoined") {
+                    playerStates.set(playerLower, true);
+                } else if (event.eventType === "PlayerWithdrawn") {
+                    playerStates.set(playerLower, false);
+                }
+            }
+
+            // Extract currently active players
+            const activePlayers = Array.from(playerStates.entries())
+                .filter(([_, isJoined]) => isJoined)
+                .map(([player]) => getAddress(player)); // Convert back to checksummed Address
+                
+            setPlayers(activePlayers);
+
+        } catch (error) {
+            console.error("Error fetching players:", error);
+        } finally {
+            setLoadingPlayers(false);
+        }
     }
 
 
@@ -195,25 +247,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             account: address as `0x${string}`,
         })
     }
-    
-    
-
-    useWatchContractEvent({
-        address: contractAddress,
-        abi: [
-            parseAbiItem(
-                'event ChallengeStarted(uint256 startingTime)',
-            ),
-        ],
-        eventName: 'ChallengeStarted',
-        config: wagmiEventRefreshConfig,
-        poll: true,
-        pollingInterval: 5_000,
-        onLogs: (logs) => {
-            // This will trigger immediately when the event is emitted
-            refetchStatus();
-        },
-    })
 
 
 
@@ -286,7 +319,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                 } finally {
                     setIsRefetchingStatus(false);
                 }
-            }, 2000)
+            }, 1000)
             return () => {
                 clearTimeout(timer);
                 setIsRefetchingStatus(false);
@@ -389,29 +422,25 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
 
 
-    //For displaying moving dots
-    const [dots, setDots] = useState(".");
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-        setDots((prev) => {
-            if (prev === "...") return ".";
-            return prev + ".";
-        });
-        }, 500);
-
-        return () => clearInterval(interval);
-    }, []);
-
-
 /************
  * Display
  *************/
 
     const LoadingSpinner = () => (
         <div className="flex flex-col items-center justify-center p-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
+            <div 
+                className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"
+            />
             <p className="text-gray-600">Updating challenge status...</p>
+        </div>
+    );
+
+    const LoadingPlayersSpinner = () => (
+        <div className="flex flex-col items-center justify-center p-8">
+            <div 
+                className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-500 mb-4"
+            />
+            <p className="text-gray-600">Updating Players List...</p>
         </div>
     );
 
@@ -424,7 +453,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                     {/* Statut d’attente */}
                     <div className="flex items-center justify-between bg-[#0B1126] p-4 rounded-lg border border-cyan-500/20">
                         <p className="flex items-center gap-2 text-xl font-semibold text-white/90">
-                        🚀 En attente de joueurs{dots}
+                        🚀 En attente de joueurs<span className="animate-ellipsis"/>
                         </p>
                         <div className="flex flex-col items-end space-y-1 text-sm">
                         <div className="text-white/60">
@@ -447,7 +476,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                         </div>
                     </div>
 
-                    {/* Header d’état + Actions */}
                     <div className="flex items-center justify-between space-x-4">
                         {/* Boutons JOIN / LEAVE */}
                         {!userHasJoined ? (
@@ -496,18 +524,23 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                     </div>
 
                     {/* Liste des joueurs */}
-                    <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
-                        <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
-                        <div className="flex flex-col gap-2 text-white">
-                        {players?.length > 0 ? (
-                            [...players].reverse().map((addr) => (
-                                <Joined address={addr} key={addr} />
-                            ))
-                        ) : (
-                            <div className="italic text-white/50">(aucun pour l'instant)</div>
-                        )}
-                        </div>
-                    </div>
+                    {loadingPlayers ? (
+                        <LoadingPlayersSpinner/>
+                    ) : (
+                        <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
+                            <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
+                            <div className="flex flex-col gap-2 text-white">
+                            {players?.length > 0 ? (
+                                [...players].reverse().map((addr) => (
+                                    <Joined address={addr} key={addr} />
+                                ))
+                            ) : (
+                                <div className="italic text-white/50">(aucun pour l'instant)</div>
+                            )}
+                            </div>
+                        </div> 
+                    )}
+                    
 
                     <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage="Vous avez rejoint le challenge avec succès!" />
                     <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Le challenge a démarré avec succès!" />
