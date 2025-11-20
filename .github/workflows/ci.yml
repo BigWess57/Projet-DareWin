@@ -2,7 +2,7 @@ name: Test Unitaires
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths:
       - 'backend/**' # trigger only when backend files change
   workflow_dispatch:
