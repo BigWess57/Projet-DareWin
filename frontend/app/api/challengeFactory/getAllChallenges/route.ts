@@ -34,6 +34,7 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: json.errors }, { status: 500 })
     }
     return NextResponse.json({ data: json.data.challengeCreateds })
+    
   } catch (err) {
     console.error("Failed to fetch challenges:", err);
     return NextResponse.json({ error: "Failed to fetch challenges" }, { status: 500 });
