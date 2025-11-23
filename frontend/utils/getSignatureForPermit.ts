@@ -1,7 +1,7 @@
 import { Address, parseSignature } from "viem";
 import { publicClient } from "./client";
 import { signTypedData } from "wagmi/actions";
-import { config } from "@/app/RainbowKitAndWagmiProvider";
+import { config } from "@/src/app/RainbowKitAndWagmiProvider";
 
 
 const ERC20_MINIMAL_ABI = [
