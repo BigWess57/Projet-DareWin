@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Pagination,
   PaginationContent,
@@ -24,8 +25,11 @@ interface PaginatedTabContentProps {
   emptyMessage?: string;
 }
 
-const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsPerPage, handleItemsPerPageChange, renderItem, emptyMessage = "No Items." }) => {
+const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsPerPage, handleItemsPerPageChange, renderItem, emptyMessage }) => {
+  const t = useTranslations('MyChallenges.PaginatedTabContent');
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const defaultEmptyMessage = emptyMessage ?? t('no_items');
 
   const totalItems = items.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -58,7 +62,7 @@ const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsP
                                     if (currentPage > 1) setCurrentPage(currentPage - 1);
                                 }}
                             >
-                                Prev
+                                {t('prev')}
                             </PaginationPrevious>
                         </PaginationItem>
 
@@ -97,14 +101,14 @@ const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsP
                                     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
                                 }}
                             >
-                                Next
+                                {t('next')}
                             </PaginationNext>
                         </PaginationItem>
                     </PaginationContent>
                 </Pagination>
 
                 <div className="min-w-50 flex items-center justify-end space-x-2">
-                    <span className="text-sm text-muted-foreground">Afficher par page:</span>
+                    <span className="text-sm text-muted-foreground">{t('items_per_page_label')}</span>
                     <Select
                         value={itemsPerPage.toString()}
                         onValueChange={handleItemsPerPageChange}
@@ -125,7 +129,7 @@ const PaginatedTabContent: React.FC<PaginatedTabContentProps> = ({ items, itemsP
             </div>
         </>
       ) : (
-        <div className="text-xl italic">{emptyMessage}</div>
+        <div className="text-xl italic">{defaultEmptyMessage}</div>
       )}
     </div>
   );

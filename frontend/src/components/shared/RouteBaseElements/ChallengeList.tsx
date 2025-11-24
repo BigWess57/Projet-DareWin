@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl';
 
 import { Address, formatEther, GetLogsReturnType, isAddressEqual, parseAbiItem } from 'viem';
 import { useAccount } from 'wagmi';
@@ -298,10 +299,11 @@ const ChallengeList = () => {
     }, [address])
 
 
+    const t = useTranslations('MyChallenges.ChallengeList');
     const LoadingSpinner = () => (
         <div className="flex flex-col items-center justify-center p-8 pt-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
-            <p className="text-gray-600">Retrieving Challenges...</p>
+            <p className="text-gray-600">{t('loading')}</p>
         </div>
     );
 

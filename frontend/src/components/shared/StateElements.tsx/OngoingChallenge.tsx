@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import { useTranslations } from 'next-intl';
 
 import { DurationContext } from '../RouteBaseElements/ChallengePage'
 import { ChallengeTimer } from './ChallengeTimer'
@@ -12,6 +13,7 @@ const OngoingChallenge = ({
 }) => {
 
   const duration = useContext(DurationContext)
+  const t = useTranslations('Challenge.OngoingChallenge');
   
   
 /***************** 
@@ -29,7 +31,7 @@ const OngoingChallenge = ({
 
     return (
       <div>
-        <strong>Début :</strong>{' '}
+        <strong>{t('start_label')}</strong>{' '}
         <time dateTime={date.toISOString()}>
           {formatted}
         </time>
@@ -43,7 +45,7 @@ const OngoingChallenge = ({
     <div className="space-y-6 p-6 bg-gradient-to-br from-[#1F243A] to-[#151A2A] border border-white/10 rounded-2xl shadow-xl">
       {/* Header */}
       <h1 className="flex items-center gap-2 text-2xl font-bold text-white">
-        🎮 Défi en cours! A vous de jouer!
+        <span>🎮</span> {t('title')}
       </h1>
 
       {/* Content */}

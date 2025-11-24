@@ -1,5 +1,6 @@
 'use client'
 import { useContext, useEffect, useState } from "react";
+import { useTranslations } from 'next-intl';
 
 import { contractAbi } from "@/constants/ChallengeInfo"
 
@@ -22,13 +23,7 @@ enum WorkflowStatus {
     VotingForWinner,
     ChallengeWon
 }
-//To display state names
-const stateLabels = {
-    [WorkflowStatus.GatheringPlayers]: "Regroupement des joueurs",
-    [WorkflowStatus.OngoingChallenge]: "Challenge en cours",
-    [WorkflowStatus.VotingForWinner]: "Vote pour élire le gagnant",
-    [WorkflowStatus.ChallengeWon]: "Challenge terminé",
-};
+// state labels are provided by translations under the `Challenge.State` subgroup
 
 
 const ChallengeState = () => {
@@ -38,6 +33,7 @@ const ChallengeState = () => {
  * *************/
     const duration = useContext(DurationContext)
     const contractAddress = useContext(ContractAddressContext)
+    const t = useTranslations('Challenge');
 
 /***************** 
  * Functions for interaction with the blokchain 
@@ -110,10 +106,25 @@ const ChallengeState = () => {
 ///******Display *******/
 
     const displayState = (() => {
-        if (IsPending) return 'Loading…';
-        if (error) return 'Error fetching description';
+        if (IsPending) return t('loading');
+        if (error) return t('error_fetching');
 
-        return stateLabels[currentDisplayStatus];
+        const key = (() => {
+            switch (currentDisplayStatus) {
+                case WorkflowStatus.GatheringPlayers:
+                    return 'State.gathering_players';
+                case WorkflowStatus.OngoingChallenge:
+                    return 'State.ongoing_challenge';
+                case WorkflowStatus.VotingForWinner:
+                    return 'State.voting_for_winner';
+                case WorkflowStatus.ChallengeWon:
+                    return 'State.challenge_won';
+                default:
+                    return 'State.unknown';
+            }
+        })();
+
+        return t(key);
     })()
 
     
@@ -121,7 +132,7 @@ const ChallengeState = () => {
     return (
         <>
             <h1 className="text-xl font-bold m-5">
-                Etat du Challenge: <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{displayState}</span>
+                {t('State.title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">{displayState}</span>
             </h1>
             <div /*className="p-5 border"*/>
                 {!IsPending && currentDisplayStatus === WorkflowStatus.GatheringPlayers && (
@@ -144,7 +155,7 @@ const ChallengeState = () => {
                 {/* Fallback if none of the above matched */}
                 {!IsPending &&
                 !Object.values(WorkflowStatus).includes(currentDisplayStatus) && (
-                    <p className="text-red-500">❌ Error displaying state</p>
+                    <p className="text-red-500">{t('State.error_display')}</p>
                 )}
             </div>
         

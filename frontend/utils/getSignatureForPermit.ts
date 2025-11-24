@@ -106,8 +106,6 @@ export const GetRSVsig = async (
     };
 
     // sign the Permit type data with the deployer's private key
-    // const signature = await signer.signTypedData(domain, types, values);
-
     const signatureHex = await signTypedData(config, {
         types,
         domain,

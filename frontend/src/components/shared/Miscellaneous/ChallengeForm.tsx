@@ -1,6 +1,7 @@
 'use client'
 
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
+import { useTranslations } from 'next-intl';
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -20,59 +21,59 @@ import z from 'zod'
 
 
 
-export const formSchema = z.object({
-    description: z.string().min(3),
-    hours: z.string().regex(/^\d+$/, 'Must be a number'),
-    minutes: z.string().regex(/^[0-5]?\d$/, '0–59'),
-    seconds: z.string().regex(/^[0-5]?\d$/, '0–59'),
-    bid: z.string().regex(/^\d+(\.\d+)?$/, 'Must be a valid number'),
-    maxPlayers: z.coerce.number().min(1),
-    isGroup: z.boolean(),
-    groupAddresses: z
-        .array(
-            z.object({
-                address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Must be a valid address (40 char)'),  // or `.regex(/^0x[a-fA-F0-9]{40}$/)`
+export const getFormSchema = (t: ReturnType<typeof useTranslations>) => 
+    z.object({
+        description: z.string().min(3, t('description_min_3')),
+        hours: z.string().regex(/^\d+$/, t('hours_number')),
+        minutes: z.string().regex(/^[0-5]?\d$/, t('minutes_range')),
+        seconds: z.string().regex(/^[0-5]?\d$/, t('seconds_range')),
+        bid: z.string().regex(/^\d+(\.\d+)?$/, t('bid_number')),
+        maxPlayers: z.coerce.number().min(2, t('max_players_min')),
+        isGroup: z.boolean(),
+        groupAddresses: z
+            .array(
+                z.object({
+                    address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, t('address_format')),  // or `.regex(/^0x[a-fA-F0-9]{40}$/)`
+                })
+            )
+    }).transform(({ hours, minutes, seconds, maxPlayers, bid, description, isGroup, groupAddresses}) => ({
+        duration: Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds),
+        maxPlayers,
+        bid,
+        description,
+        isGroup,
+        groupAddresses,
+    })).superRefine((data, ctx) => {
+        if (data.duration < 30) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t('total_duration_error'),
+                path: ['total duration'],
             })
-        )
-}).transform(({ hours, minutes, seconds, maxPlayers, bid, description, isGroup, groupAddresses}) => ({
-    duration: Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds),
-    maxPlayers,
-    bid,
-    description,
-    isGroup,
-    groupAddresses,
-}))
-.superRefine((data, ctx) => {
-    if (data.duration < 30) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Total duration must be at least 30 seconds',
-            path: ['total duration'],
-        })
-    }
-    if(data.isGroup && data.groupAddresses.length < 2) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'At least 2 addresses should be added',
-            path: [`isGroup`],
-        })
-    }
-    // Uniqueness check for groupAddresses
-    const seen = new Set<string>();
-    data.groupAddresses.forEach((item, index) => {
-        if (seen.has(item.address)) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Duplicate address not allowed',
-            path: ["isGroup"],
-        });
-        } else {
-            seen.add(item.address);
         }
+        if (data.isGroup && data.groupAddresses.length < 2) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t('at_least_two_addresses'),
+                path: [`isGroup`],
+            })
+        }
+        // Uniqueness check for groupAddresses
+        const seen = new Set<string>();
+        data.groupAddresses.forEach((item, index) => {
+            if (seen.has(item.address)) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: t('duplicate_address'),
+                    path: ["isGroup"],
+                });
+            } else {
+                seen.add(item.address);
+            }
+        });
     });
-})
 
-export type ChallengeFormValues = z.input<typeof formSchema> | any | z.output<typeof formSchema>;
+export type ChallengeFormValues = z.input<ReturnType<typeof getFormSchema>> | any | z.output<ReturnType<typeof getFormSchema>>;
 
 
 const ChallengeForm = ({
@@ -80,6 +81,8 @@ const ChallengeForm = ({
 }: {
     onSubmit: (values: ChallengeFormValues) => void
 }) => {
+    const t = useTranslations('ChallengeForm');
+    const formSchema = getFormSchema(t);
     const form = useForm<ChallengeFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -119,16 +122,16 @@ const ChallengeForm = ({
                     name="description"
                     render={({ field }) => (
                         <FormItem className="space-y-2">
-                            <FormLabel>Description</FormLabel>
+                            <FormLabel>{t('description_label')}</FormLabel>
                                 <FormControl>
                                     <Textarea 
-                                        placeholder="A short description..." 
+                                        placeholder={t('description_placeholder')} 
                                         {...field} 
                                         className="
                                             w-full bg-[#0A0F1E] border border-white/20 rounded-lg
                                             px-4 py-3 text-white placeholder:text-white/50
                                             focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400
-                                            transition duration-200
+                                            transition duration-200 selection:bg-[#324b96]
                                         "
                                     />
                                 </FormControl>
@@ -143,7 +146,7 @@ const ChallengeForm = ({
                     name="total duration"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Durée</FormLabel>
+                            <FormLabel>{t('duration_label')}</FormLabel>
                             <div className='flex gap-2 items-end'>
                                 {['hours', 'minutes', 'seconds'].map((name, i) => (
                                     <FormField
@@ -166,7 +169,8 @@ const ChallengeForm = ({
                                                     "
                                                 />
                                             </FormControl>
-                                            <FormLabel className="text-xs">{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel>
+                                            {/* <FormLabel className="text-xs">{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel> */}
+                                            <FormLabel className="text-xs">{t(name)}</FormLabel>
                                             <FormMessage />
                                         </FormItem>
                                     )}
@@ -178,18 +182,17 @@ const ChallengeForm = ({
                     )}
                 />
 
-                {/* Bid */}
                 <FormField
                     control={form.control}
                     name="bid"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="font-medium">Mise (DARE)</FormLabel>
+                            <FormLabel className="font-medium">{t('bid_label')}</FormLabel>
                                 <FormControl>
                                     <Input
                                         placeholder="0.1"
                                         min={0}
-                                        onKeyDown={(e) => {
+                                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                                             const allowedKeys = [
                                                 'Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', '.', // allow decimal point
                                             ];
@@ -205,7 +208,7 @@ const ChallengeForm = ({
                                             w-full bg-[#0A0F1E] border border-white/20 rounded-lg
                                             px-4 py-2 text-white placeholder:text-white/50
                                             focus:border-purple-500 focus:ring-2 focus:ring-purple-500
-                                            transition duration-200
+                                            transition duration-200 selection:bg-[#324b96]
                                         "/>
                                 </FormControl>
                             <FormMessage />
@@ -240,7 +243,7 @@ const ChallengeForm = ({
                                 />
                                 </RadixSwitch.Root>
                             </FormControl>
-                            <FormLabel>Mode (public/groupe privé)</FormLabel>
+                            <FormLabel>{t('mode_label')}</FormLabel>
                             <FormMessage />
                         </FormItem>
                     )}
@@ -253,7 +256,7 @@ const ChallengeForm = ({
                         name="maxPlayers"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Mode PUBLIC : Nombre de joueurs max autorisés</FormLabel>
+                                <FormLabel>{t('public_max_players_label')}</FormLabel>
                                 <FormControl>
                                     <Input 
                                         type="number" 
@@ -272,36 +275,40 @@ const ChallengeForm = ({
                     />
                 ) : (
                     <FormItem>
-                        <FormLabel>Mode GROUPE : Adresses autorisées :</FormLabel>
+                        <FormLabel>{t('group_addresses_label')}</FormLabel>
                         {fields.map((item, index) => (
-                            <div key={item.id} className="flex items-center space-x-2 mb-2">
-                                <Controller
-                                    control={form.control}
-                                    name={`groupAddresses.${index}.address` as const}
-                                    render={({ field }) => (
-                                        <FormControl>
-                                            <Input
-                                                placeholder="0x..."
-                                                {...field}
-                                                className="
-                                                    w-full bg-[#0A0F1E] border border-white/20 rounded-lg
-                                                    px-4 py-2 text-white placeholder:text-white/50
-                                                    focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500
-                                                    transition duration-200
-                                                "
-                                            />
-                                        </FormControl>
-                                    )}
-                                />
-                                <Button 
-                                    type="button" 
-                                    variant="destructive" 
-                                    onClick={() => remove(index)}
-                                    className="px-3 py-1 bg-red-600 hover:bg-red-700 transition rounded-md text-white"
-                                >
-                                    Retirer
-                                </Button>
-                            </div>
+                            <FormField
+                                key={item.id}
+                                control={form.control}
+                                name={`groupAddresses.${index}.address` as const}
+                                render={({ field }) => (
+                                    <FormItem className="mb-2">
+                                        <div className='flex items-center space-x-2'>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="0x..."
+                                                    {...field}
+                                                    className="
+                                                        w-full bg-[#0A0F1E] border border-white/20 rounded-lg
+                                                        px-4 py-2 text-white placeholder:text-white/50
+                                                        focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500
+                                                        transition duration-200 selection:bg-[#324b96]
+                                                    "
+                                                />
+                                            </FormControl>
+                                            <Button 
+                                                type="button" 
+                                                variant="destructive" 
+                                                onClick={() => remove(index)}
+                                                className="px-3 py-1 bg-red-600 hover:bg-red-700 transition rounded-md text-white"
+                                            >
+                                                {t('remove_address')}
+                                            </Button>
+                                        </div>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         ))}
                         <div>
                             <Button 
@@ -313,7 +320,7 @@ const ChallengeForm = ({
                                 "
                                 onClick={() => append({ address: '' })}
                             >
-                                Ajouter une Adresse
+                                {t('add_address')}
                             </Button>
                         </div>
                     </FormItem>
@@ -330,7 +337,7 @@ const ChallengeForm = ({
                         transition-transform duration-200
                     "
                 >
-                    Créer un Challenge
+                    {t('submit_button')}
                 </Button>
             </form>
         </Form>

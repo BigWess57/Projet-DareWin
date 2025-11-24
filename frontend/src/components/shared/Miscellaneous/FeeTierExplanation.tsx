@@ -8,8 +8,12 @@ import {
 } from '@/src/components/ui/tooltip'
 import { TierBronzeFee, TierGoldFee, TierPlatinumFee, TierSilverFee } from '@/constants/TokenInfo'
 import { CircleQuestionMark } from 'lucide-react'
+import { useTranslations } from 'next-intl';
 
 export function FeeTierExplanation() {
+
+  const t = useTranslations('Header');
+  
   return (
     <TooltipProvider>
       <Tooltip>
@@ -20,11 +24,11 @@ export function FeeTierExplanation() {
         </TooltipTrigger>
         <TooltipContent className="bg-[#1F243A] text-sm text-white border border-white/20 rounded-lg shadow-lg">
           <div className="max-w-xs">
-            <p className='mb-2'>Les frais sont structurés par paliers : plus vous possédez de tokens DARE, plus le pourcentage de frais diminue :  </p>
-            <p>➤ 0–10000  DARE = <span className='text-[#CE8946] font-bold'>BRONZE - {TierBronzeFee} de frais</span></p>
-            <p>➤ 10000–40000  DARE = <span className='text-slate-400 font-bold'>SILVER - {TierSilverFee} de frais</span></p>
-            <p>➤ 40000–100000  DARE = <span className='text-yellow-400 font-bold'>GOLD - {TierGoldFee} de frais</span></p>
-            <p>➤ {'>'} 100000  DARE = <span className='text-cyan-400 font-bold'>PLATINUM - {TierPlatinumFee} de frais</span></p>
+            <p className='mb-2'>{t('fee_explanation')}</p>
+            <p>➤ 0–10000  DARE = <span className='text-[#CE8946] font-bold'>{t('tier_bronze', { fee: TierBronzeFee })}</span></p>
+            <p>➤ 10000–40000  DARE = <span className='text-slate-400 font-bold'>{t('tier_silver', { fee: TierSilverFee })}</span></p>
+            <p>➤ 40000–100000  DARE = <span className='text-yellow-400 font-bold'>{t('tier_gold', { fee: TierGoldFee })}</span></p>
+            <p>➤ {'>'} 100000  DARE = <span className='text-cyan-400 font-bold'>{t('tier_platinum', { fee: TierPlatinumFee })}</span></p>
           </div>
         </TooltipContent>
       </Tooltip>

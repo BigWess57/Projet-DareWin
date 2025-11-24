@@ -7,6 +7,7 @@ import { CopyAction } from '../Miscellaneous/CopyAction'
 import { factoryAbi } from '@/constants/ChallengeFactoryInfo'
 
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react'
 import { decodeEventLog, parseEther, zeroHash } from 'viem'
 import { _toLowerCase } from 'zod/v4/core'
@@ -17,6 +18,7 @@ import { factoryAddress } from "@/config/networks"
 
 
 const ChallengeFactory = () => {
+    const t = useTranslations('ChallengeFactory');
 
     const [challengeIpfsCid, setChallengeIpfsCid] = useState<string>("")
 
@@ -29,7 +31,7 @@ const ChallengeFactory = () => {
                     .then(async (res) => {
                         if (!res.ok) {
                             const errJson = await res.json().catch(() => ({}));
-                            toast.error("Error unpinning Proofs on IPFS: " + (errJson.error ?? res.statusText), {
+                            toast.error(t('error_unpin', { error: errJson.error ?? res.statusText }), {
                                 duration: 3000,
                             });
                         } else {
@@ -38,19 +40,19 @@ const ChallengeFactory = () => {
                         }
                     })
                     .catch((err) => {
-                        toast.error("Network error unpinning Proofs: " + err, {
+                        toast.error(t('network_error_unpin', { error: String(err) }), {
                             duration: 3000,
                         });
                     });
                 }
 
                 if(err.message.toLowerCase().includes("user rejected the request")){
-                    toast.error("Error : User rejected the request", {
+                    toast.error(t('user_rejected'), {
                         duration: 3000,
                     });
                     return
                 }
-                toast.error("Creation failed: " + err.message, {
+                toast.error(t('creation_failed', { reason: err.message }), {
                     duration: 3000,
                 })
             },
@@ -116,7 +118,7 @@ const ChallengeFactory = () => {
             const pinJson = await pinRes.json();
             if (!pinRes.ok || !pinJson.ipfsHash) {
                 console.error('Pin failed', pinJson);
-                toast.error("Creation failed: Failed to pin Proofs to IPFS. Try again", {
+                toast.error(t('pin_failed'), {
                     duration: 3000,
                 })
                 return;
@@ -187,9 +189,9 @@ const ChallengeFactory = () => {
     useEffect(() => {
         if (isConfirming) {
             // Affiche le toast "loading" et garde son ID
-            toast.loading('Pending...', {
+            toast.loading(t('pending'), {
                 id: 1,
-                description: 'Creating Challenge...',
+                description: t('pending_desc'),
                 action: null,
             })
         }
@@ -197,16 +199,16 @@ const ChallengeFactory = () => {
             const newContractAddress = getContractAddressFromLogs(receipt);
 
             if(!newContractAddress){
-                toast.warning("Warning!", {
+                toast.warning(t('warning'), {
                     id: 1,
-                    description: "Challenge successfully created, but could not retrieve contract address. Check 'My challenges' tab",
+                    description: t('warning_desc'),
                     duration: 3000,
                 })
                 return;
             }else{
-                toast.success("Transaction Successful!", {
+                toast.success(t('success'), {
                     id: 1,
-                    description: "Challenge créé avec succes a l'adresse " + newContractAddress,
+                    description: t('success_desc', { address: newContractAddress }),
                     action:<CopyAction address={newContractAddress}/>,
                     duration: 5000,
                 })
@@ -219,28 +221,28 @@ const ChallengeFactory = () => {
                 fetch('/api/ipfsProofs/unpinProofs', { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ipfsHash: challengeIpfsCid })})
                 .then(async (res) => {
                     if (!res.ok) {
-                        const errJson = await res.json().catch(() => ({}));
-                        toast.error("Error unpinning Proofs on IPFS: " + (errJson.error ?? res.statusText), {
-                            duration: 3000,
-                        });
-                    } else {
-                        console.log("Proofs unpinned successfully");
-                    }
+                            const errJson = await res.json().catch(() => ({}));
+                            toast.error(t('error_unpin', { error: errJson.error ?? res.statusText }), {
+                                duration: 3000,
+                            });
+                        } else {
+                            console.log("Proofs unpinned successfully");
+                        }
                 })
                 .catch((err) => {
-                    toast.error("Network error unpinning Proofs: " + err, {
-                        duration: 3000,
-                    });
+                        toast.error(t('network_error_unpin', { error: String(err) }), {
+                            duration: 3000,
+                        });
                 });
             }
 
             if(errorConfirmation.message.toLowerCase().includes("user rejected the request")){
-                toast.error("Error : User rejected the request", {
+                toast.error(t('user_rejected'), {
                     duration: 3000,
                 });
                 return
             }
-            toast.error(errorConfirmation.message, {
+            toast.error(t('error', { message: errorConfirmation.message }), {
                 duration: 3000,
             });
         }
@@ -250,8 +252,7 @@ const ChallengeFactory = () => {
 
     return (
         <div className='flex-center flex-col gap-10 '>
-            <div className='text-3xl font-bold'>Crée un nouveau challenge et invite tes amis !</div>
-
+            <div className='text-3xl font-bold'>{t('title')}</div>
             <ChallengeForm onSubmit={handleCreateChallenge} />
         </div>
         

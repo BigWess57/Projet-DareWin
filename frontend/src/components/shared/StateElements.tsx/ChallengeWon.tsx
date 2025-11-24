@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 
 import { Address, formatEther } from 'viem'
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
+import { useTranslations } from 'next-intl'
 
 import { ContractAddressContext } from '../RouteBaseElements/ChallengePage'
 
@@ -13,6 +14,7 @@ import { Button } from '@/src/components/ui/button'
 const ChallengeWon = () => {
 
   const {address} = useAccount()
+  const t = useTranslations('Challenge.ChallengeWon')
 
   const [numberOfWinners, setNumberOfWinners] = useState<number>(0)
   const [prize, setPrize] = useState<bigint>(0n)
@@ -53,9 +55,9 @@ const ChallengeWon = () => {
       mutation: {
           onError: (err) => {
               if(err.message.toLowerCase().includes("user rejected")){
-                  toast.error("withdraw prize failed: Use rejected the request")
+                  toast.error(t('withdraw_rejected'))
               }else{
-                  toast.error("withdraw prize failed: " + err.message)
+                  toast.error(t('withdraw_failed', { error: err.message }))
               }
           },
       },
@@ -95,7 +97,7 @@ const ChallengeWon = () => {
     // current connected player
     const player = readData[3].result
     if (player == undefined || highestVotes == undefined){
-      toast.error("Error : Could not retrieve player info from contract", {
+      toast.error(t('error_player_info'), {
           duration: 3000,
       });
       return;
@@ -124,8 +126,8 @@ const ChallengeWon = () => {
   //For start challenge
   useEffect(() => {
       if(isSuccess) {
-        toast.success("Succès", {
-          description: "Vous avez récupéré votre récompense",
+        toast.success(t('success_title'), {
+          description: t('success_description'),
         })
 
         setHasWithdrawn(true);
@@ -138,7 +140,7 @@ const ChallengeWon = () => {
       }
       if(withdrawReceiptError) {
           console.error('Transaction failed ', withdrawReceiptError.message)
-          toast.error("Error : Could not withdraw prize", {
+          toast.error(t('error_withdraw'), {
               duration: 3000,
           });
       }
@@ -154,18 +156,18 @@ const ChallengeWon = () => {
       ">
         {/* Titre */}
         <h1 className="flex items-center gap-3 text-3xl font-bold">
-          Le vote est terminé !
+          {t('title')}
         </h1>
         <div className="w-full max-w-md space-y-6 text-center">
           {!hasJoined ? (
             <div className="text-lg italic text-white/80">
-              Vous ne participez pas à ce défi
+              {t('not_participated')}
             </div>
           ) : isWinner ? (
             <div className="space-y-3">
-              <div className="text-xl font-semibold text-green-400">🎉 Vous avez gagné !</div>
+              <div className="text-xl font-semibold text-green-400">{t('winner_message')}</div>
               <div className="text-lg text-white/80">
-                Votre Récompense :
+                {t('your_reward')}
                 <span className="ml-2 font-semibold text-yellow-300">
                   {formatEther(prize)} DARE
                 </span>
@@ -181,18 +183,18 @@ const ChallengeWon = () => {
                 `}
               >
                 {hasWithdrawn
-                  ? "Vous avez déjà récupéré votre récompense"
-                  : "Récupérer votre récompense"}
+                  ? t('already_withdrawn')
+                  : t('withdraw_button')}
               </Button>
             </div>
           ) : (
-            <div className="text-xl text-red-400 font-semibold">Vous avez perdu ...</div>
+            <div className="text-xl text-red-400 font-semibold">{t('loser_message')}</div>
           )}
 
           <div className="text-lg text-white/80">
             {numberOfWinners > 1
-              ? `${numberOfWinners} joueurs ont gagné ce défi et remportent `
-              : `${numberOfWinners} joueur a gagné ce défi et remporte `}
+              ? t('winners_message_plural', { count: numberOfWinners })
+              : t('winners_message_singular', { count: numberOfWinners })}
             <span className="font-semibold text-yellow-300">
               {formatEther(prize)} DARE
             </span>

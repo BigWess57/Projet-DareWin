@@ -1,5 +1,6 @@
 import { Clock1, Clock2, Clock3, Clock4, Clock5, Clock6, Clock7, Clock8, Clock9, Clock10, Clock11, Clock12 } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl';
 
 export function ChallengeTimer({
   startingTime,
@@ -11,6 +12,7 @@ export function ChallengeTimer({
   refreshDisplay?: () => Promise<void>
 }) {
 
+    const t = useTranslations('Challenge.ChallengeTimer');
     const start = Number(startingTime)
     const dur = Number(duration)
 
@@ -63,10 +65,10 @@ export function ChallengeTimer({
     return (
         <div className="space-y-2">
             <div className="text-white text-base">
-                Temps restant : 
+                {t('time_remaining')}
             </div>
             {!displayTimer ? 
-                <div className='italic'>Loading...</div>
+                <div className='italic'>{t('loading')}</div>
             : 
                 <div className="flex items-center text-xl font-mono text-cyan-400">
                     <Icon className="mr-5 w-8 h-8 text-cyan-400 animate-pulse" /> {hours}:{minutes}:{seconds}

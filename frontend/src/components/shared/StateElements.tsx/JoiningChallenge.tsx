@@ -1,6 +1,7 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 
 import { toast } from "sonner"
+import { useTranslations } from 'next-intl';
 
 import { Address, getAddress, GetLogsReturnType, isAddressEqual, parseAbiItem } from "viem"
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from "wagmi"
@@ -34,6 +35,7 @@ function isHexArray(x: unknown): x is `0x${string}`[] {
 
 const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOptions) => Promise<QueryObserverResult<unknown, ReadContractErrorType>>}) => {
 
+    const t = useTranslations('Challenge.JoiningChallenge');
     const bid = useContext(BidContext)
     const contractAddress = useContext(ContractAddressContext)
 
@@ -55,10 +57,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     const { data: joinHash, isPending: isJoining, writeContract: joinContract, } = useWriteContract({
         mutation: {
             onError: (err) => {
-                if(err.message.toLowerCase().includes("user rejected")){
-                    toast.error("joining failed: Use rejected the request")
+                if(err.message.toLowerCase().includes("user rejected the request")){
+                    toast.error(t('join_rejected'))
                 }else{
-                    toast.error("joining failed: " + err.message)
+                    toast.error(t('join_failed', { error: err.message }))
                 }
             },
         },
@@ -73,10 +75,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     const { data: withdrawHash, isPending: isWithdrawing, writeContract: withdrawContract, } = useWriteContract({
         mutation: {
             onError: (err) => {
-                if(err.message.toLowerCase().includes("user rejected")){
-                    toast.error("withdrawal failed: Use rejected the request")
+                if(err.message.toLowerCase().includes("user rejected the request")){
+                    toast.error(t('withdraw_rejected'))
                 }else{
-                    toast.error("withdrawal failed: " + err.message)
+                    toast.error(t('withdraw_failed', { error: err.message }))
                 }
             },
         },
@@ -91,10 +93,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
     const { data: startHash, isPending: isStarting, writeContract: startContract, } = useWriteContract({
         mutation: {
             onError: (err) => {
-                if(err.message.toLowerCase().includes("user rejected")){
-                    toast.error("start failed: Use rejected the request")
+                if(err.message.toLowerCase().includes("user rejected the request")){
+                    toast.error(t('start_rejected'))
                 }else{
-                    toast.error("start failed: " + err.message)
+                    toast.error(t('start_failed', { error: err.message }))
                 }
             },
         },
@@ -211,7 +213,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         if (groupMode) {
             if(!challengeMerkleProof){
                 // user not whitelisted or proof not loaded yet
-                toast.error('No Merkle proof available for your address.');
+                toast.error(t('no_merkle_proof'));
                 return;
             }else{
                 merkleProof = challengeMerkleProof;
@@ -270,7 +272,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         }
         if(joinReceiptError) {
             console.error('Transaction failed ', joinReceiptError.message)
-            toast.error("Error : Could not join the challenge", {
+            toast.error(t('error_join_challenge'), {
                 duration: 3000,
             });
         }
@@ -298,7 +300,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         }
         if(withdrawReceiptError) {
             console.error('Transaction failed ', withdrawReceiptError.message)
-            toast.error("Error : Could not leave the challenge", {
+            toast.error(t('error_leave_challenge'), {
                 duration: 3000,
             });
         }
@@ -327,7 +329,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         }
         if(startReceiptError) {
             console.error('Transaction failed ', startReceiptError.message)
-            toast.error("Error : Could not start the challenge", {
+            toast.error(t('error_start_challenge'), {
                 duration: 3000,
             });
         }
@@ -351,7 +353,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
         const player = readData[3].result
         if (player == undefined){
-            toast.error("Error : Could not retrieve player info from contract", {
+            toast.error(t('error_player_info'), {
                 duration: 3000,
             });
             return;
@@ -390,12 +392,12 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
                     if (!result.proof) {
                         // user not whitelisted or proof not loaded yet
-                        toast.error('No Merkle proof available for your address.');
+                        toast.error(t('no_merkle_proof'));
                         return;
                     }
 
                     if (!isHexArray(result.proof)) {
-                        toast.error('Invalid proof format.');
+                        toast.error(t('invalid_proof_format'));
                         return;
                     }
 
@@ -431,7 +433,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             <div 
                 className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"
             />
-            <p className="text-gray-600">Updating challenge status...</p>
+            <p className="text-gray-600">{t('updating_status')}</p>
         </div>
     );
 
@@ -440,7 +442,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             <div 
                 className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-500 mb-4"
             />
-            <p className="text-gray-600">Updating Players List...</p>
+            <p className="text-gray-600">{t('updating_players')}</p>
         </div>
     );
 
@@ -453,23 +455,23 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                     {/* Statut d’attente */}
                     <div className="flex items-center justify-between bg-[#0B1126] p-4 rounded-lg border border-cyan-500/20">
                         <p className="flex items-center gap-2 text-xl font-semibold text-white/90">
-                        🚀 En attente de joueurs<span className="animate-ellipsis"/>
+                        🚀 {t('waiting_players')}<span className="animate-ellipsis"/>
                         </p>
                         <div className="flex flex-col items-end space-y-1 text-sm">
                         <div className="text-white/60">
-                            Mode : <span className="font-semibold text-cyan-400">{groupMode ? 'Friend Group' : 'Public'}</span>
+                            {t('mode')} : <span className="font-semibold text-cyan-400">{groupMode ? t('friend_group') : t('public')}</span>
                         </div>
                         {groupMode && (
                             <div className={`text-sm ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
                                 {isCheckingWhitelist ? (
                                     <div className="flex items-center text-cyan-500 justify-center gap-2">
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        <span>Chargement des adresses autorisées...</span>
+                                        <span>{t('loading_addresses')}</span>
                                     </div>
                                 ) : isAllowed === true ? (
-                                    'Vous etes autorisé a participer au challenge'
+                                    t('authorized')
                                 ) : isAllowed === false ? (
-                                    "Vous n'etes pas autorisé a participer au challenge"
+                                    t('not_authorized')
                                 ) : null}
                             </div>
                         )}
@@ -489,7 +491,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                                 : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
                             `}
                             >
-                            REJOINDRE
+                            {t('join')}
                             </button>
                         ) : (
                             <button
@@ -502,7 +504,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                                 : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:brightness-110'}
                             `}
                             >
-                            QUITTER
+                            {t('leave')}
                             </button>
                         )}
 
@@ -518,7 +520,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                                 : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white hover:brightness-110'}
                             `}
                             >
-                                Démarrer le défi
+                                {t('start_challenge')}
                             </button>
                         )}
                     </div>
@@ -528,23 +530,23 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                         <LoadingPlayersSpinner/>
                     ) : (
                         <div className="p-4 bg-[#0B1126] rounded-lg border border-white/10">
-                            <h4 className="text-sm text-white/60 uppercase mb-2">Joueurs :</h4>
+                            <h4 className="text-sm text-white/60 uppercase mb-2">{t('players')}:</h4>
                             <div className="flex flex-col gap-2 text-white">
                             {players?.length > 0 ? (
                                 [...players].reverse().map((addr) => (
                                     <Joined address={addr} key={addr} />
                                 ))
                             ) : (
-                                <div className="italic text-white/50">(aucun pour l'instant)</div>
+                                <div className="italic text-white/50">{t('no_players_yet')}</div>
                             )}
                             </div>
                         </div> 
                     )}
                     
 
-                    <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage="Vous avez rejoint le challenge avec succès!" />
-                    <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage="Le challenge a démarré avec succès!" />
-                    <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage="Vous avez quitté le challenge" />
+                    <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage={t('success_joined')} />
+                    <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage={t('success_started')} />
+                    <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage={t('success_left')} />
                 </div>
             )}
         </>

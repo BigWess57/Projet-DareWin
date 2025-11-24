@@ -13,7 +13,7 @@ export function CopyAction({ address }: { address: string }) {
 
   return (
     <Button className="bg-blue-600" onClick={handleCopy}>
-      {copied ? 'Copié!' : 'Copier CA'}
+      {copied ? 'Copied!' : 'Copy CA'}
       <StickyNote />
     </Button>
   )

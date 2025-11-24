@@ -1,7 +1,11 @@
+import { useTranslations } from "next-intl";
+
 const Footer = () => {
+  const t = useTranslations('Footer');
+  
   return (
     <footer className="footer">
-        All rights reserved &copy; Alyra {new Date().getFullYear()}
+        {t('all_rights_reserved')} &copy; Alyra {new Date().getFullYear()}
     </footer>
   )
 }

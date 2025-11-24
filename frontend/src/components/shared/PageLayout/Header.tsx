@@ -14,8 +14,10 @@ import { Home, Zap, PencilRuler } from 'lucide-react'
 import { FeeTierExplanation } from '../Miscellaneous/FeeTierExplanation';
 import { tokenAddress } from '@/config/networks';
 import LanguageSwitcher from '../Miscellaneous/LanguageSwitcher';
+import {useTranslations} from 'next-intl';
 
 const Header = () => {
+    const t = useTranslations('Header');
 
 /************
  * Blockchain interaction
@@ -37,14 +39,14 @@ const Header = () => {
 /******Display ******/
     const displayBalance = (() => {
         if (!isConnected) return { success: false, message: "-" };
-        if (IsPending) return { success: false, message: "Chargement..." };
-        if (error) return { success: false, message: "Erreur lors du fetch du solde" };
+        if (IsPending) return { success: false, message: t('connecting') };
+        if (error) return { success: false, message: t('fetch_error') };
         
         if (typeof balance === 'bigint') {
             return { success: true, message: formatEther(balance) };
         }
 
-        return { success: false, message: "Erreur inattendue" };
+        return { success: false, message: t('unexpected_error') };
     })()
 
     const displayFeeTier = (() => {
@@ -54,13 +56,13 @@ const Header = () => {
 
         const balanceFormated = Number(formatEther(balance as bigint))
         if(balanceFormated < feeTierBronzeCap){
-            return <span className='text-[#CE8946] font-bold'>BRONZE - {TierBronzeFee} de frais</span>
+            return <span className='text-[#CE8946] font-bold'>{t('tier_bronze', { fee: TierBronzeFee })}</span>
         }else if(balanceFormated < feeTierSilverCap){
-            return <span className='text-slate-400 font-bold'>SILVER - {TierSilverFee} de frais</span>
+            return <span className='text-slate-400 font-bold'>{t('tier_silver', { fee: TierSilverFee })}</span>
         }else if(balanceFormated < feeTierGoldCap){
-            return <span className='text-yellow-400 font-bold'>GOLD - {TierGoldFee} de frais</span>
+            return <span className='text-yellow-400 font-bold'>{t('tier_gold', { fee: TierGoldFee })}</span>
         }else {
-            return <span className='text-cyan-400 font-bold'>PLATINUM - {TierPlatinumFee} de frais</span>
+            return <span className='text-cyan-400 font-bold'>{t('tier_platinum', { fee: TierPlatinumFee })}</span>
         }
     })()
 
@@ -97,17 +99,17 @@ const Header = () => {
             <ul className="flex items-center gap-3">
                 <li>
                 <Link href="/" className={linkClasses(isActive.home)}>
-                    <Home size={20} /> ACCUEIL
+                    <Home size={20} /> {t('nav_home')}
                 </Link>
                 </li>
                 <li>
                 <Link href="/createchallenge" className={linkClasses(isActive.create)}>
-                    <PencilRuler size={20} /> CRÉER
+                    <PencilRuler size={20} /> {t('nav_create')}
                 </Link>
                 </li>
                 <li>
                 <Link href="/mychallenges" className={linkClasses(isActive.mychallenges)}>
-                    <Zap size={20} /> MES CHALLENGES
+                    <Zap size={20} /> {t('nav_mychallenges')}
                 </Link>
                 </li>
             </ul>
@@ -117,17 +119,17 @@ const Header = () => {
 
                 <div className="px-4 py-3 rounded-xl bg-[#1F243A] border border-white/10 text-sm text-white shadow-sm">
                     <div className="text-white/90 text-lg mb-1">
-                        Balance : <span className="ml-2 font-semibold text-white-400 text-xl font-mono tracking-wide">
+                        {t('balance_label')} <span className="ml-2 font-semibold text-white-400 text-xl font-mono tracking-wide">
                             { displayBalance.success ?
                                 <>{Number(displayBalance.message).toLocaleString(undefined, {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 6,
-                                })} DARE</> : displayBalance.message
+                                })} {t('dare_symbol')}</> : displayBalance.message
                             } 
                         </span>
                     </div>
                     <div className='flex items-center'>
-                        <div className="text-white/60">Palier de frais : <span className="text-white/80">{displayFeeTier}</span></div>
+                        <div className="text-white/60">{t('fee_label')} <span className="text-white/80">{displayFeeTier}</span></div>
                         <FeeTierExplanation/>
                     </div>
                     
@@ -146,14 +148,14 @@ const Header = () => {
                                 type="button"
                                 className="px-6 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl text-sm font-semibold text-white hover:brightness-110 transition"
                             >
-                                Se connecter
+                                {t('connect')}
                             </button>
                             ) : chain.unsupported ? (
                             <button
                                 onClick={openChainModal}
                                 className="px-4 py-2 border border-red-400 rounded-md text-sm text-red-400 hover:bg-red-500/10 transition"
                             >
-                                Mauvais réseau
+                                {t('wrong_network')}
                             </button>
                             ) : (
                             <div className="flex items-center gap-3">

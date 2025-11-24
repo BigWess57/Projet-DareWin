@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useEffect, useState } from "react"
+import { useTranslations } from 'next-intl';
 import { StickyNote } from 'lucide-react'
 
 import { useAccount, useReadContracts } from "wagmi"
@@ -16,6 +17,7 @@ export const ContractAddressContext = createContext<Address>("0x0000000000000000
 
 const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
 
+  const t = useTranslations('Challenge');
 
 /***************** 
  * Functions for interaction with the blokchain 
@@ -54,8 +56,8 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
   
   // Convert unknown to safe string
   const displayDesc = (() => {
-    if (IsPending) return 'Loading…';
-    if (error) return 'Error fetching description';
+    if (IsPending) return t('loading');
+    if (error) return t('error_fetching');
 
     const desc = description;
 
@@ -63,15 +65,15 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
   })()
 
   const displayBid = (() => {
-    if (IsPending) return 'Loading…';
-    if (error) return 'Error fetching description';
+    if (IsPending) return t('loading');
+    if (error) return t('error_fetching');
 
     return formatEther(bid)
   })()
 
   const displayDuration = (() => {
-    if (IsPending) return 'Loading…';
-    if (error) return 'Error fetching description';
+    if (IsPending) return t('loading');
+    if (error) return t('error_fetching');
 
     const durationAsNumber = Number(duration)
     const hours = Math.floor(durationAsNumber / 3600);
@@ -138,15 +140,15 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
           <button
             onClick={handleCopy}
             className="p-1 rounded-md hover:bg-white/10 transition-colors"
-            aria-label="Copier l'adresse du contrat"
+            aria-label={t('copy_contract_address')}
           >
             <div className="flex items-center gap-2">
               <StickyNote className="w-5 h-5 text-white/70" />
               {copied ? (
                 <span className="text-sm text-green-400 animate-fade-in">
-                  Copié !
+                  {t('copied')}
                 </span>
-                ) : (<span className="text-white/50">copier CA</span>)}
+                ) : (<span className="text-white/50">{t('copy_ca')}</span>)}
             </div>
             
           </button>
@@ -156,11 +158,11 @@ const ChallengePage = ({contractAddress} : {contractAddress : Address}) => {
         {/* Stats */}
         <div className="flex space-x-8 text-sm md:text-base">
           <div className="flex flex-col">
-            <span className="text-white/60 uppercase tracking-wide">Mise</span>
-            <span className="font-semibold text-cyan-400">{displayBid} DARE</span>
+            <span className="text-white/60 uppercase tracking-wide">{t('bid')}</span>
+            <span className="font-semibold text-cyan-400">{displayBid} DARE</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-white/60 uppercase tracking-wide">Durée</span>
+            <span className="text-white/60 uppercase tracking-wide">{t('duration')}</span>
             <span className="font-semibold text-white">{displayDuration}</span>
           </div>
         </div>

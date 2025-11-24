@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslations } from 'next-intl';
 import {
   Tabs,
   TabsContent,
@@ -28,6 +29,7 @@ export function ChallengeTabs({
   handleChallengeClick,
 }: ChallengeTabsProps) {
 
+  const t = useTranslations('MyChallenges.ChallengeTabs');
   const ITEMS_PER_PAGE = 5; //Default value
 
   const [itemsPerPage, setItemsPerPage] = useState(ITEMS_PER_PAGE);
@@ -65,7 +67,7 @@ export function ChallengeTabs({
               hover:text-white
             "
           >
-            Créés
+            {t('tab_created')}
           </TabsTrigger>
 
           <TabsTrigger
@@ -81,7 +83,7 @@ export function ChallengeTabs({
               hover:text-white
             "
           >
-            Rejoints
+            {t('tab_joined')}
           </TabsTrigger>
 
           <TabsTrigger
@@ -97,14 +99,14 @@ export function ChallengeTabs({
               hover:text-white
             "
           >
-            Récents
+            {t('tab_recent')}
           </TabsTrigger>
         </TabsList>
 
 
 
         <TabsContent value="created">
-          <div className="text-2xl font-bold mb-4">Créés :</div>
+          <div className="text-2xl font-bold mb-4">{t('section_created')}</div>
 
           <PaginatedTabContent
             key={itemsPerPage}
@@ -120,13 +122,13 @@ export function ChallengeTabs({
                 <ChallengePreview challenge={challenge} />
               </div>
             )}
-            emptyMessage="Aucun challenge créé."
+            emptyMessage={t('empty_created')}
           />
         </TabsContent>
 
 
         <TabsContent value="joined">
-          <div className="text-2xl font-bold mb-4">Rejoints :</div>
+          <div className="text-2xl font-bold mb-4">{t('section_joined')}</div>
 
           <PaginatedTabContent
             key={itemsPerPage}
@@ -142,13 +144,13 @@ export function ChallengeTabs({
                 <ChallengePreview challenge={challenge} />
               </div>
             )}
-            emptyMessage="Aucun challenge rejoint."
+            emptyMessage={t('empty_joined')}
           />
         </TabsContent>
 
 
         <TabsContent value="recent">
-          <div className="text-2xl font-bold mb-4">Challenges Récents :</div>
+          <div className="text-2xl font-bold mb-4">{t('section_recent')}</div>
 
           <PaginatedTabContent
             key={itemsPerPage}
@@ -164,7 +166,7 @@ export function ChallengeTabs({
                 <ChallengePreview challenge={challenge} />
               </div>
             )}
-            emptyMessage="Aucun challenge trouvé."
+            emptyMessage={t('empty_recent')}
           />
         </TabsContent>
       </Tabs>

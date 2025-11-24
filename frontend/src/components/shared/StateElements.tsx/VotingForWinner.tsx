@@ -10,6 +10,7 @@ import { Address, getAddress, GetLogsReturnType, isAddressEqual, parseAbiItem, R
 import { useAccount, useReadContracts, useWaitForTransactionReceipt, useWatchContractEvent, useWriteContract } from 'wagmi'
 import { Checkbox } from '@/src/components/ui/checkbox';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { QueryObserverResult, RefetchOptions } from '@tanstack/react-query';
 
 import { ChallengeTimer } from './ChallengeTimer';
@@ -24,6 +25,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
     const {address} = useAccount()
 
     const contractAddress = useContext(ContractAddressContext)
+    const t = useTranslations('Challenge.VotingForWinner')
     
 /*********** Variables ************ */
     const [selectedPlayer, setSelectedPlayer] = useState<Address | null>(null)
@@ -89,6 +91,12 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                 abi: contractAbi,
                 functionName: 'currentPlayerNumber',
             },
+            {
+                address: contractAddress,
+                abi: contractAbi,
+                functionName: 'players',
+                args: [address as Address],
+            },
         ],
         account: address as `0x${string}` | undefined,
     })
@@ -99,9 +107,9 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
         mutation: {
             onError: (err) => {
                 if(err.message.toLowerCase().includes("user rejected")){
-                    toast.error("Vote failed: Use rejected the request")
+                    toast.error(t('vote_failed_user_rejected'))
                 }else{
-                    toast.error("Vote failed: " + err.message)
+                    toast.error(t('vote_failed', { error: err.message }))
                 }
             },
         },
@@ -116,9 +124,9 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
         mutation: {
             onError: (err) => {
                 if(err.message.toLowerCase().includes("user rejected")){
-                    toast.error("End Vote failed: Use rejected the request")
+                    toast.error(t('end_vote_rejected'))
                 }else{
-                    toast.error("End Vote failed: " + err.message)
+                    toast.error(t('end_vote_failed', { error: err.message }))
                 }
             },
         },
@@ -131,7 +139,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
 
     const voteForWinner = () => {
         if(selectedPlayer == null){
-            toast.error("Error : No selected player", {
+            toast.error(t('no_selected_player'), {
                 duration: 3000,
             });
             return
@@ -176,24 +184,6 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
 
     // Get players from GraphQL (through next server endpoint)
     const getAllPlayers = async() => {
-        // const CurrentPlayers = await getPlayers(`/api/challenges/getAllPlayers?address=${contractAddress}`);
-        // setPlayers(CurrentPlayers);
-
-        // //If current user is a player, set isPlayer to true
-        // let found = false;
-        // for (const player of CurrentPlayers) {
-        //     if(player == undefined){
-        //         console.error("player could not be retrieved");
-        //         continue;
-        //     }
-        //     if (address && player == address.toLowerCase()) {
-        //         found = true;
-        //         break;
-        //     }
-        // }
-        // setIsPlayer(found);
-
-        // return CurrentPlayers;
 
         try {
             setLoadingPlayers(true)
@@ -256,45 +246,6 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
     }
 
 
-    // //Helper function to check if everyone has voted
-    // const checkEveryoneVoted = (
-    //     players : (Address | undefined)[],
-    //     playersVoted : (Address | undefined)[],
-    //     lastVotedLength : number = 0,
-    // ) => {
-    //     if(players.length > 0 && (players.length == (playersVoted.length + lastVotedLength) ) ){
-    //         setHasEveryoneVoted(true);
-    //     }
-    // }
-
-
-    // // Get players who voted from GraphQL (through next server endpoint)
-    // const getAllPlayersVoted = async(playersArray : (Address | undefined)[]) => {
-    //     const VotedPlayers : Address[] = await getPlayers(`/api/challenges/getAllPlayersVoted?address=${contractAddress}`);
-    //     setPlayersVoted(VotedPlayers);
-
-    //     let setVoted = false;
-    //     //If current player has voted, set hasVoted to true
-    //     for (const player of VotedPlayers) {
-    //         // const { args } = player;
-    //         if(player == undefined){
-    //             console.error("voter could not be retrieved");
-    //             continue;
-    //         }
-    //         if (address && isAddressEqual(player, address)) {
-    //             setVoted = true;
-    //             break;
-    //         }
-    //     }
-        
-    //     //Set hasVoted, depending on if we found a matching address or not
-    //     setHasVoted(setVoted);
-
-    //     //Check if everyone has voted
-    //     checkEveryoneVoted(playersArray, VotedPlayers)
-    // }
-
-
     // Subscribe to the PlayerVoted event to act whenever there is a new one
     useWatchContractEvent({
         address: contractAddress,
@@ -308,30 +259,6 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
         poll: true,
         pollingInterval: 5_000,
         onLogs(logs) {
-            logs.forEach((log) => {
-                const { voter } = log.args;
-                if(voter === undefined) return;
-
-                if(address && isAddressEqual(voter, address)){
-                    setHasVoted(true);
-                }
-
-                // setPlayersVoted((prev) => {
-                //     //store the voter only if not already stored
-                //     for (const voted of playersVoted) {
-                //         if(voted === undefined) continue;
-
-                //         if(isAddressEqual(voter, voted)){
-                //             return prev;
-                //         }
-                //     }
-                //     //Check if everyone has voted (only if this is a new voter)
-                //     checkEveryoneVoted(players, playersVoted, logs.length)
-                //     //add voter to array of players who voted
-                //     return [...prev, voter]
-                // });
-            })
-
             //If no one had voted, check the contract.
             if(!hasSomeoneVoted){
                 readContracts(config, {
@@ -405,7 +332,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
             const json = await res.json();
             if (!res.ok) {
                 console.error('Unpin failed', json);
-                toast.error("Error unpinning Proofs on IPFS: " + (json?.error ?? res.statusText), {
+                toast.error(t('unpin_error', { error: (json?.error ?? res.statusText) }), {
                     duration: 3000,
                 });
             } else {
@@ -413,7 +340,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
             }
         } catch (err) {
             console.error('Network error unpinning', err);
-            toast.error('Network error when trying to unpin', {
+            toast.error(t('unpin_network_error'), {
                 duration: 3000,
             });
         }
@@ -423,9 +350,6 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
 
     useEffect(() => {
         getAllPlayers()
-        // .then((playersArray) => {
-        //     getAllPlayersVoted(playersArray);
-        // });
         refetchReadData();
     }, [address])
 
@@ -457,6 +381,17 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
 
         const everyoneVoted = readData[5].result === 0 ? true : false;
         setHasEveryoneVoted(everyoneVoted);
+
+        const player = readData[6].result
+        if (player == undefined){
+            toast.error("Error : Could not retrieve player info from contract", {
+                duration: 3000,
+            });
+            return;
+        }
+        //store if player has joined the challenge
+        const hasVoted = player[1]
+        setHasVoted(hasVoted)
             
     }, [readData, address])
 
@@ -510,7 +445,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
     const LoadingSpinner = () => (
         <div className="flex flex-col items-center justify-center p-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-500 mb-4"></div>
-            <p className="text-gray-600">Updating challenge status...</p>
+            <p className="text-gray-600">{t('updating_status')}</p>
         </div>
     );
 
@@ -519,7 +454,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
             <div 
                 className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-500 mb-4"
             />
-            <p className="text-gray-600">Updating Players List...</p>
+            <p className="text-gray-600">{t('updating_players')}</p>
         </div>
     );
 
@@ -532,12 +467,12 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                     {hasEveryoneVoted ? (
                         // 🎉 All voted
                         <div className="flex flex-col items-center justify-center p-10 space-y-6">
-                        <h1 className="text-3xl font-bold">Vote terminé ! Tout le monde a voté</h1>
+                        <h1 className="text-3xl font-bold">{t('all_voted')}</h1>
                         <button
                             onClick={endWinnerVote}
                             className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-semibold hover:brightness-110 transition"
                         >
-                            Révéler le(s) gagnant(s)
+                            {t('reveal_winners')}
                         </button>
                         </div>
                     ) : (
@@ -547,7 +482,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                                 {/* Prompt & Vote */}
                                 <div className="space-y-4">
                                 <p className="text-2xl font-semibold flex items-center gap-2">
-                                    🗳️ C’est l’heure de voter !
+                                    {t('prompt')}
                                 </p>
                                 <Button
                                     disabled={!selectedPlayer || hasVoted || !isPlayer}
@@ -561,10 +496,10 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                                     `}
                                 >
                                     {hasVoted
-                                    ? "Vous avez déjà voté"
+                                    ? t('already_voted')
                                     : !isPlayer
-                                        ? "Vous n'êtes pas un joueur"
-                                        : "Voter"}
+                                        ? t('not_a_player')
+                                        : t('vote_button')}
                                 </Button>
                                 </div>
 
@@ -581,21 +516,21 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="italic text-white/50">Initialisation du timer…</div>
+                                            <div className="italic text-white/50">{t('initializing_timer')}</div>
                                         )
                                     ) : (
                                     <div className="space-y-2">
-                                        <div className="text-white/80">Vote terminé ! (vous pouvez toujours voter si ce n'est pas fait)</div>
+                                        <div className="text-white/80">{t('vote_finished_still_can_vote')}</div>
                                         <button
                                         onClick={endWinnerVote}
                                         className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg text-white font-medium hover:brightness-110 transition"
                                         >
-                                            Révéler le(s) gagnant(s)
+                                            {t('reveal_winners')}
                                         </button>
                                     </div>
                                     )
                                 ) : (
-                                    <div className="text-xl italic text-white/60">En attente du premier vote…</div>
+                                    <div className="text-xl italic text-white/60">{t('waiting_first_vote')}</div>
                                 )}
                                 </div>
                             </div>
@@ -605,7 +540,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                                 <LoadingPlayersSpinner/>
                             ) : (
                                 <div className="p-6 bg-[#0B1126] border border-white/10 rounded-lg space-y-4">
-                                    <h2 className="text-lg font-semibold text-white/80">Joueurs :</h2>
+                                    <h2 className="text-lg font-semibold text-white/80">{t('players')}</h2>
                                     <div className="flex flex-col gap-3">
                                     {players?.length > 0 ? (
                                         players.map((addr) => (
@@ -629,15 +564,15 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                                         </label>
                                         ))
                                     ) : (
-                                        <div className="italic text-white/50">(Aucun joueur trouvé)</div>
+                                        <div className="italic text-white/50">{t('no_players_found')}</div>
                                     )}
                                     </div>
                                 </div>
                             )}
                         </>
                     )}
-                    <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage="You successfully voted!" />
-                    <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage="You successfully reveiled the winner!" />
+                    <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage={t('success_voted')} />
+                    <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage={t('success_revealed')} />
                 </div>
             )}
         </>

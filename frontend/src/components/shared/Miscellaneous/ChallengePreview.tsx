@@ -1,9 +1,11 @@
 import React from 'react'
+import { useTranslations } from 'next-intl';
 import { Challenge } from '../RouteBaseElements/ChallengeList'
 
 
 
 const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
+  const t = useTranslations('MyChallenges.ChallengePreview');
   return (
     <div
       className="
@@ -16,13 +18,13 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
       {/* Full‑width header */}
       <div className="col-span-full">
         <h2 className="text-2xl font-extrabold text-white truncate max-w-full">
-          Challenge : {challenge.description}
+          Challenge : {challenge.description}
         </h2>
       </div>
 
       {/* Creator */}
       <div className="flex flex-col">
-        <span className="text-sm text-white/60">Créateur</span>
+        <span className="text-sm text-white/60">{t('creator')}</span>
         <span className="font-medium text-white truncate max-w-full">
           {challenge.creator}
         </span>
@@ -30,7 +32,7 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
 
       {/* Bid */}
       <div className="flex flex-col">
-        <span className="text-sm text-white/60">Mise</span>
+        <span className="text-sm text-white/60">{t('bid')}</span>
         <span className="font-medium text-cyan-400">
           {challenge.bid} DARE
         </span>
@@ -38,7 +40,7 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
 
       {/* Duration */}
       <div className="flex flex-col">
-        <span className="text-sm text-white/60">Durée</span>
+        <span className="text-sm text-white/60">{t('duration')}</span>
         <span className="font-medium text-white">
           {(() => {
             const total = Number(challenge.duration)
@@ -52,7 +54,7 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
 
       {/* Max Players */}
       <div className="flex flex-col">
-        <span className="text-sm text-white/60">Max Joueurs</span>
+        <span className="text-sm text-white/60">{t('max_players')}</span>
         <span className="font-medium text-white">
           {challenge.maxPlayers}
         </span>
@@ -60,7 +62,7 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
 
       {/* Time of Creation */}
       <div className="flex flex-col">
-        <span className="text-sm text-white/60">Créé le</span>
+        <span className="text-sm text-white/60">{t('created_at')}</span>
         <span className="font-medium text-white">
           {new Date(Number(challenge.timestampOfCreation) * 1000).toLocaleString()}
         </span>
@@ -68,9 +70,9 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
 
       {/* Mode */}
       <div className="flex flex-col">
-        <span className="text-sm text-white/60">Mode</span>
+        <span className="text-sm text-white/60">{t('mode')}</span>
         <span className="font-medium text-white">
-          {challenge.groupMode ? 'Groupe privé' : 'Public'}
+          {challenge.groupMode ? t('private_group') : t('public')}
         </span>
       </div>
     </div>

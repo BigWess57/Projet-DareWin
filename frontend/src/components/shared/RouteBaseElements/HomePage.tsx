@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import React from 'react'
 
 import {useTranslations} from 'next-intl';
 
@@ -22,12 +21,13 @@ const HomePage = () => {
       >
         {/* Main content */}
         <h1 className="relative text-6xl md:text-6xl font-extrabold pb-5 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-pink-500 to-purple-500 animate-text">
-          {/* Play - Dare - Win */}{t('title')}
+          {t('title')}
         </h1>
-        <p className="relative text-lg md:text-xl mb-8 max-w-2xl text-white-200 animate-fade-in">
-          Rejoins la communauté qui transforme chaque défi en aventure blockchain{" "}
-          <span className="text-pink-400 font-semibold">ludique</span> et{" "}
-          <span className="text-cyan-300 font-semibold">sécurisée</span>.
+        <p className="relative text-xl md:text-2xl mb-8 max-w-2xl text-white-200 animate-fade-in">
+          {t.rich('subtitle', {
+            fun: (chunks) => <span className="text-pink-400 font-semibold">{chunks}</span>,
+            secure: (chunks) => <span className="text-cyan-300 font-semibold">{chunks}</span>
+          })}
         </p>
         <Link
           href="/createchallenge"
@@ -37,7 +37,7 @@ const HomePage = () => {
             hover:scale-105 hover:brightness-110 transition-transform duration-300
           "
         >
-          Commencer
+          {t('cta_button')}
         </Link>
       </section>
 
@@ -45,39 +45,39 @@ const HomePage = () => {
       <section className="relative px-6 pb-16 overflow-hidden">
         
         <h2 className="relative text-3xl md:text-4xl font-extrabold text-center text-white mb-12 z-10">
-          Comment ça marche ?
+          {t('how_it_works_title')}
         </h2>
         
         <div className="relative grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 z-10">
           {[
             {
-              title: "1. Crée ton défi",
-              desc: "Défini la durée, la mise en DARE et le nombre de participants (ou choisis un groupe privé).",
+              title: t('step_1_title'),
+              desc: t('step_1_desc'),
               color: "from-cyan-500 to-blue-600",
             },
             {
-              title: "2. Participe ou invite",
-              desc: "Paye ta mise en DARE et rejoins le challenge !",
+              title: t('step_2_title'),
+              desc: t('step_2_desc'),
               color: "from-indigo-500 to-violet-600",
             },
             {
-              title: "3. Relevez le défi",
-              desc: "Réalisez votre exploit dans le temps imparti et capturez l’attention de la communauté.",
+              title: t('step_3_title'),
+              desc: t('step_3_desc'),
               color: "from-purple-500 to-pink-600",
             },
             {
-              title: "4. Votez pour le vainqueur",
-              desc: "Les participants votent en toute transparence sur la meilleure performance.",
+              title: t('step_4_title'),
+              desc: t('step_4_desc'),
               color: "from-blue-500 to-indigo-600",
             },
             {
-              title: "5. Automatisation & récompense",
-              desc: "À la fin du vote, le smart contract distribue automatiquement la cagnotte aux gagnants.",
+              title: t('step_5_title'),
+              desc: t('step_5_desc'),
               color: "from-cyan-500 to-blue-600",
             },
             {
-              title: "6. Répétez",
-              desc: "Lancez un nouveau défi, changez de mise ou passez en mode privé pour relever toujours plus de challenges !",
+              title: t('step_6_title'),
+              desc: t('step_6_desc'),
               color: "from-violet-500 to-purple-600",
             },
           ].map(({ title, desc, color }, idx) => (
@@ -96,7 +96,7 @@ const HomePage = () => {
       {/* Call to Action Footer */}
       <section className="py-12 text-center px-6">
         <h2 className="text-2xl font-bold mb-4">
-          Prêt à relever le prochain défi ?
+          {t('footer_cta')}
         </h2>
       </section>
     </div>
