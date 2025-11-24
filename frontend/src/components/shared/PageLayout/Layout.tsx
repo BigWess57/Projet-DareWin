@@ -8,9 +8,7 @@ import { useAccount } from "wagmi";
 import HomePage from "../RouteBaseElements/HomePage";
 
 
-const Layout = ({ children }: Readonly<{
-  children: React.ReactNode;
-}>) => {
+const Layout = () => {
     const {isConnected} = useAccount()
     return (
         <div className="app">
@@ -21,7 +19,6 @@ const Layout = ({ children }: Readonly<{
                bg-[radial-gradient(ellipse_at_center,_rgba(80,120,200,0.12)_0%,transparent_80%)] 
                pointer-events-none"  />
                 {isConnected ? (
-                    // <>{children}</>
                     <HomePage/>
                 ) : (
                     <NotConnected />
