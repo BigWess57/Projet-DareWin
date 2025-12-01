@@ -18,7 +18,39 @@
     "step_5_desc": "À la fin du vote, le smart contract distribue automatiquement la cagnotte aux gagnants.",
     "step_6_title": "6. Répétez",
     "step_6_desc": "Lancez un nouveau challenge, changez de mise ou passez en mode privé pour relever toujours plus de challenges !",
-    "footer_cta": "Prêt à relever le prochain challenge ?"
+    "footer_cta": "Prêt à relever le prochain challenge ?",
+    "Swap": {
+      "title": "Swap",
+      "you_pay": "Vous payez",
+      "you_receive": "Vous recevez",
+      "balance": "Solde",
+      "calculating": "Calcul en cours...",
+      "fetching_rate": "Récupération du taux...",
+      "insufficient_balance": "Solde insuffisant",
+      "transaction_settings": "Paramètres de transaction",
+      "slippage_tolerance": "Slippage Tolerance",
+      "custom": "Personnalisé",
+      "frontrun_warning": "Votre transaction peut être frontrun.",
+      "fail_warning": "Votre transaction peut échouer.",
+      "error_retrieving_price": "Erreur lors de la récupération du prix de swap",
+      "fetching_dare_price": "Récupération du prix DARE...",
+      "connect_wallet": "Connecter le portefeuille pour swapper",
+      "swap_tokens": "Swapper les jetons",
+      "enter_amount": "Entrez un montant",
+      "fetching_price": "Récupération du prix...",
+      "invalid_amount": "Montant invalide",
+      "swapping": "Échange en cours...",
+      "swap_failed": "Swap échoué.",
+      "user_rejected": "L'utilisateur a rejeté la demande",
+      "pending": "En attente...",
+      "transaction_success": "Succès de la transaction !",
+      "swap_success": "Vous avez échangé vos tokens avec succès !",
+      "error_while_swapping": "Erreur lors du swap (voir la console)",
+      "failed_to_fetch_quote": "Échec de la récupération du devis",
+      "insufficient_pool_liquidity": "Liquidité insuffisante du pool",
+      "price_impact_tooltip": "La différence entre le prix du marché et le rendement estimé en raison de la taille du trade.",
+      "high_price_impact": "Impact de prix élevé :"
+    }
   },
   "Header": {
     "nav_home": "ACCUEIL",
@@ -221,5 +253,10 @@
       "success_title": "Succès",
       "success_description": "Vous avez récupéré votre récompense"
     }
+  },
+  "CurrentTransaction": {
+    "transaction_in_progress": "Transaction en cours...",
+    "transaction_pending": "En attente...",
+    "transaction_successful": "Transaction réussie !"
   }
 }

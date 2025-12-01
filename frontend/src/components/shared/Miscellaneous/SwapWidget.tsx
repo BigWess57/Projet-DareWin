@@ -12,6 +12,7 @@ import { useDarePrice } from "./useDarePrice";
 import { toast } from "sonner";
 import { CurrentTransactionToast } from "./CurrentTransactionToast";
 import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding";
+import { useTranslations } from "next-intl";
 
 
 interface TokenIconProps {
@@ -28,6 +29,7 @@ const TokenIcon = ({ symbol, color }: TokenIconProps) => (
 
 const SwapWidget = () => {
 
+  const t = useTranslations('HomePage.Swap');
   const {address, isConnected} = useAccount();
 
   // --- BLOCKCHAIN FUNCTIONS ---
@@ -46,12 +48,12 @@ const SwapWidget = () => {
       mutation: {
           onError: (err) => {
               if(err.message.toLowerCase().includes("user rejected the request")){
-                  toast.info("Swap Failed.", {
+                  toast.info(t('swap_failed'), {
                     id: 1,
-                    description : "User rejected the request"
+                    description : t('user_rejected')
                   })
               }else{
-                  toast.error("Swap Failed.", {
+                  toast.error(t('swap_failed'), {
                     id: 1,
                     description : err.message
                   })
@@ -242,7 +244,7 @@ const SwapWidget = () => {
                   args: [uniswapV2RouterAddress, amountIn],
                   account: address as `0x${string}`,
               })
-              toast.info('Pending...', {
+              toast.info(t('pending'), {
                   id: 1,
                   description: <div><div>Approving tokens...</div><div>Tx hash : {txHash}</div></div>,
                   action:null,
@@ -251,7 +253,7 @@ const SwapWidget = () => {
               //Wait for approval of transaction
               await waitForTransactionReceipt(config, { hash: txHash, confirmations: 1  })
 
-              toast.success("Transaction Success!", {
+              toast.success(t('transaction_success'), {
                   id: 1,
                   description: <div><div>Tokens Approved!</div><div>Tx hash : {txHash}</div></div>,
                   duration: 3000,
@@ -266,7 +268,7 @@ const SwapWidget = () => {
               args: [amountIn, amountOutMin, [tokenAddress, wethAddress], address, deadline],
           })
 
-          toast.info('Pending...', {
+          toast.info(t('pending'), {
               id: 2,
               description: <div><div>Swapping tokens...</div><div>Tx hash : {txHash}</div></div>,
           })
@@ -274,15 +276,15 @@ const SwapWidget = () => {
           
           await waitForTransactionReceipt(config, { hash: txHash, confirmations: 1 })
 
-          toast.success("Transaction Success!", {
+          toast.success(t('transaction_success'), {
               id: 2,
-              description: <div><div>Swapping Successful!</div><div>Tx hash : {txHash}</div></div>,
+              description: <div><div>{t('swap_success')}</div><div>Tx hash : {txHash}</div></div>,
               duration: 3000,
           })
 
       } catch (err:any) {
         if(err.message?.toLowerCase().includes("user rejected the request")) {
-          toast.info("User rejected the request", {
+          toast.info(t('user_rejected'), {
             duration: 3000,
           });
           return
@@ -313,7 +315,7 @@ const SwapWidget = () => {
       }
       if(swapReceiptError) {
           console.error('Transaction failed ', swapReceiptError.message)
-          toast.error("Error while swapping (check console)", {
+          toast.error(t('error_while_swapping'), {
               duration: 3000,
           });
       }
@@ -378,7 +380,7 @@ const SwapWidget = () => {
 
       } catch (error) {
         console.error("Quote fetch error:", error);
-        setQuoteError("Failed to fetch quote");
+        setQuoteError(t('failed_to_fetch_quote'));
       } finally {
         setIsQuoteLoading(false);
       }
@@ -395,6 +397,8 @@ const SwapWidget = () => {
 
     if (!receiveAmount || receiveAmount === '.' || parseFloat(receiveAmount) === 0) {
         setPayAmount('');
+        setIsQuoteLoading(false); // Reset loading
+        setQuoteError(null); // Clear errors
         return;
     }
 
@@ -463,9 +467,9 @@ const SwapWidget = () => {
         if (errorMsg.includes("Insufficient liquidity") || 
           errorMsg.includes("ds-math-sub-underflow") || 
           errorMsg.includes("invalid opcode")) {
-          setQuoteError("Insufficient Pool Liquidity");
+          setQuoteError(t('insufficient_pool_liquidity'));
         } else {
-          setQuoteError("Failed to fetch quote");
+          setQuoteError(t('failed_to_fetch_quote'));
           console.error("Quote fetch error:", error);
         }
         setPayAmount('');
@@ -538,7 +542,7 @@ const SwapWidget = () => {
     if (impactPercent > 8) {
       danger = true
       colorClass = "bg-red-500/20 text-red-400";
-      label = "High Price Impact :";
+      label = t('high_price_impact');
     } else if (impactPercent > 1) {
       colorClass = "bg-yellow-500/20 text-yellow-400";
       label = "";
@@ -552,7 +556,7 @@ const SwapWidget = () => {
         </div>
         {/* Tooltip */}
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#1F243A] text-gray-200 text-xs rounded-lg opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-normal w-48 text-center border border-white/10 shadow-xl z-50">
-            The difference between the market price and estimated return due to trade size.
+            {t('price_impact_tooltip')}
             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1F243A] rotate-45 border-r border-b border-white/10"></div>
         </div>
       </div>
@@ -578,7 +582,7 @@ const SwapWidget = () => {
           
           {/* Header */}
           <div className="flex justify-between items-center mb-4 px-2">
-            <h3 className="text-white font-semibold text-lg">Swap</h3>
+            <h3 className="text-white font-semibold text-lg">{t('title')}</h3>
             <div className="flex gap-2">
                 <button className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"><Info size={20} /></button>
                 <button 
@@ -594,10 +598,10 @@ const SwapWidget = () => {
             {showSettings && (
                 <div ref={settingsRef} className="absolute top-12 right-2 z-50 bg-[#1F243A] border border-white/10 rounded-xl p-4 shadow-xl w-64 animate-in fade-in zoom-in-95 duration-200">
                     <div className="flex justify-between items-center mb-3">
-                        <span className="text-sm font-semibold text-white">Transaction Settings</span>
+                        <span className="text-sm font-semibold text-white">{t('transaction_settings')}</span>
                         <button onClick={() => setShowSettings(false)} className="text-gray-400 hover:text-white hover:bg-white/5 rounded-full p-1"><X size={16}/></button>
                     </div>
-                    <div className="text-xs text-gray-400 mb-2 font-medium">Slippage Tolerance</div>
+                    <div className="text-xs text-gray-400 mb-2 font-medium">{t('slippage_tolerance')}</div>
                     <div className="flex gap-2 mb-3">
                         {[0.5, 1.0, 2.0, 5.0].map((val) => (
                             <button
@@ -627,13 +631,13 @@ const SwapWidget = () => {
                     {slippage > 5 && (
                         <div className="flex items-start gap-1.5 mt-2 text-yellow-400/90 text-[10px] leading-tight bg-yellow-400/10 p-2 rounded-lg border border-yellow-400/20">
                             <AlertTriangle size={12} className="shrink-0 mt-0.5" />
-                            <span>Your transaction may be frontrun.</span>
+                            <span>{t('frontrun_warning')}</span>
                         </div>
                     )}
                      {slippage < 0.05 && (
                         <div className="flex items-start gap-1.5 mt-2 text-yellow-400/90 text-[10px] leading-tight bg-yellow-400/10 p-2 rounded-lg border border-yellow-400/20">
                             <AlertTriangle size={12} className="shrink-0 mt-0.5" />
-                            <span>Your transaction may fail.</span>
+                            <span>{t('fail_warning')}</span>
                         </div>
                     )}
                 </div>
@@ -649,9 +653,9 @@ const SwapWidget = () => {
               }`}
           >
             <div className="flex justify-between text-sm text-gray-400 mb-2">
-              <span>You pay</span>
+              <span>{t('you_pay')}</span>
               <span className={`flex items-center gap-1 ${isInsufficientBalance ? 'text-red-400' : ''}`}>
-                Balance: {activePayToken.loading ? (
+                {t('balance')}: {activePayToken.loading ? (
                   <span className="animate-pulse bg-white/10 w-10 h-3 rounded"></span>
                 ) : (
                   <span className={isInsufficientBalance ? 'text-red-400 font-medium' : 'text-white/90'}>{activePayToken.balance?.formatted ? Number(activePayToken.balance.formatted).toFixed(4) : '0.00'}</span>
@@ -661,7 +665,7 @@ const SwapWidget = () => {
               {isQuoteLoading && activeField === 'RECEIVE' ? (
                  <div className="w-2/3 h-9 flex items-center">
                     <Loader2 className="animate-spin text-blue-500" size={24} />
-                    <span className="ml-3 text-white/30 text-sm">Calculating...</span>
+                    <span className="ml-3 text-white/30 text-sm">{t('calculating')}</span>
                  </div>
               ) : (
                 <input 
@@ -688,7 +692,7 @@ const SwapWidget = () => {
                   ≈ ${payUsdValue.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
                 </span>
               }
-              {isInsufficientBalance && <span className="text-red-400 font-medium">Insufficient balance</span>}
+              {isInsufficientBalance && <span className="text-red-400 font-medium">{t('insufficient_balance')}</span>}
             </div>
           </div>
 
@@ -705,9 +709,9 @@ const SwapWidget = () => {
           {/* Receive Input Section */}
           <div className="bg-[#0F111A] rounded-2xl p-4 mt-2 border border-white/5 hover:border-white/10 transition-colors">
             <div className="flex justify-between text-sm text-gray-400 mb-2">
-              <span>You receive</span>
+              <span>{t('you_receive')}</span>
               <span>
-                Balance: {activeReceiveToken.loading ? (
+                {t('balance')}: {activeReceiveToken.loading ? (
                    <span className="animate-pulse bg-white/10 w-10 h-3 rounded"></span>
                 ) : (
                    <span className="text-white/90">{activeReceiveToken.balance?.formatted ? Number(activeReceiveToken.balance.formatted).toFixed(2) : '0.00'}</span>
@@ -717,7 +721,7 @@ const SwapWidget = () => {
               {isQuoteLoading && activeField === 'PAY' ? (
                  <div className="w-2/3 h-9 flex items-center">
                     <Loader2 className="animate-spin text-purple-600" size={24} />
-                    <span className="ml-3 text-white/30 text-sm">Fetching rate...</span>
+                    <span className="ml-3 text-white/30 text-sm">{t('fetching_rate')}</span>
                  </div>
               ) : (
                 <input 
@@ -748,8 +752,8 @@ const SwapWidget = () => {
           <div className="flex justify-between items-center px-4 py-3 text-sm">
             <div className={`flex items-center font-medium cursor-pointer  ${isDarePriceError ? 'text-red-500  hover:text-red-400' : 'text-cyan-400  hover:text-cyan-300'}`}>
               <Info size={14} className="mr-1" />
-              {isDarePriceError ? "Error retrieving swap price"
-                : isDarePriceLoading ? <><Loader2 size={20} className="animate-spin" /> <span className="ml-2">Fetching DARE Price...</span></>
+              {isDarePriceError ? t('error_retrieving_price')
+                : isDarePriceLoading ? <><Loader2 size={20} className="animate-spin" /> <span className="ml-2">{t('fetching_dare_price')}</span></>
                 : isEthToDare ? currentDarePrice?.formattedFromEthToDare
                 : currentDarePrice?.formattedFromDareToEth}
             </div>
@@ -765,7 +769,7 @@ const SwapWidget = () => {
               className="w-full bg-cyan-600/20  text-cyan-400 font-bold py-4 rounded-2xl transition-all duration-300 flex items-center justify-center gap-2"
             >
               <Wallet size={20} />
-              Connect Wallet to Swap
+              {t('connect_wallet')}
             </button>
           ) : (
             <Button 
@@ -773,16 +777,16 @@ const SwapWidget = () => {
               disabled={!payAmount || isSwapping || isInsufficientBalance || isQuoteLoading || !!quoteError}
               className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white font-bold py-8 text-xl rounded-2xl shadow-lg shadow-purple-500/25 transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             >
-              {isSwapping ? <><Loader2 size={20} className="animate-spin" /><span className="ml-2">Swapping...</span></> 
-                : isInsufficientBalance ? 'Insufficient Balance' 
-                : !!quoteError ? 'Invalid Amount'
-                : isQuoteLoading ? 'Fetching Price...' 
-                : !payAmount ? 'Enter Amount' 
-                : 'Swap Tokens'}
+              {isSwapping ? <><Loader2 size={20} className="animate-spin" /><span className="ml-2">{t('swapping')}</span></> 
+                : isInsufficientBalance ? t('insufficient_balance')
+                : !!quoteError ? t('invalid_amount')
+                : isQuoteLoading ? t('fetching_price') 
+                : !payAmount ? t('enter_amount')
+                : t('swap_tokens')}
             </Button>
           )}
 
-          <CurrentTransactionToast isConfirming={swapConfirming} isSuccess={swapSuccess} successMessage={"Swap Successful !"} txHash={hash}/>
+          <CurrentTransactionToast isConfirming={swapConfirming} isSuccess={swapSuccess} successMessage={t('swap_success')} txHash={hash}/>
         </div>
       </div>
     </div>

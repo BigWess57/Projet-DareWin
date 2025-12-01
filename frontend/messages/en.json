@@ -18,7 +18,39 @@
     "step_5_desc": "At the end of voting, the smart contract automatically distributes the pot to the winners.",
     "step_6_title": "6. Repeat",
     "step_6_desc": "Launch a new challenge, change the stake or switch to private mode to keep pushing the limits!",
-    "footer_cta": "Ready to take on the next challenge?"
+    "footer_cta": "Ready to take on the next challenge?",
+    "Swap": {
+      "title": "Swap",
+      "you_pay": "You pay",
+      "you_receive": "You receive",
+      "balance": "Balance",
+      "calculating": "Calculating...",
+      "fetching_rate": "Fetching rate...",
+      "insufficient_balance": "Insufficient balance",
+      "transaction_settings": "Transaction Settings",
+      "slippage_tolerance": "Slippage Tolerance",
+      "custom": "Custom",
+      "frontrun_warning": "Your transaction may be frontrun.",
+      "fail_warning": "Your transaction may fail.",
+      "error_retrieving_price": "Error retrieving swap price",
+      "fetching_dare_price": "Fetching DARE Price...",
+      "connect_wallet": "Connect Wallet to Swap",
+      "swap_tokens": "Swap Tokens",
+      "enter_amount": "Enter Amount",
+      "fetching_price": "Fetching Price...",
+      "invalid_amount": "Invalid Amount",
+      "swapping": "Swapping...",
+      "swap_failed": "Swap Failed.",
+      "user_rejected": "User rejected the request",
+      "pending": "Pending...",
+      "transaction_success": "Transaction Success!",
+      "swap_success": "You successfully swapped your tokens !",
+      "error_while_swapping": "Error while swapping (check console)",
+      "failed_to_fetch_quote": "Failed to fetch quote",
+      "insufficient_pool_liquidity": "Insufficient Pool Liquidity",
+      "price_impact_tooltip": "The difference between the market price and estimated return due to trade size.",
+      "high_price_impact": "High Price Impact :"
+    }
   },
   "Header": {
     "nav_home": "HOME",
@@ -221,5 +253,10 @@
       "success_title": "Success",
       "success_description": "You successfully withdrew your reward"
     }
+  },
+  "CurrentTransaction": {
+    "transaction_in_progress": "Transaction in progress...",
+    "transaction_pending": "Pending...",
+    "transaction_successful": "Transaction Successful!"
   }
 }
