@@ -7,7 +7,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { formatEther } from "viem";
 import { useAccount, useReadContract } from "wagmi";
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/src/i18n/navigation';
 
 
 import { Home, Zap, PencilRuler } from 'lucide-react'
@@ -69,11 +69,13 @@ const Header = () => {
 
 /****** Path change ******/
     const pathname = usePathname()
+
     const isActive = {
         home: pathname === '/',
         create: pathname.startsWith('/createchallenge'),
         mychallenges: pathname.startsWith('/mychallenges'),
     }
+
     const linkClasses = (active: boolean) =>
     `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
       active

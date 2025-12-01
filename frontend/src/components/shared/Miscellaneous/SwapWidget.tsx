@@ -658,7 +658,7 @@ const SwapWidget = () => {
                 {t('balance')}: {activePayToken.loading ? (
                   <span className="animate-pulse bg-white/10 w-10 h-3 rounded"></span>
                 ) : (
-                  <span className={isInsufficientBalance ? 'text-red-400 font-medium' : 'text-white/90'}>{activePayToken.balance?.formatted ? Number(activePayToken.balance.formatted).toFixed(4) : '0.00'}</span>
+                  <span className={isInsufficientBalance ? 'text-red-400 font-medium' : 'text-white/90'}>{activePayToken.balance?.formatted ? Number(activePayToken.balance.formatted).toFixed(isEthToDare ? 6 : 2) : '0.00'}</span>
                 )}{activePayToken.symbol}</span>
             </div>
             <div className="flex justify-between items-center">
@@ -714,7 +714,9 @@ const SwapWidget = () => {
                 {t('balance')}: {activeReceiveToken.loading ? (
                    <span className="animate-pulse bg-white/10 w-10 h-3 rounded"></span>
                 ) : (
-                   <span className="text-white/90">{activeReceiveToken.balance?.formatted ? Number(activeReceiveToken.balance.formatted).toFixed(2) : '0.00'}</span>
+                    <span className="text-white/90">
+                      {activeReceiveToken.balance?.formatted ? Number(activeReceiveToken.balance.formatted).toFixed(isEthToDare ? 2 : 6): '0.00'}
+                    </span>
                 )} {activeReceiveToken.symbol}</span>
             </div>
             <div className="flex justify-between items-center">
