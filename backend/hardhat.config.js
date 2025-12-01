@@ -35,7 +35,8 @@ module.exports = {
       quiet: true
     }
   },
-  defaultNetwork: "localhost",
+
+  // defaultNetwork: "localhost",
   networks: {
     sepolia: {
       url: SEPOLIA_RPC_URL,
@@ -56,13 +57,13 @@ module.exports = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     },
-    hardhat: {
-      forking: {
-        enabled: true,
-        url: MAINNET_RPC_URL,
-        blockNumber: 23910926
-      }
-    }
+    // hardhat: {
+    //   forking: {
+    //     enabled: true,
+    //     url: MAINNET_RPC_URL,
+    //     blockNumber: 23910926
+    //   }
+    // }
   },
   // /!\  Permet de configurer la vérifications sur Etherscan
   etherscan: {
