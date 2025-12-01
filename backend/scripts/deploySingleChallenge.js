@@ -9,6 +9,9 @@ async function main() {
     await DareWinToken.deploymentTransaction()?.wait();
     console.log(`DARE token deployed to ${DareWinToken.target}`)
 
+    const currentBlock = await ethers.provider.getBlock("latest")
+    console.log("Current Block :",currentBlock)
+
     const amountToDistribute = ethers.parseUnits("1000", await DareWinToken.decimals());
     for (let i = 1; i < 6; i++) {
         await DareWinToken.transfer(signers[i].address, amountToDistribute);

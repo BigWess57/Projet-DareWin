@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import {useTranslations} from 'next-intl';
+import SwapWidget from '../Miscellaneous/SwapWidget';
 
 const HomePage = () => {
 
@@ -9,9 +10,9 @@ const HomePage = () => {
   return (
     <div>
     {/* Decorative SVG circles */}
-      <div className="absolute top-20 right-1/6 w-96 h-96 bg-cyan-500/20 rounded-full animate-pulse" />
-      <div className="absolute top-60 left-1/6 w-72 h-72 bg-cyan-500/20 rounded-full" />
-      <div className="absolute bottom-40 right-1/3 w-56 h-56 bg-purple-500/20 rounded-full animate-spin-slow" />
+      <div className="absolute top-20 right-1/6 w-96 h-96 bg-cyan-500/30 rounded-full animate-pulse blur-3xl" />
+      <div className="absolute top-60 left-1/6 w-72 h-72 bg-cyan-500/30 rounded-full blur-3xl" />
+      <div className="absolute bottom-40 right-1/3 w-56 h-56 bg-purple-500/30 rounded-full animate-spin-slow blur-3xl" />
 
       <section
         className="
@@ -41,10 +42,29 @@ const HomePage = () => {
         </Link>
       </section>
 
+      <section className="relative px-6 py-20 flex flex-col items-center">
+          
+        {/* Section Header */}
+        <div className="text-center mb-10 max-w-4xl">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-4">
+            {t('buy_dare_title')}
+          </h2>
+          <p className="text-gray-400 text-xl">
+            {t('buy_dare_subtitle')}
+          </p>
+        </div>
+
+        {/* Swap Component Injection */}
+          <div className="w-full flex justify-center z-20">
+             <SwapWidget />
+          </div>
+      </section>
+      
+
       {/* How It Works */}
       <section className="relative px-6 pb-16 overflow-hidden">
         
-        <h2 className="relative text-3xl md:text-4xl font-extrabold text-center text-white mb-12 z-10">
+        <h2 className="relative text-3xl md:text-5xl font-extrabold text-center text-white mb-12 z-10">
           {t('how_it_works_title')}
         </h2>
         

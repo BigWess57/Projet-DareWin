@@ -571,8 +571,8 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                             )}
                         </>
                     )}
-                    <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage={t('success_voted')} />
-                    <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage={t('success_revealed')} />
+                    <CurrentTransactionToast isConfirming={voteConfirming} isSuccess={voteSuccess} successMessage={t('success_voted')} txHash={voteHash}/>
+                    <CurrentTransactionToast isConfirming={voteEndConfirming} isSuccess={voteEndSuccess} successMessage={t('success_revealed')} txHash={endVoteHash}/>
                 </div>
             )}
         </>

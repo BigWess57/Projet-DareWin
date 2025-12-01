@@ -2,6 +2,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv/config");
 
+const MAINNET_RPC_URL = process.env.MAINNET_RPC_URL || "";
 const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "";
 const HOLESKY_RPC_URL = process.env.HOLESKY_RPC_URL || "";
 const BASE_SEPOLIA_RPC_URL = process.env.BASE_SEPOLIA_RPC_URL || "";
@@ -34,6 +35,7 @@ module.exports = {
       quiet: true
     }
   },
+  defaultNetwork: "localhost",
   networks: {
     sepolia: {
       url: SEPOLIA_RPC_URL,
@@ -54,20 +56,16 @@ module.exports = {
       url: "http://127.0.0.1:8545",
       chainId: 31337,
     },
+    hardhat: {
+      forking: {
+        enabled: true,
+        url: MAINNET_RPC_URL,
+        blockNumber: 23910926
+      }
+    }
   },
   // /!\  Permet de configurer la vérifications sur Etherscan
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
   },
-  // defaultNetwork: "hardhat",
-  // networks: {
-  //   hardhat: {
-  //     forking: {
-  //       enabled: true,
-  //       url: ALCHEMY_MAINNET_RPC,
-  //       blockNumber: 22889343
-  //     }
-  //   }
-  // }
-
 };

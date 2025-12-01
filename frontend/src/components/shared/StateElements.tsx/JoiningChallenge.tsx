@@ -544,9 +544,9 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                     )}
                     
 
-                    <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage={t('success_joined')} />
-                    <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage={t('success_started')} />
-                    <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage={t('success_left')} />
+                    <CurrentTransactionToast isConfirming={joinConfirming} isSuccess={joinSuccess} successMessage={t('success_joined')} txHash={joinHash}/>
+                    <CurrentTransactionToast isConfirming={startConfirming} isSuccess={startSuccess} successMessage={t('success_started')} txHash={startHash}/>
+                    <CurrentTransactionToast isConfirming={withdrawConfirming} isSuccess={withdrawSuccess} successMessage={t('success_left')} txHash={withdrawHash}/>
                 </div>
             )}
         </>
