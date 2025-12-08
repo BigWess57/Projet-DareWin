@@ -5,15 +5,16 @@ const {
 const { assert, expect } = require("chai")
 const { ethers, network } = require("hardhat")
 // const helpers = require("@nomicfoundation/hardhat-network-helpers")
-const { StandardMerkleTree } = require("@openzeppelin/merkle-tree")
+const { StandardMerkleTree } = require("@openzeppelin/merkle-tree");
+const { bigint } = require("hardhat/internal/core/params/argumentTypes");
 
 
 describe("tests ChallengeFactory contract", function () {
 
     const duration = 1000n;
-    const maxPlayers = 5n;
     const bid = ethers.parseEther("1");
     const description = "test";
+    const merkleRoot = ethers.zeroPadValue(ethers.toBeHex(17), 32);
 
     //Just deployment (base state)
     async function deployedChallengeFactoryFixtureBase() {
@@ -36,7 +37,7 @@ describe("tests ChallengeFactory contract", function () {
         beforeEach(async function () {
             ({challengeFactory, signers, token } = await loadFixture(deployedChallengeFactoryFixtureBase));
 
-            await challengeFactory.createChallenge(duration, maxPlayers, bid, description, 0, ethers.ZeroHash, "ipfsCid");
+            await challengeFactory.createChallenge(duration, bid, description, merkleRoot, "ipfsCid");
         });
 
 
@@ -69,12 +70,10 @@ describe("tests ChallengeFactory contract", function () {
 
             // Verify initialisation
             const _duration = await challenge.duration();
-            const _maxPlayers = await challenge.maxPlayers();
             const _bid = await challenge.bid();
             const _description = await challenge.description();
 
             expect(_duration).to.equal(1000n);
-            expect(_maxPlayers).to.equal(5n);
             expect(_bid).to.equal(bid);
             expect(_description).to.equal("test")
 
@@ -123,77 +122,25 @@ describe("tests ChallengeFactory contract", function () {
             await expect(
                 challengeFactory.createChallenge(
                     0n, // Invalid duration
-                    maxPlayers,
                     bid,
                     description,
-                    false,
-                    ethers.ZeroHash,
+                    merkleRoot,
                     "ipfsCid"
                 )
             ).to.be.revertedWithCustomError(challengeFactory, "InvalidDuration");
-        });
-
-        it('should revert with InsufficientPlayers when maxPlayers is less than 2', async function() {
-            await expect(
-                challengeFactory.createChallenge(
-                    duration,
-                    1n, // Invalid: less than 2
-                    bid,
-                    description,
-                    false,
-                    ethers.ZeroHash,
-                    "ipfsCid"
-                )
-            ).to.be.revertedWithCustomError(challengeFactory, "InsufficientPlayers");
-        });
-
-        it('should revert with InsufficientPlayers when maxPlayers is 0', async function() {
-            await expect(
-                challengeFactory.createChallenge(
-                    duration,
-                    0n, // Invalid: 0 players
-                    bid,
-                    description,
-                    false,
-                    ethers.ZeroHash,
-                    "ipfsCid"
-                )
-            ).to.be.revertedWithCustomError(challengeFactory, "InsufficientPlayers");
         });
 
         it('should revert with InsufficientBid when bid is 0', async function() {
             await expect(
                 challengeFactory.createChallenge(
                     duration,
-                    maxPlayers,
                     0n, // Invalid bid
                     description,
-                    false,
-                    ethers.ZeroHash,
+                    merkleRoot,
                     "ipfsCid"
                 )
             ).to.be.revertedWithCustomError(challengeFactory, "InsufficientBid");
         });
     });
 
-    describe("Group Mode Tests", function () {
-        beforeEach(async function () {
-            ({challengeFactory, signers, token } = await loadFixture(deployedChallengeFactoryFixtureBase));
-        });
-
-        
-        it('should create challenge with groupMode false and zero merkle root', async function() {
-            await expect(
-                challengeFactory.createChallenge(
-                    duration,
-                    maxPlayers,
-                    bid,
-                    description,
-                    false, // groupMode = false
-                    ethers.ZeroHash,
-                    "ipfsCid"
-                )
-            ).to.emit(challengeFactory, 'ChallengeCreated');
-        });
-    })
 })

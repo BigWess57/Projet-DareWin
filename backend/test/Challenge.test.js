@@ -14,7 +14,6 @@ describe("tests Challenge contract", function () {
     //Important Global variables
     const votingDelay = 10000;
     const duration = 1000n;
-    const maxPlayers = 5n;
     const description = "test";
 
     //Fee tier (used to divide)
@@ -23,6 +22,7 @@ describe("tests Challenge contract", function () {
     const gold = 3n; //3 % (>40000 and <100000 tokens)
     const platinum = 2n; //2 % (>100000 tokens)
 
+    const nonZeroMerkleRoot = ethers.zeroPadValue(ethers.toBeHex(17), 32);
 
     async function getTimestampPlusOneHourInSeconds() {
         // returns current timestamp in seconds
@@ -35,7 +35,7 @@ describe("tests Challenge contract", function () {
 
     //Just deployment (base state)
     
-    async function deployedChallengeFixtureBase(mode = "link") {
+    async function deployedChallengeFixtureBase() {
         const signers = await ethers.getSigners();
 
         //Token deployment + Funding players (for setup)^
@@ -63,28 +63,24 @@ describe("tests Challenge contract", function () {
 
         let challenge;
         let merkleTree;
-        if(mode == "link"){
-            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash, "ipfsCid");
-        }else if(mode == "group"){
-            //Make merkle tree from players array
-            //array of players to store (for merkle root)
-            const playersAllowed = [
-                [signers[0].address],
-                [signers[1].address],
-                [signers[2].address],
-                [signers[3].address],
-                [signers[4].address]
-            ]
+        //Make merkle tree from players array
+        //array of players to store (for merkle root)
+        const playersAllowed = [
+            [signers[0].address],
+            [signers[1].address],
+            [signers[2].address],
+            [signers[3].address],
+            [signers[4].address]
+        ]
 
-            merkleTree = StandardMerkleTree.of(playersAllowed, ["address"]);
+        merkleTree = StandardMerkleTree.of(playersAllowed, ["address"]);
 
-            challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root, "ipfsCid");
-        }
+        challenge = await Challenge.deploy(signers[0].address, token.target, duration, bid, description, signers[0].address, merkleTree.root, "ipfsCid");
 
         return { challenge, signers, token, bid, merkleTree };
     }
 
-    //Ongoing challenge (LINK MODE)
+    //Ongoing challenge
     async function OngoingChallengeFixture() {
         //Use the previous function (to not write duplicate code)
         const { challenge, signers, token, bid } = await deployedChallengeFixtureBase();
@@ -96,11 +92,17 @@ describe("tests Challenge contract", function () {
         const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
         const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
         
-        await challenge.joinChallenge(deadline1, v1, r1, s1, []);
-        await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
-        await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
-        await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
-        await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, []);
+        const proof1 = merkleTree.getProof([signers[0].address]);
+        const proof2 = merkleTree.getProof([signers[1].address]);
+        const proof3 = merkleTree.getProof([signers[2].address]);
+        const proof4 = merkleTree.getProof([signers[3].address]);
+        const proof5 = merkleTree.getProof([signers[4].address]);
+
+        await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
+        await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, proof2);
+        await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, proof3);
+        await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, proof4);
+        await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, proof5);
 
         await challenge.startChallenge();
         return { challenge, signers, token, bid };
@@ -231,16 +233,6 @@ describe("tests Challenge contract", function () {
 
         it('should juste deploy the contract', async function() { 
             
-            //Challenge Deployment
-            const Challenge = await ethers.getContractFactory('Challenge'); 
-
-            await expect(
-                Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, false, ethers.ZeroHash, "ipfsCid")
-            ).to.not.be.reverted
-        })
-
-        it('should juste deploy the contract in Group mode', async function() { 
-            
             const playersAllowed = [
                 [signers[0].address],
                 [signers[1].address],
@@ -255,7 +247,7 @@ describe("tests Challenge contract", function () {
 
             //Challenge Deployment
             await expect(
-                challenge = await Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, merkleTree.root, "ipfsCid")
+                challenge = await Challenge.deploy(signers[0].address, token.target, duration, bid, description, signers[0].address, merkleTree.root, "ipfsCid")
             ).to.not.be.reverted
         })
 
@@ -279,12 +271,10 @@ describe("tests Challenge contract", function () {
                         signers[0].address,
                         "0x0000000000000000000000000000000000000000", // Invalid token
                         duration,
-                        maxPlayers,
                         bid,
                         description,
                         signers[0].address,
-                        false,
-                        ethers.ZeroHash,
+                        nonZeroMerkleRoot,
                         "ipfsCid"
                     )
                 ).to.be.revertedWithCustomError(Challenge, "ZeroAddressToken");
@@ -297,12 +287,10 @@ describe("tests Challenge contract", function () {
                         signers[0].address,
                         token.target, // Invalid token
                         duration,
-                        maxPlayers,
                         bid,
                         description,
                         "0x0000000000000000000000000000000000000000",
-                        false,
-                        ethers.ZeroHash,
+                        nonZeroMerkleRoot,
                         "ipfsCid"
                     )
                 ).to.be.revertedWithCustomError(Challenge, "ZeroAddressFeeReceiver");
@@ -315,50 +303,13 @@ describe("tests Challenge contract", function () {
                         signers[0].address,
                         token.target,
                         0n, // Invalid duration
-                        maxPlayers,
                         bid,
                         description,
                         signers[0].address,
-                        false,
-                        ethers.ZeroHash,
+                        nonZeroMerkleRoot,
                         "ipfsCid"
                     )
                 ).to.be.revertedWithCustomError(Challenge, "InvalidDuration");
-            });
-
-            it('should revert with InsufficientPlayers when maxPlayers = 1 (< 2) in LINK mode', async function() {
-                const Challenge = await ethers.getContractFactory('Challenge');
-                await expect(
-                    Challenge.deploy(
-                        signers[0].address,
-                        token.target,
-                        duration,
-                        1n, // Invalid: less than 2
-                        bid,
-                        description,
-                        signers[0].address,
-                        false,
-                        ethers.ZeroHash,
-                        "ipfsCid"
-                    )
-                ).to.be.revertedWithCustomError(Challenge, "InsufficientPlayers");
-            });
-            it('should revert with InsufficientPlayers when maxPlayers = 0 (< 2) in LINK mode', async function() {
-                const Challenge = await ethers.getContractFactory('Challenge');
-                await expect(
-                    Challenge.deploy(
-                        signers[0].address,
-                        token.target,
-                        duration,
-                        0n, // Invalid: less than 2
-                        bid,
-                        description,
-                        signers[0].address,
-                        false,
-                        ethers.ZeroHash,
-                        "ipfsCid"
-                    )
-                ).to.be.revertedWithCustomError(Challenge, "InsufficientPlayers");
             });
 
             it('should revert with InsufficientBid when bid is 0', async function() {
@@ -368,18 +319,16 @@ describe("tests Challenge contract", function () {
                         signers[0].address,
                         token.target,
                         duration,
-                        maxPlayers,
                         0n, // Invalid bid
                         description,
                         signers[0].address,
-                        false,
-                        ethers.ZeroHash,
+                        nonZeroMerkleRoot,
                         "ipfsCid"
                     )
                 ).to.be.revertedWithCustomError(Challenge, "InsufficientBid");
             });
 
-            it('GROUP MODE: should revert with IPFSCidEmpty when IPFS CID is empty', async function() {
+            it('should revert with IPFSCidEmpty when IPFS CID is empty', async function() {
                 const playersAllowed = [
                     [signers[0].address],
                     [signers[1].address]
@@ -392,22 +341,20 @@ describe("tests Challenge contract", function () {
                         signers[0].address,
                         token.target,
                         duration,
-                        maxPlayers,
                         bid,
                         description,
                         signers[0].address,
-                        true, // Group mode
                         merkleTree.root,
-                        "" // Empty IPFS CID
+                        ""
                     )
                 ).to.be.revertedWithCustomError(Challenge, "IPFSCidEmpty");
             });
 
-            it('GROUP MODE : should revert with MerkleRootRequired if the merkle root is 0', async function() { 
+            it('should revert with MerkleRootRequired if the merkle root is 0', async function() { 
                 const Challenge = await ethers.getContractFactory('Challenge'); 
 
                 await expect(
-                    Challenge.deploy(signers[0].address, token.target, duration, maxPlayers, bid, description, signers[0].address, true, ethers.ZeroHash, "ipfsCid")
+                    Challenge.deploy(signers[0].address, token.target, duration, bid, description, signers[0].address, ethers.ZeroHash, "ipfsCid")
                 ).to.be.revertedWithCustomError(Challenge, "MerkleRootRequired")
             })
 
@@ -423,19 +370,23 @@ describe("tests Challenge contract", function () {
         let signers;
         let bid;
         let token;
+        let merkleTree;
+
         beforeEach(async function () {
-            ({challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase));
+            ({challenge, signers, bid, token, merkleTree} = await loadFixture(deployedChallengeFixtureBase));
         });
 
         it('should allow a player to join, and sends the money to the challenge contract correctly', async function() {
             const { v, r, s, deadline } = await GetRSVsig(signers[0], token, bid, challenge);
+
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
             expect(
                 await token.balanceOf(challenge)
             ).to.equal(0)
 
             await expect(
-                challenge.joinChallenge(deadline, v, r, s, [])
+                challenge.joinChallenge(deadline, v, r, s, proof1)
             )
             .to.not.be.reverted;
             
@@ -443,49 +394,44 @@ describe("tests Challenge contract", function () {
                 await token.balanceOf(challenge)
             ).to.equal(bid)
         })
+
         it('should not allow a player to join if the permit is wrong', async function() {
             const { v, r, s, deadline } = await GetRSVsig(signers[1], token, bid, challenge);
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
             await expect(
-                challenge.connect(signers[0]).joinChallenge(deadline, v, r, s, [])
+                challenge.connect(signers[0]).joinChallenge(deadline, v, r, s, proof1)
             )
             .to.be.revertedWithCustomError(token, "ERC20InsufficientAllowance");
-        })        
+        })  
+        
+        it('should not allow a player to join if he is not among those chosen by the admin at creation', async function() {
+            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[5], token, bid, challenge);
 
-        it('FOR LINK MODE : should not allow any more participants to join if the max is already reached', async function() {
-            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
-            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
-            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
-            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
-            const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
-            const { v: v6, r: r6, s: s6, deadline: deadline6 } = await GetRSVsig(signers[5], token, bid, challenge);
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);  
-            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
-            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
-            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
-            await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, []);
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
             await expect(
-                challenge.connect(signers[5]).joinChallenge(deadline6, v6, r6, s6, [])
-            ).to.be.revertedWithCustomError(challenge, "ChallengeFull");
-
+                challenge.connect(signers[5]).joinChallenge(deadline1, v1, r1, s1, proof1)
+            ).to.be.revertedWithCustomError(challenge, "NotWhitelisted")
         })
 
 
         it('should not allow a participant to join twice', async function()  {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
-            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, [])).to.be.revertedWithCustomError(challenge, "AlreadyJoined");
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, proof1)).to.be.revertedWithCustomError(challenge, "AlreadyJoined");
         })
 
         it('should allow a player to join even if his permit has been frontran (avoid DoS)', async function() {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
             //Frontrun the permit call
             await token.permit(signers[0].address, challenge, bid, deadline1, v1, r1, s1);
             await expect(
-                challenge.connect(signers[0]).joinChallenge(deadline1, v1, r1, s1, [])
+                challenge.connect(signers[0]).joinChallenge(deadline1, v1, r1, s1, proof1)
             ).to.not.be.reverted;
         })
 
@@ -497,11 +443,17 @@ describe("tests Challenge contract", function () {
             const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
             const { v: v5, r: r5, s: s5, deadline: deadline5 } = await GetRSVsig(signers[4], token, bid, challenge);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
-            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
-            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, []);
-            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, []);
-            await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, []);
+            const proof1 = merkleTree.getProof([signers[0].address]);
+            const proof2 = merkleTree.getProof([signers[1].address]);
+            const proof3 = merkleTree.getProof([signers[2].address]);
+            const proof4 = merkleTree.getProof([signers[3].address]);
+            const proof5 = merkleTree.getProof([signers[4].address]);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, proof2);
+            await challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, proof3);
+            await challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, proof4);
+            await challenge.connect(signers[4]).joinChallenge(deadline5, v5, r5, s5, proof5);
 
             //one player withdraws from challenge
             expect(
@@ -533,7 +485,9 @@ describe("tests Challenge contract", function () {
         it('should not allow a player to join, and then withdraw twice', async function() {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            const proof1 = merkleTree.getProof([signers[0].address]);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
             await challenge.withdrawFromChallenge();
             //try to withdraw without having joined, reverts
             await expect(
@@ -544,21 +498,23 @@ describe("tests Challenge contract", function () {
         it('should allow a player to join, withdraw and then join again the challenge', async function() {
             //Needed twice, because of the nonce
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
-            
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
             await challenge.withdrawFromChallenge();
 
             const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const proof2 = merkleTree.getProof([signers[0].address]);
             await expect(
-               challenge.joinChallenge(deadline2, v2, r2, s2, [])
+               challenge.joinChallenge(deadline2, v2, r2, s2, proof2)
             ).to.not.be.reverted
         })
 
         it('should not allow to start the challenge if there is less than 2 players', async function() {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
 
             await expect(
                 challenge.startChallenge()
@@ -570,8 +526,11 @@ describe("tests Challenge contract", function () {
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
             const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
-            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
+            const proof1 = merkleTree.getProof([signers[0].address]);
+            const proof2 = merkleTree.getProof([signers[1].address]);
+
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, proof2);
             await challenge.startChallenge();
             expect(
                await challenge.currentStatus()
@@ -579,61 +538,6 @@ describe("tests Challenge contract", function () {
         })
 
     });
-
-    describe("gathering players state (FOR GROUP MODE SPECIFIC TESTS)", function () {
-        let challenge;
-        let signers;
-        let bid;
-        let token;
-        let merkleTree;
-
-        //Function for using the group fixture with 'loadFixture'
-        async function groupModeFixture() {
-            return await deployedChallengeFixtureBase('group');
-        }
-
-        beforeEach(async function () {
-            //Deploying in group mode
-            ({challenge, signers, bid, token, merkleTree} = await loadFixture(groupModeFixture));
-        });
-
-        it('FOR GROUP MODE : should still allow players to join', async function() {
-            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
-            const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
-            const { v: v3, r: r3, s: s3, deadline: deadline3 } = await GetRSVsig(signers[2], token, bid, challenge);
-            const { v: v4, r: r4, s: s4, deadline: deadline4 } = await GetRSVsig(signers[3], token, bid, challenge);
-
-            //Get merkle proof for each player
-            const proof1 = merkleTree.getProof([signers[0].address]);
-            const proof2 = merkleTree.getProof([signers[1].address]);
-            const proof3 = merkleTree.getProof([signers[2].address]);
-            const proof4 = merkleTree.getProof([signers[3].address]);
-
-            //join with proof
-            await expect(
-                challenge.connect(signers[0]).joinChallenge(deadline1, v1, r1, s1, proof1)
-            ).to.not.be.reverted;
-            await expect(
-                challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, proof2)
-            ).to.not.be.reverted;
-            await expect(
-                challenge.connect(signers[2]).joinChallenge(deadline3, v3, r3, s3, proof3)
-            ).to.not.be.reverted;
-            await expect(
-                challenge.connect(signers[3]).joinChallenge(deadline4, v4, r4, s4, proof4)
-            ).to.not.be.reverted;
-        })
-
-        it('FOR GROUP MODE : should not allow a player to join if he is not among those chosen by the admin at creation', async function() {
-            const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[5], token, bid, challenge);
-
-            const proof1 = merkleTree.getProof([signers[0].address]);
-
-            await expect(
-                challenge.connect(signers[5]).joinChallenge(deadline1, v1, r1, s1, proof1)
-            ).to.be.revertedWithCustomError(challenge, "NotWhitelisted")
-        })
-    })
 
 
     // state OngoingChallenge
@@ -1114,8 +1018,9 @@ describe("tests Challenge contract", function () {
         it("should emit an event when a Player Joined", async function() {
             const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
-            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, []))
+            await expect(challenge.joinChallenge(deadline1, v1, r1, s1, proof1))
                 .to.emit(challenge, "PlayerJoined")
                 .withArgs(signers[0].address); 
         })
@@ -1123,8 +1028,9 @@ describe("tests Challenge contract", function () {
         it("should emit an event when a Player Withdraws from challenge", async function() {
             const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
+            const proof1 = merkleTree.getProof([signers[0].address]);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
             await expect(challenge.withdrawFromChallenge())
                 .to.emit(challenge, "PlayerWithdrawn")
                 .withArgs(signers[0].address); 
@@ -1134,9 +1040,11 @@ describe("tests Challenge contract", function () {
             const {challenge, signers, bid, token} = await loadFixture(deployedChallengeFixtureBase)
             const { v: v1, r: r1, s: s1, deadline: deadline1 } = await GetRSVsig(signers[0], token, bid, challenge);
             const { v: v2, r: r2, s: s2, deadline: deadline2 } = await GetRSVsig(signers[1], token, bid, challenge);
+            const proof1 = merkleTree.getProof([signers[0].address]);
+            const proof2 = merkleTree.getProof([signers[1].address]);
 
-            await challenge.joinChallenge(deadline1, v1, r1, s1, []);
-            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, []);
+            await challenge.joinChallenge(deadline1, v1, r1, s1, proof1);
+            await challenge.connect(signers[1]).joinChallenge(deadline2, v2, r2, s2, proof2);
 
             await expect(challenge.startChallenge())
                 .to.emit(challenge, "ChallengeStarted")
