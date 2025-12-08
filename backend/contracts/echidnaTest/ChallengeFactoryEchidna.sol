@@ -6,8 +6,8 @@ import "../DareWinTokenERC20.sol";
 
 /// @notice Echidna test harness for ChallengeFactory
 contract ChallengeFactoryEchidna {
-    ChallengeFactoryTestable public factory;
-    DareWin public token;
+    ChallengeFactoryTestable public immutable factory;
+    DareWin public immutable token;
     address public constant FEE_RECEIVER = address(0x1234);
     address public constant TOKEN_OWNER = address(0x5678);
 
@@ -25,26 +25,21 @@ contract ChallengeFactoryEchidna {
     // Helper function to create challenges with random parameters
     function createRandomChallenge(
         uint64 duration,
-        uint32 maxPlayers,
         uint128 bid,
-        bool groupMode,
         bytes32 merkleRoot
     ) public {
         attemptedCreations++;
         
         // Ensure valid parameters to avoid reverts
         if (duration == 0) duration = 1;
-        if (maxPlayers < 2) maxPlayers = 2;
         if (bid == 0) bid = 1;
         
         uint256 beforeCount = factory.totalChallengesCreated();
         
         factory.createChallenge(
             duration,
-            maxPlayers,
             bid,
             "Test Challenge",
-            groupMode,
             merkleRoot,
             "QmTest"
         );
@@ -81,21 +76,18 @@ contract ChallengeFactoryEchidna {
     // ========== ASSERTION TESTS ==========
     
     /// @notice Test that creating a challenge with valid params doesn't revert
-    function createValidChallenge(uint64 duration, uint32 maxPlayers, uint128 bid) public {
+    function createValidChallenge(uint64 duration, uint128 bid) public {
         // Bound inputs to valid ranges
         if (duration == 0) duration = 1;
-        if (maxPlayers < 2) maxPlayers = 2;
         if (bid == 0) bid = 1;
         
         uint256 countBefore = factory.totalChallengesCreated();
         
         factory.createChallenge(
             duration,
-            maxPlayers,
             bid,
             "Valid Challenge",
-            false,
-            bytes32(0),
+            bytes32(uint256(17)),
             "QmValidCID"
         );
         
@@ -110,11 +102,9 @@ contract ChallengeFactoryEchidna {
         bool reverted = false;
         try factory.createChallenge(
             0, // Invalid: duration = 0
-            2,
             100,
             "Invalid Duration",
-            false,
-            bytes32(0),
+            bytes32(uint256(17)),
             "QmCID"
         ) {
             reverted = false;
@@ -124,16 +114,14 @@ contract ChallengeFactoryEchidna {
         assert(reverted); // Should revert
     }
     
-    /// @notice Test parameter validation for maxPlayers
-    function testInvalidMaxPlayers() public {
+    /// @notice Test parameter validation for merkle root
+    function testInvalidMerkleRoot() public {
         bool reverted = false;
         try factory.createChallenge(
             3600,
-            1, // Invalid: maxPlayers < 2
             100,
             "Invalid Players",
-            false,
-            bytes32(0),
+            bytes32(0),// Invalid: merkleRoot = 0
             "QmCID"
         ) {
             reverted = false;
@@ -148,11 +136,9 @@ contract ChallengeFactoryEchidna {
         bool reverted = false;
         try factory.createChallenge(
             3600,
-            2,
             0, // Invalid: bid = 0
             "Invalid Bid",
-            false,
-            bytes32(0),
+            bytes32(uint256(17)),
             "QmCID"
         ) {
             reverted = false;

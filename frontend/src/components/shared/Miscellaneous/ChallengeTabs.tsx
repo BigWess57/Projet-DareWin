@@ -106,7 +106,7 @@ export function ChallengeTabs({
 
 
         <TabsContent value="created">
-          <div className="text-2xl font-bold mb-4">{t('section_created')}</div>
+          <div className="text-3xl font-bold mb-4">{t('section_created')}</div>
 
           <PaginatedTabContent
             key={itemsPerPage}
@@ -128,7 +128,7 @@ export function ChallengeTabs({
 
 
         <TabsContent value="joined">
-          <div className="text-2xl font-bold mb-4">{t('section_joined')}</div>
+          <div className="text-3xl font-bold mb-4">{t('section_joined')}</div>
 
           <PaginatedTabContent
             key={itemsPerPage}
@@ -150,7 +150,7 @@ export function ChallengeTabs({
 
 
         <TabsContent value="recent">
-          <div className="text-2xl font-bold mb-4">{t('section_recent')}</div>
+          <div className="text-3xl font-bold mb-4">{t('section_recent')}</div>
 
           <PaginatedTabContent
             key={itemsPerPage}

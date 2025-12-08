@@ -42,16 +42,13 @@ contract ChallengeFactory {
     
     /// @notice Creates a new `Challenge` contract
     /// @param duration Duration of the challenge in seconds
-    /// @param maxPlayers Maximum number of participants allowed
     /// @param bid Amount of DareWin tokens required to join
     /// @param description A short textual description of the challenge
-    /// @param groupMode Whether the challenge is restricted to a predefined group
-    /// @param merkleRoot merkle root of addresses allowed in group mode
-    function createChallenge(uint64 duration, uint32 maxPlayers, uint128 bid, string memory description, bool groupMode, bytes32 merkleRoot, string memory ipfsCid) external {
+    /// @param merkleRoot merkle root of addresses allowed
+    function createChallenge(uint64 duration, uint128 bid, string memory description, bytes32 merkleRoot, string memory ipfsCid) external {
         require(duration > 0, InvalidDuration());
-        require(maxPlayers >= 2, InsufficientPlayers());
         require(bid > 0, InsufficientBid());
-        address c = address(new Challenge(msg.sender, dareWinToken, duration, maxPlayers, bid, description, feeReceiver, groupMode, merkleRoot, ipfsCid));
+        address c = address(new Challenge(msg.sender, dareWinToken, duration, bid, description, feeReceiver, merkleRoot, ipfsCid));
 
         totalChallengesCreated++;
         isChallenge[c] = true;

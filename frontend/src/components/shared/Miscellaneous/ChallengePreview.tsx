@@ -9,10 +9,10 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
   return (
     <div
       className="
-        p-6 bg-gradient-to-br from-[#1F243A] to-[#0F1221]
+        p-8 bg-gradient-to-br from-[#09365f] to-[#0e1122]
         border border-white/10 rounded-2xl 
         shadow-lg transition-transform duration-200 hover:scale-105 hover:shadow-2xl
-        grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
+        grid grid-cols-1 md:grid-cols-2 gap-8
       "
     >
       {/* Full‑width header */}
@@ -23,24 +23,24 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
       </div>
 
       {/* Creator */}
-      <div className="flex flex-col">
-        <span className="text-sm text-white/60">{t('creator')}</span>
+      <div className="flex flex-col text-md">
+        <span className="text-white/60">{t('creator')}</span>
         <span className="font-medium text-white truncate max-w-full">
           {challenge.creator}
         </span>
       </div>
 
       {/* Bid */}
-      <div className="flex flex-col">
-        <span className="text-sm text-white/60">{t('bid')}</span>
+      <div className="flex flex-col text-md">
+        <span className="text-white/60">{t('bid')}</span>
         <span className="font-medium text-cyan-400">
           {challenge.bid} DARE
         </span>
       </div>
 
       {/* Duration */}
-      <div className="flex flex-col">
-        <span className="text-sm text-white/60">{t('duration')}</span>
+      <div className="flex flex-col text-md">
+        <span className="text-white/60">{t('duration')}</span>
         <span className="font-medium text-white">
           {(() => {
             const total = Number(challenge.duration)
@@ -52,27 +52,11 @@ const ChallengePreview = ({challenge} : {challenge : Challenge}) => {
         </span>
       </div>
 
-      {/* Max Players */}
-      <div className="flex flex-col">
-        <span className="text-sm text-white/60">{t('max_players')}</span>
-        <span className="font-medium text-white">
-          {challenge.maxPlayers}
-        </span>
-      </div>
-
       {/* Time of Creation */}
-      <div className="flex flex-col">
-        <span className="text-sm text-white/60">{t('created_at')}</span>
+      <div className="flex flex-col text-md">
+        <span className="text-white/60">{t('created_at')}</span>
         <span className="font-medium text-white">
           {new Date(Number(challenge.timestampOfCreation) * 1000).toLocaleString()}
-        </span>
-      </div>
-
-      {/* Mode */}
-      <div className="flex flex-col">
-        <span className="text-sm text-white/60">{t('mode')}</span>
-        <span className="font-medium text-white">
-          {challenge.groupMode ? t('private_group') : t('public')}
         </span>
       </div>
     </div>

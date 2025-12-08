@@ -13,7 +13,7 @@ async function main() {
     if(isLocalhost){
         DareWinToken = DareWin.attach("0x5fbdb2315678afecb367f032d93f642f64180aa3")
     }else {
-        //enter Right address DEPENDING ON NETWORK (SEPOLIA, HOLESKY...). Here BASE
+        //enter Right address DEPENDING ON NETWORK (SEPOLIA, HOLESKY...). Here BASE SEPOLIA
         DareWinToken = DareWin.attach("0xF5b33B18eF224357aFB475Cbc75cae3084da46FA")
     }   
 

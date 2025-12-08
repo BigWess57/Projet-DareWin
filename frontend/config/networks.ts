@@ -43,16 +43,16 @@ const TOKEN_ADDRESSES: Record<ChainKey, `0x${string}`> = {
   baseSepolia: "0xF5b33B18eF224357aFB475Cbc75cae3084da46FA",
   sepolia: "0xB32F99D77195738d7dfE0502Bc0EDc6F1158ECD3", 
   holesky: "0x93C1101D99048DFF77844B32081729f39F501903",
-  // hardhat: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // localnet
-  hardhat: "0xd31d3e1F60552ba8B35aA3Bd17c949404fdd12c4", // forked local mainnet
+  hardhat: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // localnet
+  // hardhat: "0xd31d3e1F60552ba8B35aA3Bd17c949404fdd12c4", // forked local mainnet
 };
 
 const CHALLENGE_FACTORY_ADDRESSES: Record<ChainKey, `0x${string}`> = {
-  baseSepolia: "0xcC562Bf0F37835EEE3754fB5bdD50fa3935BA36B",
+  baseSepolia: "0x0AA78A34a0f93418bBFe502A765740Ab54E5107E",
   sepolia: "0xc665D2331f7CA33869F5F0EE563c5C5C2554D919",
   holesky: "0x411F9f26C89CFe22a5f952A1995C4250f383A387",
-  // hardhat: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853", // localnet
-  hardhat: "0xd23BF69104cC640E68ebeE83B9833d6Db6F220E6", // forked local mainnet
+  hardhat: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853", // localnet
+  // hardhat: "0xd23BF69104cC640E68ebeE83B9833d6Db6F220E6", // forked local mainnet
 };
 
 

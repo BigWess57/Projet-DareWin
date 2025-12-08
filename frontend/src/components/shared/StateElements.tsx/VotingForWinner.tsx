@@ -69,11 +69,6 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
             {
                 address: contractAddress,
                 abi: contractAbi,
-                functionName: 'groupMode',
-            },
-            {
-                address: contractAddress,
-                abi: contractAbi,
                 functionName: 'ipfsCid',
             },
             {
@@ -302,6 +297,7 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
                     if(res === 0) {
                         setHasEveryoneVoted(true);
                     }
+                    console.log(res)
                 })
                 .catch(err => {
                     console.error( "Error retrieving remaing voters : ", err);
@@ -361,28 +357,21 @@ const VotingForWinner = ({status, refetchStatus} : {status: number | undefined, 
         const duration = readData[0].result
         setVotingDuration(duration as number)
 
-        // mode of the challenge
-        const groupMode = readData[1].result;
-
         // cid of the merkle proofs
-        const cid = readData[2].result
+        const cid = readData[1].result
+        attemptUnpin(cid as string);
 
-        //only try to unpin if groupMode = true, to avoid unnecessary Api calls
-        if(groupMode){
-            attemptUnpin(cid as string);
-        }
-
-        const challengeEnded = readData[3].result;
+        const challengeEnded = readData[2].result;
         setVotingStarted(challengeEnded as bigint)
 
         
-        const anyoneVoted = (readData[4].result !== undefined && readData[4].result > 0) ? true : false;
+        const anyoneVoted = (readData[3].result !== undefined && readData[3].result > 0) ? true : false;
         setHasSomeoneVoted(anyoneVoted);
 
-        const everyoneVoted = readData[5].result === 0 ? true : false;
+        const everyoneVoted = readData[4].result === 0 ? true : false;
         setHasEveryoneVoted(everyoneVoted);
 
-        const player = readData[6].result
+        const player = readData[5].result
         if (player == undefined){
             toast.error("Error : Could not retrieve player info from contract", {
                 duration: 3000,

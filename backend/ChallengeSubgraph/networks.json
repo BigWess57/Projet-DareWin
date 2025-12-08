@@ -6,9 +6,9 @@
     }
   },
   "base-sepolia": {
-    "ChallengeFactory": {  
-      "address": "0xcC562Bf0F37835EEE3754fB5bdD50fa3935BA36B",
-      "startBlock": 33951225
+    "ChallengeFactory": {
+      "address": "0x0AA78A34a0f93418bBFe502A765740Ab54E5107E",
+      "startBlock": 34732737
     }
   }
 }

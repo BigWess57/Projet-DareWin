@@ -1,12 +1,10 @@
 import {
   PlayerJoined as PlayerJoinedEvent,
   PlayerWithdrawn as PlayerWithdrawnEvent,
-  PlayerVoted as PlayerVotedEvent,
 } from "../generated/templates/ChallengeTemplate/Challenge"
 import {
   PlayerJoined,
   PlayerWithdrawn,
-//   PlayerVoted,
   ChallengeCreated
 } from "../generated/schema"
 
@@ -46,19 +44,3 @@ export function handlePlayerWithdrawn(event: PlayerWithdrawnEvent): void {
     pw.timestamp = event.block.timestamp
     pw.save()
 }
-
-// export function handlePlayerVoted(event: PlayerVotedEvent): void {
-//     let challengeId = event.address.toHex(); // address of emitting contract
-//     let challenge = ChallengeCreated.load(challengeId)
-//     if (challenge == null) {
-//         return
-//     }
-
-//     let id = event.block.number.toString() + "-" + event.transaction.hash.toHex() + "-" + event.logIndex.toString()
-//     let pv = new PlayerVoted(id)
-//     pv.challenge = challengeId
-//     pv.player = event.params.voter
-//     pv.votedFor = event.params.votedFor
-//     pv.timestamp = event.block.timestamp
-//     pv.save()
-// }

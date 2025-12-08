@@ -8,7 +8,6 @@ type ChallengeCreated @entity(immutable: true) {
   
   playersJoined: [PlayerJoined!]! @derivedFrom(field: "challenge")   # all joins
   playersWithdrawn: [PlayerWithdrawn!]! @derivedFrom(field: "challenge")  # all withdraws
-  # playersVoted: [PlayerVoted!]! @derivedFrom(field: "challenge")  # all votes
 }
 
 type PlayerJoined @entity(immutable: true) {
@@ -24,11 +23,3 @@ type PlayerWithdrawn @entity(immutable: true) {
   player: Bytes!
   timestamp: BigInt!
 }
-
-# type PlayerVoted @entity(immutable: true) {
-#   id: ID!
-#   challenge: ChallengeCreated!
-#   player: Bytes!
-#   votedFor: Bytes!
-#   timestamp: BigInt!
-# }

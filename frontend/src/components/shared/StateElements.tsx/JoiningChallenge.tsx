@@ -117,11 +117,6 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
             {
                 address: contractAddress,
                 abi: contractAbi,
-                functionName: 'groupMode',
-            },
-            {
-                address: contractAddress,
-                abi: contractAbi,
                 functionName: 'ipfsCid',
             },
             {
@@ -135,9 +130,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
       })
 
 
-    // const [allowance, setAllowance] = useState<bigint>(0n)
     const [challengeOwner, setChallengeOwner] = useState<Address>("0x0000000000000000000000000000000000000000")
-    const [groupMode, setGroupMode] = useState<boolean>(false)
 
     const [isAllowed, setIsAllowed] = useState<boolean>(false)
     const [isCheckingWhitelist, setIsCheckingWhitelist] = useState(false);
@@ -210,16 +203,12 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         const {deadline, v, r, s} = await GetRSVsig(address, tokenAddress, bid, contractAddress)
 
         let merkleProof;
-        if (groupMode) {
-            if(!challengeMerkleProof){
-                // user not whitelisted or proof not loaded yet
-                toast.error(t('no_merkle_proof'));
-                return;
-            }else{
-                merkleProof = challengeMerkleProof;
-            }
+        if(!challengeMerkleProof){
+            // user not whitelisted or proof not loaded yet
+            toast.error(t('no_merkle_proof'));
+            return;
         }else{
-            merkleProof = [];
+            merkleProof = challengeMerkleProof;
         }
 
         joinContract({
@@ -344,14 +333,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
         const owner = readData[0].result
         setChallengeOwner(owner as Address)
 
-        // group mode
-        const mode = readData[1].result
-        setGroupMode(mode as boolean)
-
-        const ipfsCid = readData[2].result
+        const ipfsCid = readData[1].result
         setChallengeCid(ipfsCid as string)
 
-        const player = readData[3].result
+        const player = readData[2].result
         if (player == undefined){
             toast.error(t('error_player_info'), {
                 duration: 3000,
@@ -366,7 +351,7 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
 
     
     useEffect(() => {
-        if(!address || !groupMode || !challengeCid) return;
+        if(!address || !challengeCid) return;
         
         const connected = address.toLowerCase();
 
@@ -457,24 +442,17 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                         <p className="flex items-center gap-2 text-xl font-semibold text-white/90">
                         🚀 {t('waiting_players')}<span className="animate-ellipsis"/>
                         </p>
-                        <div className="flex flex-col items-end space-y-1 text-sm">
-                        <div className="text-white/60">
-                            {t('mode')} : <span className="font-semibold text-cyan-400">{groupMode ? t('friend_group') : t('public')}</span>
-                        </div>
-                        {groupMode && (
-                            <div className={`text-sm ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
-                                {isCheckingWhitelist ? (
-                                    <div className="flex items-center text-cyan-500 justify-center gap-2">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        <span>{t('loading_addresses')}</span>
-                                    </div>
-                                ) : isAllowed === true ? (
-                                    t('authorized')
-                                ) : isAllowed === false ? (
-                                    t('not_authorized')
-                                ) : null}
-                            </div>
-                        )}
+                        <div className={`text-lg font-semibold ${isAllowed ? 'text-green-400' : 'text-red-400'}`}>
+                            {isCheckingWhitelist ? (
+                                <div className="flex items-center text-cyan-500 justify-center gap-2">
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>{t('loading_addresses')}</span>
+                                </div>
+                            ) : isAllowed === true ? (
+                                t('authorized')
+                            ) : isAllowed === false ? (
+                                t('not_authorized')
+                            ) : null}
                         </div>
                     </div>
 
@@ -483,10 +461,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                         {!userHasJoined ? (
                             <button
                             onClick={joinChallenge}
-                            disabled={groupMode && !isAllowed}
+                            disabled={!isAllowed}
                             className={`
                                 w-1/3 px-4 py-3 rounded-lg font-medium transition
-                                ${groupMode && !isAllowed
+                                ${!isAllowed
                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110'}
                             `}
@@ -496,10 +474,10 @@ const JoiningChallenge = ({refetchStatus} : {refetchStatus: (options?: RefetchOp
                         ) : (
                             <button
                             onClick={withdrawFromChallenge}
-                            disabled={groupMode && !isAllowed}
+                            disabled={!isAllowed}
                             className={`
                                 w-1/3 px-4 py-3 rounded-lg font-medium transition
-                                ${groupMode && !isAllowed
+                                ${!isAllowed
                                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:brightness-110'}
                             `}

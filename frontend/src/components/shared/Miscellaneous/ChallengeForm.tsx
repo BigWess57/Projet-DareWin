@@ -1,6 +1,6 @@
 'use client'
 
-import { Controller, useFieldArray, useForm } from 'react-hook-form'
+import { Controller, useFieldArray, useFormContext, useForm } from 'react-hook-form'
 import { useTranslations } from 'next-intl';
 
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -27,21 +27,23 @@ export const getFormSchema = (t: ReturnType<typeof useTranslations>) =>
         hours: z.string().regex(/^\d+$/, t('hours_number')),
         minutes: z.string().regex(/^[0-5]?\d$/, t('minutes_range')),
         seconds: z.string().regex(/^[0-5]?\d$/, t('seconds_range')),
-        bid: z.string().regex(/^\d+(\.\d+)?$/, t('bid_number')),
-        maxPlayers: z.coerce.number().min(2, t('max_players_min')),
-        isGroup: z.boolean(),
+        bid: z.string().regex(/^\d+(\.\d+)?$/, t('valid_number')).refine(val => parseFloat(val) > 0, {
+            message: t('bid_min_0')
+        }),
+        // maxPlayers: z.coerce.number().min(2, t('max_players_min')),
+        // isGroup: z.boolean(),
         groupAddresses: z
             .array(
                 z.object({
                     address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, t('address_format')),  // or `.regex(/^0x[a-fA-F0-9]{40}$/)`
                 })
             )
-    }).transform(({ hours, minutes, seconds, maxPlayers, bid, description, isGroup, groupAddresses}) => ({
+    }).transform(({ hours, minutes, seconds/*, maxPlayers*/, bid, description/*, isGroup*/, groupAddresses}) => ({
         duration: Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds),
-        maxPlayers,
+        // maxPlayers,
         bid,
         description,
-        isGroup,
+        // isGroup,
         groupAddresses,
     })).superRefine((data, ctx) => {
         if (data.duration < 30) {
@@ -51,26 +53,23 @@ export const getFormSchema = (t: ReturnType<typeof useTranslations>) =>
                 path: ['total duration'],
             })
         }
-        if (data.isGroup && data.groupAddresses.length < 2) {
+        if (data.groupAddresses.length < 2) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: t('at_least_two_addresses'),
-                path: [`isGroup`],
+                path: [`groupAddresses`],
             })
         }
-        // Uniqueness check for groupAddresses
-        const seen = new Set<string>();
-        data.groupAddresses.forEach((item, index) => {
-            if (seen.has(item.address)) {
-                ctx.addIssue({
-                    code: z.ZodIssueCode.custom,
-                    message: t('duplicate_address'),
-                    path: ["isGroup"],
-                });
-            } else {
-                seen.add(item.address);
-            }
-        });
+        //Duplicate address check
+        const addresses = data.groupAddresses.map(item => item.address);
+        const uniqueAddresses = new Set(addresses);
+        if (addresses.length !== uniqueAddresses.size) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: t('duplicate_address'),
+                path: ["groupAddresses"],
+            });
+        }
     });
 
 export type ChallengeFormValues = z.input<ReturnType<typeof getFormSchema>> | any | z.output<ReturnType<typeof getFormSchema>>;
@@ -89,17 +88,25 @@ const ChallengeForm = ({
             hours: '0',
             minutes: '1',
             seconds: '0',
-            maxPlayers: 5,
+            // maxPlayers: 5,
             bid: '',
             description: '',
-            isGroup: true,
+            // isGroup: true,
             groupAddresses: [],
         },
     })
+    // const { formState: { errors } } = form;
     const { fields, append, remove } = useFieldArray({
         control: form.control,
         name: 'groupAddresses',
     });
+
+// const { control, handleSubmit, formState: { errors } } = form; // Destructure 'errors' here!
+
+// Access errors directly
+const groupErrors = form.formState.errors.groupAddresses;
+// Helper to safely get the root message (handles Array vs Object structure)
+const groupErrorMessage = (groupErrors as any)?.message || (groupErrors as any)?.root?.message;
 
     return (
         <Form {...form}>
@@ -147,33 +154,34 @@ const ChallengeForm = ({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel>{t('duration_label')}</FormLabel>
-                            <div className='flex gap-2 items-end'>
+                            <div className='flex gap-5 items-top'>
                                 {['hours', 'minutes', 'seconds'].map((name, i) => (
                                     <FormField
                                         key={name}
                                         control={form.control}
                                         name={name as 'hours' | 'minutes' | 'seconds'}
                                         render={({ field }) => (
-                                        <FormItem className="w-30 flex">
-                                            <FormControl>
-                                                <Input 
-                                                    type="number" 
-                                                    min={0} 
-                                                    max={name !== 'hours' ? 59 : undefined} 
-                                                    {...field} 
-                                                    className="
-                                                        w-24 bg-[#0A0F1E] border border-white/20 rounded-md
-                                                        px-3 py-2 text-white placeholder:text-white/50
-                                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-500
-                                                        transition duration-200
-                                                    "
-                                                />
-                                            </FormControl>
-                                            {/* <FormLabel className="text-xs">{name.charAt(0).toUpperCase() + name.slice(1)}</FormLabel> */}
-                                            <FormLabel className="text-xs">{t(name)}</FormLabel>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
+                                            <FormItem className="min-w-24 items-start">
+                                                <div className='flex gap-2'>
+                                                    <FormControl>
+                                                        <Input 
+                                                            type="number" 
+                                                            min={0} 
+                                                            max={name !== 'hours' ? 59 : undefined} 
+                                                            {...field}
+                                                            className="
+                                                                w-24 bg-[#0A0F1E] border border-white/20 rounded-md
+                                                                px-3 py-2 text-white placeholder:text-white/50
+                                                                focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                                                                transition duration-200
+                                                            "
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel className="text-xs">{t(name)}</FormLabel>
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
                                     />
                                 ))}
                             </div>
@@ -188,36 +196,36 @@ const ChallengeForm = ({
                     render={({ field }) => (
                         <FormItem>
                             <FormLabel className="font-medium">{t('bid_label')}</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="0.1"
-                                        min={0}
-                                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                                            const allowedKeys = [
-                                                'Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', '.', // allow decimal point
-                                            ];
-                                            if (
-                                                !allowedKeys.includes(e.key) &&
-                                                !/^\d$/.test(e.key) // only digits
-                                            ) {
-                                                e.preventDefault();
-                                            }
-                                        }}
-                                        {...field} 
-                                        className="
-                                            w-full bg-[#0A0F1E] border border-white/20 rounded-lg
-                                            px-4 py-2 text-white placeholder:text-white/50
-                                            focus:border-purple-500 focus:ring-2 focus:ring-purple-500
-                                            transition duration-200 selection:bg-[#324b96]
-                                        "/>
-                                </FormControl>
+                            <FormControl>
+                                <Input
+                                    placeholder="0.1"
+                                    min={0}
+                                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                                        const allowedKeys = [
+                                            'Backspace', 'Tab', 'ArrowLeft', 'ArrowRight', 'Delete', '.', // allow decimal point
+                                        ];
+                                        if (
+                                            !allowedKeys.includes(e.key) &&
+                                            !/^\d$/.test(e.key) // only digits
+                                        ) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    {...field} 
+                                    className="
+                                        w-full bg-[#0A0F1E] border border-white/20 rounded-lg
+                                        px-4 py-2 text-white placeholder:text-white/50
+                                        focus:border-purple-500 focus:ring-2 focus:ring-purple-500
+                                        transition duration-200 selection:bg-[#324b96]
+                                    "/>
+                            </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
 
                 {/* Mode switch */}
-                <FormField
+                {/* <FormField
                     control={form.control}
                     name="isGroup"
                     render={({ field }) => (
@@ -247,10 +255,10 @@ const ChallengeForm = ({
                             <FormMessage />
                         </FormItem>
                     )}
-                />
+                /> */}
 
-                {/* Conditional: Max players or group addresses */}
-                {!form.watch('isGroup') ? (
+                {/* Conditional: group addresses */}
+                {/* {!form.watch('isGroup') ? (
                     <FormField
                         control={form.control}
                         name="maxPlayers"
@@ -273,58 +281,65 @@ const ChallengeForm = ({
                             </FormItem>
                         )}
                     />
-                ) : (
-                    <FormItem>
-                        <FormLabel>{t('group_addresses_label')}</FormLabel>
-                        {fields.map((item, index) => (
-                            <FormField
-                                key={item.id}
-                                control={form.control}
-                                name={`groupAddresses.${index}.address` as const}
-                                render={({ field }) => (
-                                    <FormItem className="mb-2">
-                                        <div className='flex items-center space-x-2'>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="0x..."
-                                                    {...field}
-                                                    className="
-                                                        w-full bg-[#0A0F1E] border border-white/20 rounded-lg
-                                                        px-4 py-2 text-white placeholder:text-white/50
-                                                        focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500
-                                                        transition duration-200 selection:bg-[#324b96]
-                                                    "
-                                                />
-                                            </FormControl>
-                                            <Button 
-                                                type="button" 
-                                                variant="destructive" 
-                                                onClick={() => remove(index)}
-                                                className="px-3 py-1 bg-red-600 hover:bg-red-700 transition rounded-md text-white"
-                                            >
-                                                {t('remove_address')}
-                                            </Button>
-                                        </div>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        ))}
-                        <div>
-                            <Button 
-                                type="button" 
-                                className="
-                                    bg-gradient-to-r from-green-500 to-cyan-500
-                                    text-white px-4 py-2 rounded-lg shadow hover:brightness-110
-                                    transition duration-200
-                                "
-                                onClick={() => append({ address: '' })}
-                            >
-                                {t('add_address')}
-                            </Button>
-                        </div>
-                    </FormItem>
-                )}
+                ) : ( */}
+                        <FormItem>
+                            <FormLabel className={`mb-2 ${groupErrorMessage && `text-red-600`}`}>{t('group_addresses_label')}</FormLabel>
+                            <div>
+                                {fields.map((item, index) => (
+                                    <FormField
+                                        key={item.id}
+                                        control={form.control}
+                                        name={`groupAddresses.${index}.address` as const}
+                                        render={({ field }) => (
+                                            <FormItem className="mb-2">
+                                                <div className='flex items-center space-x-2'>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="0x..."
+                                                            {...field}
+                                                            className="
+                                                                w-full bg-[#0A0F1E] border border-white/20 rounded-lg
+                                                                px-4 py-2 text-white placeholder:text-white/50
+                                                                focus:border-yellow-500 focus:ring-2 focus:ring-yellow-500
+                                                                transition duration-200 selection:bg-[#324b96]
+                                                            "
+                                                        />
+                                                    </FormControl>
+                                                    <Button 
+                                                        type="button" 
+                                                        variant="destructive" 
+                                                        onClick={() => remove(index)}
+                                                        className="px-3 py-1 bg-red-600 hover:bg-red-700 transition rounded-md text-white"
+                                                    >
+                                                        {t('remove_address')}
+                                                    </Button>
+                                                </div>
+                                                <FormMessage/> {/* Shows individual address errors */}
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
+                                <div className='flex items-center gap-5'>
+                                    <Button 
+                                        type="button" 
+                                        className="
+                                            bg-gradient-to-r from-green-500 to-cyan-500
+                                            text-white px-4 py-2 rounded-lg shadow hover:brightness-110
+                                            transition duration-200
+                                        "
+                                        onClick={() => append({ address: '' })}
+                                    >
+                                        {t('add_address')}
+                                    </Button>
+                                    {groupErrorMessage && (
+                                        <p className="text-[0.8rem] font-medium text-destructive">
+                                            {groupErrorMessage}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </FormItem>
+                {/* )} */}
 
                 {/* Submit Button */}
                 <Button

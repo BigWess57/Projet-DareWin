@@ -20,9 +20,7 @@ export type Challenge = {
     contractAddress: Address,
     duration : string,
     bid : string,
-    maxPlayers : string,
     timestampOfCreation : string
-    groupMode: boolean
 }
 
 type ChallengeCreated = {
@@ -90,22 +88,12 @@ const ChallengeList = () => {
                     {
                         address: challenge.address,
                         abi: contractAbi,
-                        functionName: 'maxPlayers',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
                         functionName: 'description',
-                    },
-                    {
-                        address: challenge.address,
-                        abi: contractAbi,
-                        functionName: 'groupMode',
                     },
                 ],
             })
 
-            const [duration, bid, maxPlayers, description, groupMode] = result.map((r) => r.result!)
+            const [duration, bid, description] = result.map((r) => r.result!)
             
 
             challengesInfo.push({
@@ -113,10 +101,8 @@ const ChallengeList = () => {
                 contractAddress: challenge.address,
                 duration: duration as string,
                 bid: formatEther(bid as bigint),
-                maxPlayers: maxPlayers as string,
                 description: description as string,
                 timestampOfCreation: challenge.timestamp,
-                groupMode: groupMode as boolean,
             })
         }
 

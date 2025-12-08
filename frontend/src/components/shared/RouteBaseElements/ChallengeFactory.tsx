@@ -68,73 +68,69 @@ const ChallengeFactory = () => {
     const handleCreateChallenge = async (data: ChallengeFormValues) => {
         
         const duration = data.duration;
-        const maxPlayers = data.maxPlayers;
         const bid = parseEther(data.bid);
         const description = data.description;
-        const isGroup = data.isGroup;
 
-        // Create merkle root if group mode
+        // Create merkle root
+
         let merkleRoot;
         let ipfsCid;
-        if(!isGroup){
-            merkleRoot = zeroHash;
-            ipfsCid = null;
-        }else{
-            //Gather authorized players addresses
-            const groupAddresses = data.groupAddresses.map((elem: { address: any }) => [elem.address]);
-            const tree = StandardMerkleTree.of(groupAddresses, ["address"]);
-            merkleRoot = tree.root;
+        //Gather authorized players addresses
+        const groupAddresses = data.groupAddresses.map((elem: { address: any }) => [elem.address]);
+        const tree = StandardMerkleTree.of(groupAddresses, ["address"]);
+        merkleRoot = tree.root;
 
-            // Build proofs map: address → proof
-            const proofs: Record<string, string[]> = {};
+        // Build proofs map: address → proof
+        const proofs: Record<string, string[]> = {};
 
-            for (let i = 0; i < groupAddresses.length; i++) {
-                const address = groupAddresses[i][0];  // e.g. "0xaaaa...". Already normalized
+        for (let i = 0; i < groupAddresses.length; i++) {
+            const address = groupAddresses[i][0];  // e.g. "0xaaaa...". Already normalized
 
-                // get proof from tree
-                const proof = tree.getProof(i);
-                // `proof` is an array of `bytes32` hex strings (sibling hashes)
+            // get proof from tree
+            const proof = tree.getProof(i);
+            // `proof` is an array of `bytes32` hex strings (sibling hashes)
 
-                proofs[address] = proof;
-            }
-
-            // Pin the proofs JSON to Pinata via the server endpoint
-            const payload = {
-                root: merkleRoot,
-                proofs: proofs,
-                // addresses: groupAddresses,
-                createdAt: new Date().toISOString(),
-                meta: {
-                    challengeCreator: (await window.ethereum.request({ method: 'eth_requestAccounts' }))[0] ?? null,
-                },
-            };
-
-            const pinRes = await fetch('/api/ipfsProofs/pinProofs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            const pinJson = await pinRes.json();
-            if (!pinRes.ok || !pinJson.ipfsHash) {
-                console.error('Pin failed', pinJson);
-                toast.error(t('pin_failed'), {
-                    duration: 3000,
-                })
-                return;
-            }
-            
-            ipfsCid = pinJson.ipfsHash; // IPFS CID (e.g. Qm...)
-            console.log("Proofs pinned !");
-            console.log(ipfsCid);
-            setChallengeIpfsCid(ipfsCid);
+            proofs[address] = proof;
         }
+
+        // Pin the proofs JSON to Pinata via the server endpoint
+        const payload = {
+            root: merkleRoot,
+            proofs: proofs,
+            // addresses: groupAddresses,
+            createdAt: new Date().toISOString(),
+            meta: {
+                challengeCreator: (await window.ethereum.request({ method: 'eth_requestAccounts' }))[0] ?? null,
+            },
+        };
+
+        const pinRes = await fetch('/api/ipfsProofs/pinProofs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+
+        const pinJson = await pinRes.json();
+        if (!pinRes.ok || !pinJson.ipfsHash) {
+            console.error('Pin failed', pinJson);
+            toast.error(t('pin_failed'), {
+                duration: 3000,
+            })
+            return;
+        }
+        
+        ipfsCid = pinJson.ipfsHash; // IPFS CID (e.g. Qm...)
+        console.log("Proofs pinned !");
+        console.log(ipfsCid);
+        setChallengeIpfsCid(ipfsCid);
+
+        console.log("Creating challenge ... ")
 
         writeContract({
             address: factoryAddress,
             abi: factoryAbi,
             functionName: 'createChallenge',
-            args: [duration, maxPlayers, bid, description, isGroup, merkleRoot, ipfsCid],
+            args: [duration, bid, description, merkleRoot, ipfsCid],
         })
         
     }
