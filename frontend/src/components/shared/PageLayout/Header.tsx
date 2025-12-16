@@ -1,98 +1,124 @@
-'use client'
-import Image from 'next/image'
+"use client";
+import Image from "next/image";
 import Link from "next/link";
 
-import { tokenAbi/*, tokenAddress*/, feeTierBronzeCap, feeTierSilverCap, feeTierGoldCap, TierBronzeFee, TierSilverFee, TierGoldFee, TierPlatinumFee} from "@/constants/TokenInfo";
+import {
+    tokenAbi /*, tokenAddress*/,
+    feeTierBronzeCap,
+    feeTierSilverCap,
+    feeTierGoldCap,
+    TierBronzeFee,
+    TierSilverFee,
+    TierGoldFee,
+    TierPlatinumFee,
+} from "@/constants/TokenInfo";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { formatEther } from "viem";
 import { useAccount, useReadContract } from "wagmi";
-import { usePathname } from '@/src/i18n/navigation';
+import { usePathname } from "@/src/i18n/navigation";
 
-
-import { Home, Zap, PencilRuler } from 'lucide-react'
-import { FeeTierExplanation } from '../Miscellaneous/FeeTierExplanation';
-import { tokenAddress } from '@/config/networks';
-import LanguageSwitcher from '../Miscellaneous/LanguageSwitcher';
-import {useTranslations} from 'next-intl';
+import { Home, Zap, PencilRuler } from "lucide-react";
+import { FeeTierExplanation } from "../Miscellaneous/FeeTierExplanation";
+import { tokenAddress } from "@/config/networks";
+import LanguageSwitcher from "../Miscellaneous/LanguageSwitcher";
+import { useTranslations } from "next-intl";
 
 const Header = () => {
-    const t = useTranslations('Header');
+    const t = useTranslations("Header");
 
-/************
- * Blockchain interaction
- ************/
-    const {address, isConnected} = useAccount()
-    
-    const { data: balance, error: error, isPending: IsPending, refetch: refetch } = useReadContract({
+    /************
+     * Blockchain interaction
+     ************/
+    const { address, isConnected } = useAccount();
+
+    const {
+        data: balance,
+        error: error,
+        isPending: IsPending,
+        refetch: refetch,
+    } = useReadContract({
         address: tokenAddress,
         abi: tokenAbi,
-        functionName: 'balanceOf',
+        functionName: "balanceOf",
         args: [address],
         account: address as `0x${string}` | undefined,
         query: {
             enabled: Boolean(address),
             refetchInterval: 5_000,
         },
-    })
+    });
 
-/******Display ******/
+    /******Display ******/
     const displayBalance = (() => {
         if (!isConnected) return { success: false, message: "-" };
-        if (IsPending) return { success: false, message: t('connecting') };
-        if (error) return { success: false, message: t('fetch_error') };
-        
-        if (typeof balance === 'bigint') {
+        if (IsPending) return { success: false, message: t("connecting") };
+        if (error) return { success: false, message: t("fetch_error") };
+
+        if (typeof balance === "bigint") {
             return { success: true, message: formatEther(balance) };
         }
 
-        return { success: false, message: t('unexpected_error') };
-    })()
+        return { success: false, message: t("unexpected_error") };
+    })();
 
     const displayFeeTier = (() => {
-        if (!isConnected) return "-"
+        if (!isConnected) return "-";
         if (IsPending) return null;
         if (error) return null;
 
-        const balanceFormated = Number(formatEther(balance as bigint))
-        if(balanceFormated < feeTierBronzeCap){
-            return <span className='text-[#CE8946] font-bold'>{t('tier_bronze', { fee: TierBronzeFee })}</span>
-        }else if(balanceFormated < feeTierSilverCap){
-            return <span className='text-slate-400 font-bold'>{t('tier_silver', { fee: TierSilverFee })}</span>
-        }else if(balanceFormated < feeTierGoldCap){
-            return <span className='text-yellow-400 font-bold'>{t('tier_gold', { fee: TierGoldFee })}</span>
-        }else {
-            return <span className='text-cyan-400 font-bold'>{t('tier_platinum', { fee: TierPlatinumFee })}</span>
+        const balanceFormated = Number(formatEther(balance as bigint));
+        if (balanceFormated < feeTierBronzeCap) {
+            return (
+                <span className="text-[#CE8946] font-bold">
+                    {t("tier_bronze", { fee: TierBronzeFee })}
+                </span>
+            );
+        } else if (balanceFormated < feeTierSilverCap) {
+            return (
+                <span className="text-slate-400 font-bold">
+                    {t("tier_silver", { fee: TierSilverFee })}
+                </span>
+            );
+        } else if (balanceFormated < feeTierGoldCap) {
+            return (
+                <span className="text-yellow-400 font-bold">
+                    {t("tier_gold", { fee: TierGoldFee })}
+                </span>
+            );
+        } else {
+            return (
+                <span className="text-cyan-400 font-bold">
+                    {t("tier_platinum", { fee: TierPlatinumFee })}
+                </span>
+            );
         }
-    })()
+    })();
 
-
-/****** Path change ******/
-    const pathname = usePathname()
+    /****** Path change ******/
+    const pathname = usePathname();
 
     const isActive = {
-        home: pathname === '/',
-        create: pathname.startsWith('/createchallenge'),
-        mychallenges: pathname.startsWith('/mychallenges'),
-    }
+        home: pathname === "/",
+        create: pathname.startsWith("/createchallenge"),
+        mychallenges: pathname.startsWith("/mychallenges"),
+    };
 
     const linkClasses = (active: boolean) =>
-    `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
-      active
-        ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-lg'
-        : 'border border-white/20 text-white/70 hover:border-white/40 hover:text-white'
-    }`
-
+        `flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
+            active
+                ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-lg"
+                : "border border-white/20 text-white/70 hover:border-white/40 hover:text-white"
+        }`;
 
     return (
         <nav className="w-full flex items-center gap-6 px-8 py-4 bg-[#0B1126] border-b border-white/20">
-
             <div className="relative h-[50px] w-[200px]">
                 <Image
                     src="/Logo DareWin allongé blanc.png"
                     alt="Logo"
                     fill
-                    style={{ objectFit: 'contain' }}
+                    style={{ objectFit: "contain" }}
                     priority
                 />
             </div>
@@ -100,96 +126,134 @@ const Header = () => {
             {/* Liens de navigation */}
             <ul className="flex items-center gap-3">
                 <li>
-                <Link href="/" className={linkClasses(isActive.home)}>
-                    <Home size={20} /> {t('nav_home')}
-                </Link>
+                    <Link href="/" className={linkClasses(isActive.home)}>
+                        <Home size={20} /> {t("nav_home")}
+                    </Link>
                 </li>
                 <li>
-                <Link href="/createchallenge" className={linkClasses(isActive.create)}>
-                    <PencilRuler size={20} /> {t('nav_create')}
-                </Link>
+                    <Link
+                        href="/createchallenge"
+                        className={linkClasses(isActive.create)}
+                    >
+                        <PencilRuler size={20} /> {t("nav_create")}
+                    </Link>
                 </li>
                 <li>
-                <Link href="/mychallenges" className={linkClasses(isActive.mychallenges)}>
-                    <Zap size={20} /> {t('nav_mychallenges')}
-                </Link>
+                    <Link
+                        href="/mychallenges"
+                        className={linkClasses(isActive.mychallenges)}
+                    >
+                        <Zap size={20} /> {t("nav_mychallenges")}
+                    </Link>
                 </li>
             </ul>
 
             {/* Infos Wallet (balance + fee tier) */}
             <div className="ml-auto flex gap-10 items-center text-sm text-white/80">
-
                 <div className="px-4 py-3 rounded-xl bg-[#1F243A] border border-white/10 text-sm text-white shadow-sm">
                     <div className="text-white/90 text-lg mb-1">
-                        {t('balance_label')} <span className="ml-2 font-semibold text-white-400 text-xl font-mono tracking-wide">
-                            { displayBalance.success ?
-                                <>{Number(displayBalance.message).toLocaleString(undefined, {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 6,
-                                })} {t('dare_symbol')}</> : displayBalance.message
-                            } 
+                        {t("balance_label")}{" "}
+                        <span className="ml-2 font-semibold text-white-400 text-xl font-mono tracking-wide">
+                            {displayBalance.success ? (
+                                <>
+                                    {Number(
+                                        displayBalance.message,
+                                    ).toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 4,
+                                    })}{" "}
+                                    {t("dare_symbol")}
+                                </>
+                            ) : (
+                                displayBalance.message
+                            )}
                         </span>
                     </div>
-                    <div className='flex items-center'>
-                        <div className="text-white/60">{t('fee_label')} <span className="text-white/80">{displayFeeTier}</span></div>
-                        <FeeTierExplanation/>
+                    <div className="flex items-center">
+                        <div className="text-white/60">
+                            {t("fee_label")}{" "}
+                            <span className="text-white/80">
+                                {displayFeeTier}
+                            </span>
+                        </div>
+                        <FeeTierExplanation />
                     </div>
-                    
                 </div>
 
                 <ConnectButton.Custom>
-                    {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
-                        const ready = mounted
-                        const connected = ready && account && chain && !chain.unsupported
+                    {({
+                        account,
+                        chain,
+                        openAccountModal,
+                        openChainModal,
+                        openConnectModal,
+                        mounted,
+                    }) => {
+                        const ready = mounted;
+                        const connected =
+                            ready && account && chain && !chain.unsupported;
 
                         return (
-                        <div {...(!ready && { 'aria-hidden': true, style: { opacity: 0, pointerEvents: 'none' } })}>
-                            {!connected ? (
-                            <button
-                                onClick={openConnectModal}
-                                type="button"
-                                className="px-6 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl text-sm font-semibold text-white hover:brightness-110 transition"
+                            <div
+                                {...(!ready && {
+                                    "aria-hidden": true,
+                                    style: {
+                                        opacity: 0,
+                                        pointerEvents: "none",
+                                    },
+                                })}
                             >
-                                {t('connect')}
-                            </button>
-                            ) : chain.unsupported ? (
-                            <button
-                                onClick={openChainModal}
-                                className="px-4 py-2 border border-red-400 rounded-md text-sm text-red-400 hover:bg-red-500/10 transition"
-                            >
-                                {t('wrong_network')}
-                            </button>
-                            ) : (
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={openChainModal}
-                                    className="flex items-center px-3 py-2 bg-gray-800 rounded-xl text-sm text-white hover:bg-gray-700 transition"
-                                >
-                                    {chain.hasIcon && (
-                                        <div className="h-5 w-5 rounded-full overflow-hidden mr-2 bg-white">
-                                            <img src={chain.iconUrl!} alt={chain.name} />
-                                        </div>
-                                    )}
-                                    <span>{chain.name}</span>
-                                </button>
-                                <button
-                                    onClick={openAccountModal}
-                                    className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl text-sm font-semibold text-white hover:brightness-110 transition"
-                                >
-                                    {account.displayName}
-                                    {account.displayBalance ? ` (${account.displayBalance})` : ''}
-                                </button>
+                                {!connected ? (
+                                    <button
+                                        onClick={openConnectModal}
+                                        type="button"
+                                        className="px-6 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl text-sm font-semibold text-white hover:brightness-110 transition"
+                                    >
+                                        {t("connect")}
+                                    </button>
+                                ) : chain.unsupported ? (
+                                    <button
+                                        onClick={openChainModal}
+                                        className="px-4 py-2 border border-red-400 rounded-md text-sm text-red-400 hover:bg-red-500/10 transition"
+                                    >
+                                        {t("wrong_network")}
+                                    </button>
+                                ) : (
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={openChainModal}
+                                            className="flex items-center px-3 py-2 bg-gray-800 rounded-xl text-sm text-white hover:bg-gray-700 transition"
+                                        >
+                                            {chain.hasIcon && (
+                                                <div className="h-5 w-5 rounded-full overflow-hidden mr-2 bg-white">
+                                                    <img
+                                                        src={chain.iconUrl!}
+                                                        alt={chain.name}
+                                                    />
+                                                </div>
+                                            )}
+                                            <span>{chain.name}</span>
+                                        </button>
+                                        <button
+                                            onClick={openAccountModal}
+                                            className="px-4 py-2 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-xl text-sm font-semibold text-white hover:brightness-110 transition"
+                                        >
+                                            {account.displayName}
+                                            {account.displayBalance
+                                                ? ` (${account.displayBalance})`
+                                                : ""}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                            )}
-                        </div>
-                        )
+                        );
                     }}
                 </ConnectButton.Custom>
 
-                <LanguageSwitcher/>
+                <LanguageSwitcher />
             </div>
         </nav>
-    )
-}
+    );
+};
 
 export default Header;

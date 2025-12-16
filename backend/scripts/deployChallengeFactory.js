@@ -1,57 +1,78 @@
 const hre = require("hardhat");
-const {ethers} = hre
-const {verify} = require("../utils/verify");
+const { ethers } = hre;
+const { verify } = require("../utils/verify");
 
 async function main() {
-    const signers = await ethers.getSigners()
+    const signers = await ethers.getSigners();
 
-    const isLocalhost = network.name.includes('localhost');  
-   
-   //Get DARE token first
+    const isLocalhost = network.name.includes("localhost");
+
+    //Get DARE token first
     const DareWin = await ethers.getContractFactory("DareWin");
     let DareWinToken;
-    if(isLocalhost){
-        DareWinToken = DareWin.attach("0x5fbdb2315678afecb367f032d93f642f64180aa3")
-    }else {
+    if (isLocalhost) {
+        DareWinToken = DareWin.attach(
+            "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+        );
+    } else {
         //enter Right address DEPENDING ON NETWORK (SEPOLIA, HOLESKY...). Here BASE SEPOLIA
-        DareWinToken = DareWin.attach("0xF5b33B18eF224357aFB475Cbc75cae3084da46FA")
-    }   
+        DareWinToken = DareWin.attach(
+            "0xF5b33B18eF224357aFB475Cbc75cae3084da46FA",
+        );
+    }
 
     //Send tokens to other signers (if localhost)
-    if(isLocalhost){
-        const amountToDistribute = ethers.parseUnits("1000", await DareWinToken.decimals());
+    if (isLocalhost) {
+        const amountToDistribute = ethers.parseUnits(
+            "1000",
+            await DareWinToken.decimals(),
+        );
         for (let i = 1; i < 6; i++) {
             await DareWinToken.transfer(signers[i].address, amountToDistribute);
-            if(i==1){
-            //Send a bit more to 2nd signer
-                await DareWinToken.transfer(signers[1].address, ethers.parseUnits("20000", await DareWinToken.decimals()));  
+            if (i == 1) {
+                //Send a bit more to 2nd signer
+                await DareWinToken.transfer(
+                    signers[1].address,
+                    ethers.parseUnits("20000", await DareWinToken.decimals()),
+                );
             }
 
             const bal = await DareWinToken.balanceOf(signers[i].address);
-            console.log("user " + signers[i].address + " has been sent a total of " + ethers.formatUnits(bal, await DareWinToken.decimals()) + " DARE")
+            console.log(
+                "user " +
+                    signers[i].address +
+                    " has been sent a total of " +
+                    ethers.formatUnits(bal, await DareWinToken.decimals()) +
+                    " DARE",
+            );
         }
     }
 
     //Deploy the challenge factory
-    const ChallengeFactory = await ethers.deployContract("ChallengeFactory", [DareWinToken.target, signers[0].address]);
-// const challengeFactory = await ethers.getContractFactory("ChallengeFactory");
-// const ChallengeFactory = challengeFactory.attach("0xF5b33B18eF224357aFB475Cbc75cae3084da46FA")
-    console.log('deploiement de la Challenge Factory en cours...');
+    const ChallengeFactory = await ethers.deployContract("ChallengeFactory", [
+        DareWinToken.target,
+        signers[0].address,
+    ]);
+    // const challengeFactory = await ethers.getContractFactory("ChallengeFactory");
+    // const ChallengeFactory = challengeFactory.attach("0xF5b33B18eF224357aFB475Cbc75cae3084da46FA")
+    console.log("deploiement de la Challenge Factory en cours...");
 
-    if(!isLocalhost){
-        console.log('Attente de quelques blocs avant verification');
+    if (!isLocalhost) {
+        console.log("Attente de quelques blocs avant verification");
         await ChallengeFactory.deploymentTransaction()?.wait(3);
     }
-    console.log(`ChallengeFactory deployed to ${ChallengeFactory.target}`)
+    console.log(`ChallengeFactory deployed to ${ChallengeFactory.target}`);
 
-    if(!isLocalhost) {
-        console.log( 'Vérification du contrat intelligent ChallengeFactory...' )
-        await verify(ChallengeFactory.target.toString(), [DareWinToken.target, signers[0].address])
+    if (!isLocalhost) {
+        console.log("Vérification du contrat intelligent ChallengeFactory...");
+        await verify(ChallengeFactory.target.toString(), [
+            DareWinToken.target,
+            signers[0].address,
+        ]);
     }
-
-}  
+}
 
 main().catch((error) => {
-    console.error(error)
-    process.exitCode = 1
-})
+    console.error(error);
+    process.exitCode = 1;
+});
