@@ -1,4 +1,3 @@
-
 import { use } from "react";
 import { Locale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
@@ -6,15 +5,11 @@ import { setRequestLocale } from "next-intl/server";
 import Layout from "@/src/components/shared/PageLayout/Layout";
 import HomePage from "@/src/components/shared/RouteBaseElements/HomePage";
 
+export default function Home({ params }: PageProps<"/[locale]">) {
+    const { locale } = use(params);
 
-export default function Home({params}: PageProps<'/[locale]'>) {
+    // Enable static rendering
+    setRequestLocale(locale as Locale);
 
-  const {locale} = use(params);
-
-  // Enable static rendering
-  setRequestLocale(locale as Locale);
-
-  return (
-    <HomePage/>
-  );
+    return <HomePage />;
 }
