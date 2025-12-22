@@ -1,62 +1,64 @@
-import { NextResponse } from "next/server"
-import { currentSubgraphURL } from "@/config/networks"
+import { NextResponse } from "next/server";
+import { currentSubgraphURL } from "@/config/networks";
 import { PlayerEvent } from "@/utils/apiFunctions";
 
-const SUBGRAPH_URL = currentSubgraphURL || "http://localhost:8000/subgraphs/name/challenge"
+const SUBGRAPH_URL =
+    currentSubgraphURL || "http://localhost:8000/subgraphs/name/challenge";
 
-type GraphQLPlayerEvent = {
-  id: string;
-  player: string;
-  timestamp: string | number;
+export type GraphQLPlayerEvent = {
+    id: string;
+    player: string;
+    timestamp: string | number;
 };
 
 export async function GET(req: Request) {
-
-    const { searchParams } = new URL(req.url)
-    const challengeAddress = searchParams.get("address") || ""
+    const { searchParams } = new URL(req.url);
+    const challengeAddress = searchParams.get("address") || "";
 
     const query = `
-      query($challengeAddress: ID!) {
-        playerJoineds(
-          where: { challenge: $challengeAddress }
-          orderBy: timestamp
-          orderDirection: desc
-        ) {
-          id
-          player
-          timestamp
-        }
+        query($challengeAddress: ID!) {
+            playerJoineds(
+                where: { challenge: $challengeAddress }
+                orderBy: timestamp
+                orderDirection: desc
+            ) {
+                id
+                player
+                timestamp
+            }
 
-        playerWithdrawns(
-          where: { challenge: $challengeAddress }
-          orderBy: timestamp
-          orderDirection: desc
-        ) {
-          id
-          player
-          timestamp
+            playerWithdrawns(
+                where: { challenge: $challengeAddress }
+                orderBy: timestamp
+                orderDirection: desc
+            ) {
+                id
+                player
+                timestamp
+            }
         }
-      }
     `;
 
     const variables = { challengeAddress: challengeAddress?.toLowerCase() };
 
-    try{
+    try {
         const response = await fetch(SUBGRAPH_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                query, variables
-            })
-        })
-        const json = await response.json()
+                query,
+                variables,
+            }),
+        });
+        const json = await response.json();
         if (json.errors) {
-            return NextResponse.json({ error: json.errors }, { status: 500 })
+            return NextResponse.json({ error: json.errors }, { status: 500 });
         }
 
-        const joined : GraphQLPlayerEvent[] = json.data?.playerJoineds ?? [];
-        const withdrawn : GraphQLPlayerEvent[] = json.data?.playerWithdrawns ?? [];
-        
+        const joined: GraphQLPlayerEvent[] = json.data?.playerJoineds ?? [];
+        const withdrawn: GraphQLPlayerEvent[] =
+            json.data?.playerWithdrawns ?? [];
+
         // // Map playerAddress(lowercase) -> { joins, withdraws, lastJoinTs, lastWithdrawTs }
         // const stats = new Map<
         //     string,
@@ -106,27 +108,28 @@ export async function GET(req: Request) {
         //     return bTs - aTs;
         // });
 
-
         // return NextResponse.json({ data: presentPlayers })
 
         // Add event type to distinguish between joined and withdrawn
-        const joinedWithType: PlayerEvent[] = joined.map(event => ({
+        const joinedWithType: PlayerEvent[] = joined.map((event) => ({
             player: event.player,
-            eventType: 'PlayerJoined' as const
+            eventType: "PlayerJoined" as const,
         }));
 
-        const withdrawnWithType: PlayerEvent[] = withdrawn.map(event => ({
+        const withdrawnWithType: PlayerEvent[] = withdrawn.map((event) => ({
             player: event.player,
-            eventType: 'PlayerWithdrawn' as const
+            eventType: "PlayerWithdrawn" as const,
         }));
 
         // Combine both arrays
         const allPlayersEvents = [...joinedWithType, ...withdrawnWithType];
 
-
-        return NextResponse.json({ data: allPlayersEvents })
+        return NextResponse.json({ data: allPlayersEvents });
     } catch (err) {
         console.error("Failed to fetch challenge Players:", err);
-        return NextResponse.json({ error: "Failed to fetch challenge Players" }, { status: 500 });
+        return NextResponse.json(
+            { error: "Failed to fetch challenge Players" },
+            { status: 500 },
+        );
     }
 }

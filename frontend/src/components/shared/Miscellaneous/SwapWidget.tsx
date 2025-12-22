@@ -7,10 +7,7 @@ import {
 import { tokenAbi, uniswapV2Router02_Abi } from "@/constants/TokenInfo";
 import {
     AlertTriangle,
-    ArrowDown,
-    ArrowDownLeft,
     ArrowDownUp,
-    ChevronDown,
     Info,
     Loader2,
     Settings,
@@ -23,7 +20,6 @@ import { formatEther, parseEther } from "viem";
 import {
     useAccount,
     useBalance,
-    useReadContract,
     useWaitForTransactionReceipt,
     useWriteContract,
 } from "wagmi";
@@ -37,7 +33,6 @@ import { config } from "@/src/app/RainbowKitAndWagmiProvider";
 import { useDarePrice } from "./useDarePrice";
 import { toast } from "sonner";
 import { CurrentTransactionToast } from "./CurrentTransactionToast";
-import { convertSegmentPathToStaticExportFilename } from "next/dist/shared/lib/segment-cache/segment-value-encoding";
 import { useTranslations } from "next-intl";
 
 interface TokenIconProps {
@@ -69,11 +64,7 @@ const SwapWidget = () => {
     });
 
     //Swap
-    const {
-        data: hash,
-        isPending,
-        writeContract: swapContract,
-    } = useWriteContract({
+    const { data: hash, writeContract: swapContract } = useWriteContract({
         mutation: {
             onError: (err) => {
                 if (
@@ -155,35 +146,35 @@ const SwapWidget = () => {
     // --- DERIVED HELPERS FOR DYNAMIC TOKENS ---
     const activePayToken = isEthToDare
         ? {
-            symbol: "ETH",
-            balance: ethBalance,
-            loading: isEthLoading,
-            color: "bg-blue-500",
-            isDare: false,
-        }
+              symbol: "ETH",
+              balance: ethBalance,
+              loading: isEthLoading,
+              color: "bg-blue-500",
+              isDare: false,
+          }
         : {
-            symbol: "DARE",
-            balance: dareBalance,
-            loading: isDareLoading,
-            color: "bg-gradient-to-r from-pink-500 to-purple-500",
-            isDare: true,
-        };
+              symbol: "DARE",
+              balance: dareBalance,
+              loading: isDareLoading,
+              color: "bg-gradient-to-r from-pink-500 to-purple-500",
+              isDare: true,
+          };
 
     const activeReceiveToken = isEthToDare
         ? {
-            symbol: "DARE",
-            balance: dareBalance,
-            loading: isDareLoading,
-            color: "bg-gradient-to-r from-pink-500 to-purple-500",
-            isDare: true,
-        }
+              symbol: "DARE",
+              balance: dareBalance,
+              loading: isDareLoading,
+              color: "bg-gradient-to-r from-pink-500 to-purple-500",
+              isDare: true,
+          }
         : {
-            symbol: "ETH",
-            balance: ethBalance,
-            loading: isEthLoading,
-            color: "bg-blue-500",
-            isDare: false,
-        };
+              symbol: "ETH",
+              balance: ethBalance,
+              loading: isEthLoading,
+              color: "bg-blue-500",
+              isDare: false,
+          };
 
     // Get current pool price
     const {
@@ -636,6 +627,7 @@ const SwapWidget = () => {
                     setEthPrice(data.ethereum.usd);
                 }
             } catch (error) {
+                console.log(error);
                 // Null if API fails
                 setEthPrice(null);
             }
@@ -1051,7 +1043,7 @@ const SwapWidget = () => {
                                 </>
                             ) : isInsufficientBalance ? (
                                 t("insufficient_balance")
-                            ) : !!quoteError ? (
+                            ) : quoteError ? (
                                 t("invalid_amount")
                             ) : isQuoteLoading ? (
                                 t("fetching_price")

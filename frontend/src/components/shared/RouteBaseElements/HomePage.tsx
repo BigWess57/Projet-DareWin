@@ -15,9 +15,9 @@ const HomePage = () => {
 
             <section
                 className="
-          relative flex flex-col items-center text-center 
-          pt-24 pb-16 px-6 overflow-hidden
-        "
+                    relative flex flex-col items-center text-center 
+                    pt-24 pb-16 px-6 overflow-hidden
+                "
             >
                 {/* Main content */}
                 <h1 className="relative text-6xl md:text-6xl font-extrabold pb-5 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-pink-500 to-purple-500 animate-text">
@@ -40,10 +40,10 @@ const HomePage = () => {
                 <Link
                     href="/createchallenge"
                     className="
-            relative z-10 px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 
-            rounded-2xl text-lg font-semibold text-white shadow-2xl 
-            hover:scale-105 hover:brightness-110 transition-transform duration-300
-          "
+                        relative z-10 px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 
+                        rounded-2xl text-lg font-semibold text-white shadow-2xl 
+                        hover:scale-105 hover:brightness-110 transition-transform duration-300
+                    "
                 >
                     {t("cta_button")}
                 </Link>

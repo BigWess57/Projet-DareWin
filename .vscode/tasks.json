@@ -1,113 +1,216 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Start Frontend",
-      "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new",
-        "group": "groupB",
-        "close": false
-      },
-      "isBackground": true,
-      "problemMatcher": []
-    },
-    {
-      "label": "Start Hardhat node",
-      "type": "shell",
-      "command": "npx hardhat node",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new",
-        "group": "groupA",
-        "close": false
-      },
-      "isBackground": true,
-      "problemMatcher": []
-    },
-    {
-      "label": "Deploy Base contracts",
-      "type": "shell",
-      "command": "sleep 5 && npx hardhat run scripts/deployTokenAndFactory.js --network localhost",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new",
-        "group": "groupA",
-        "close": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Clean and setup local graphQL",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-c",
-        "sudo rm -rf data/ && docker-compose down -v && docker-compose up -d --wait && cd .. && graph codegen && graph build --network hardhat && npm run create-local && npm run deploy-local && exec bash"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}/backend/ChallengeSubgraph/Graph-Node-Local"
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new",
-        "group": "groupA",
-        "close": false
-      },
-      "isBackground": true,
-      "problemMatcher": [],
-      "dependsOn": [
-        "Deploy Base contracts"
-      ]
-    },
-    {
-      "label": "Setup GraphQL Only",
-      "type": "shell",
-      "command": "bash",
-      "args": [
-        "-c",
-        "sudo rm -rf data/ && docker-compose down -v && docker-compose up -d --wait && cd .. && graph codegen && graph build --network hardhat && npm run create-local && npm run deploy-local && exec bash"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}/backend/ChallengeSubgraph/Graph-Node-Local"
-      },
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new",
-        "group": "groupA",
-        "close": false
-      },
-      "isBackground": true,
-      "problemMatcher": []
-    },
-    {
-      "label": "Start All",
-      "dependsOn": ["Start Frontend", "Start Hardhat node", "Deploy Base contracts", "Clean and setup local graphQL"],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start Frontend",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupB",
+                "close": false
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+
+        // --- STANDARD LOCAL TASKS ---
+        {
+            "label": "Start Hardhat node",
+            "type": "shell",
+            "command": "npm run hardhatNode",
+            "options": {
+                "cwd": "${workspaceFolder}/backend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy Base contracts",
+            "type": "shell",
+            "command": "sleep 5 && npx hardhat run scripts/deployTokenAndFactory.js --network localhost",
+            "options": {
+                "cwd": "${workspaceFolder}/backend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean and setup local graphQL",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "sudo rm -rf data/ && npm run start:local && cd .. && graph codegen && graph build --network hardhat && npm run create-local && npm run deploy-local && exec bash"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/ChallengeSubgraph/Graph-Node-Local"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "isBackground": true,
+            "problemMatcher": [],
+            "dependsOn": ["Deploy Base contracts"]
+        },
+        {
+            "label": "Setup GraphQL Only",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "sudo rm -rf data/ && npm run start:local && cd .. && graph codegen && graph build --network hardhat && npm run create-local && npm run deploy-local && exec bash"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/ChallengeSubgraph/Graph-Node-Local"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+
+        // --- FORKED MAINNET TASKS ---
+        {
+            "label": "Start Hardhat node (Fork)",
+            "type": "shell",
+            "command": "npm run hardhatNode:fork",
+            "options": {
+                "cwd": "${workspaceFolder}/backend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy Base contracts (Fork)",
+            "type": "shell",
+            // Added the extra addLiquidityDareEth script here
+            "command": "sleep 8 && npx hardhat run scripts/deployTokenAndFactory.js --network localhost && npx hardhat run scripts/addLiquidityDareEth.js --network localhost",
+            "options": {
+                "cwd": "${workspaceFolder}/backend"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean and setup local graphQL (Fork)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "sudo rm -rf data/ && npm run start:fork && cd .. && graph codegen && graph build --network mainnetFork && npm run create-local && npm run deploy-local-fork && exec bash"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/ChallengeSubgraph/Graph-Node-Local"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "isBackground": true,
+            "problemMatcher": [],
+            "dependsOn": ["Deploy Base contracts (Fork)"]
+        },
+        {
+            "label": "Setup GraphQL Only (Fork)",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "-c",
+                "sudo rm -rf data/ && npm run start:fork && cd .. && graph codegen && graph build --network mainnetFork && npm run create-local && npm run deploy-local-fork && exec bash"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/backend/ChallengeSubgraph/Graph-Node-Local"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new",
+                "group": "groupA",
+                "close": false
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+
+        // --- START ALL COMMANDS ---
+        {
+            "label": "Start All",
+            "dependsOn": [
+                "Start Frontend",
+                "Start Hardhat node",
+                "Deploy Base contracts",
+                "Clean and setup local graphQL"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Start All (Fork)",
+            "dependsOn": [
+                "Start Frontend",
+                "Start Hardhat node (Fork)",
+                "Deploy Base contracts (Fork)",
+                "Clean and setup local graphQL (Fork)"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        }
+    ]
 }

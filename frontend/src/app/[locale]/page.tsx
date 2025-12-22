@@ -2,7 +2,6 @@ import { use } from "react";
 import { Locale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 
-import Layout from "@/src/components/shared/PageLayout/Layout";
 import HomePage from "@/src/components/shared/RouteBaseElements/HomePage";
 
 export default function Home({ params }: PageProps<"/[locale]">) {

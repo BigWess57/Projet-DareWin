@@ -15,7 +15,7 @@ import {
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 import { formatEther } from "viem";
-import { useAccount, useReadContract } from "wagmi";
+import { useAccount, useBalance, useReadContract } from "wagmi";
 import { usePathname } from "@/src/i18n/navigation";
 
 import { Home, Zap, PencilRuler } from "lucide-react";
@@ -31,43 +31,35 @@ const Header = () => {
      * Blockchain interaction
      ************/
     const { address, isConnected } = useAccount();
-
+    console.log("Rendering component...");
     const {
         data: balance,
-        error: error,
-        isPending: IsPending,
-        refetch: refetch,
-    } = useReadContract({
-        address: tokenAddress,
-        abi: tokenAbi,
-        functionName: "balanceOf",
-        args: [address],
-        account: address as `0x${string}` | undefined,
+        error,
+        isPending,
+    } = useBalance({
+        address: address,
+        token: tokenAddress,
         query: {
             enabled: Boolean(address),
-            refetchInterval: 5_000,
+            refetchInterval: 5000,
         },
     });
 
     /******Display ******/
     const displayBalance = (() => {
         if (!isConnected) return { success: false, message: "-" };
-        if (IsPending) return { success: false, message: t("connecting") };
+        if (isPending) return { success: false, message: t("connecting") };
         if (error) return { success: false, message: t("fetch_error") };
 
-        if (typeof balance === "bigint") {
-            return { success: true, message: formatEther(balance) };
-        }
-
-        return { success: false, message: t("unexpected_error") };
+        return { success: true, message: balance.formatted };
     })();
 
     const displayFeeTier = (() => {
         if (!isConnected) return "-";
-        if (IsPending) return null;
+        if (isPending) return null;
         if (error) return null;
 
-        const balanceFormated = Number(formatEther(balance as bigint));
+        const balanceFormated = Number(balance.formatted);
         if (balanceFormated < feeTierBronzeCap) {
             return (
                 <span className="text-[#CE8946] font-bold">

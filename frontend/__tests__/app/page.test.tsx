@@ -1,5 +1,5 @@
-import { describe, it, expect, test } from "vitest";
-import { render, screen } from "../../test/utils";
+import { describe, it } from "vitest";
+import { render } from "../../test/utils";
 import Home from "@/src/components/shared/RouteBaseElements/HomePage";
 
 // test("Pages Router", () => {

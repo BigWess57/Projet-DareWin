@@ -4,15 +4,13 @@ import ChallengeList from "@/src/components/shared/RouteBaseElements/ChallengeLi
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { ArrowRight } from "lucide-react";
-import { Locale } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { isAddress } from "viem";
 
-export default function myChallenges() {
+export default function MyChallenges() {
     const t = useTranslations("MyChallenges");
 
     const router = useRouter();

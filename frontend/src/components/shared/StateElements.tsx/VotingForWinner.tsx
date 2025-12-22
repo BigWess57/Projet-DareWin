@@ -84,8 +84,8 @@ const VotingForWinner = ({
 
     const {
         data: readData,
-        error: error,
-        isPending: IsPending,
+        // error: error,
+        // isPending: IsPending,
         refetch: refetchReadData,
     } = useReadContracts({
         contracts: [
@@ -127,7 +127,7 @@ const VotingForWinner = ({
     ////// Vote transaction hooks //////
     const {
         data: voteHash,
-        isPending: isVoting,
+        // isPending: isVoting,
         writeContract: voteContract,
     } = useWriteContract({
         mutation: {
@@ -152,7 +152,7 @@ const VotingForWinner = ({
     ////// End Vote transaction hooks //////
     const {
         data: endVoteHash,
-        isPending: isEndingVote,
+        // isPending: isEndingVote,
         writeContract: endVoteContract,
     } = useWriteContract({
         mutation: {
@@ -295,7 +295,7 @@ const VotingForWinner = ({
         config: wagmiEventRefreshConfig,
         poll: true,
         pollingInterval: 5_000,
-        onLogs(logs) {
+        onLogs() {
             //If no one had voted, check the contract.
             if (!hasSomeoneVoted) {
                 readContracts(config, {

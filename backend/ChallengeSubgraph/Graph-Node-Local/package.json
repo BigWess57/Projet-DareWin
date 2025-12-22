@@ -1,0 +1,8 @@
+{
+    "scripts": {
+        "setup:local": "echo 'GRAPH_ETHEREUM_GENESIS_BLOCK_NUMBER=0\nGRAPH_NETWORK_NAME=hardhat' > .env",
+        "setup:fork": "echo 'GRAPH_ETHEREUM_GENESIS_BLOCK_NUMBER=23910926\nGRAPH_NETWORK_NAME=mainnetFork' > .env",
+        "start:local": "npm run setup:local && docker-compose down -v && docker-compose up -d --wait",
+        "start:fork": "npm run setup:fork && docker-compose down -v && docker-compose up -d --wait"
+    }
+}

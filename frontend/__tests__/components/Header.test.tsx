@@ -1,8 +1,8 @@
-import { describe, expect, vi, it, Mock } from "vitest";
-import Header from "@/src/components/shared/PageLayout/Header";
-import { useReadContract } from "wagmi";
-import { render, screen } from "@/test/utils";
-import { usePathname } from "next/navigation"; // Import the hook to mock it
+import { describe, expect, it /*, vi, Mock*/ } from "vitest";
+// import Header from "@/src/components/shared/PageLayout/Header";
+// import { useReadContract } from "wagmi";
+// import { render, screen } from "@/test/utils";
+// import { usePathname } from "next/navigation"; // Import the hook to mock it
 
 // 1. We mock the hook implementation specifically for this test file
 // vi.mock("next/navigation", async () => {

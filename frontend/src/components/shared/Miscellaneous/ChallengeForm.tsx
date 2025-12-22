@@ -1,11 +1,6 @@
 "use client";
 
-import {
-    Controller,
-    useFieldArray,
-    useFormContext,
-    useForm,
-} from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -175,53 +170,50 @@ const ChallengeForm = ({
                 <FormField
                     control={form.control}
                     name="total duration"
-                    render={({ field }) => (
+                    render={() => (
                         <FormItem>
                             <FormLabel>{t("duration_label")}</FormLabel>
                             <div className="flex gap-5 items-top">
-                                {["hours", "minutes", "seconds"].map(
-                                    (name, i) => (
-                                        <FormField
-                                            key={name}
-                                            control={form.control}
-                                            name={
-                                                name as
-                                                    | "hours"
-                                                    | "minutes"
-                                                    | "seconds"
-                                            }
-                                            render={({ field }) => (
-                                                <FormItem className="min-w-24 items-start">
-                                                    <div className="flex gap-2">
-                                                        <FormControl>
-                                                            <Input
-                                                                type="number"
-                                                                min={0}
-                                                                max={
-                                                                    name !==
-                                                                    "hours"
-                                                                        ? 59
-                                                                        : undefined
-                                                                }
-                                                                {...field}
-                                                                className="
+                                {["hours", "minutes", "seconds"].map((name) => (
+                                    <FormField
+                                        key={name}
+                                        control={form.control}
+                                        name={
+                                            name as
+                                                | "hours"
+                                                | "minutes"
+                                                | "seconds"
+                                        }
+                                        render={({ field }) => (
+                                            <FormItem className="min-w-24 items-start">
+                                                <div className="flex gap-2">
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            min={0}
+                                                            max={
+                                                                name !== "hours"
+                                                                    ? 59
+                                                                    : undefined
+                                                            }
+                                                            {...field}
+                                                            className="
                                                                 w-24 bg-[#0A0F1E] border border-white/20 rounded-md
                                                                 px-3 py-2 text-white placeholder:text-white/50
                                                                 focus:border-blue-500 focus:ring-2 focus:ring-blue-500
                                                                 transition duration-200
                                                             "
-                                                            />
-                                                        </FormControl>
-                                                        <FormLabel className="text-xs">
-                                                            {t(name)}
-                                                        </FormLabel>
-                                                    </div>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-                                    ),
-                                )}
+                                                        />
+                                                    </FormControl>
+                                                    <FormLabel className="text-xs">
+                                                        {t(name)}
+                                                    </FormLabel>
+                                                </div>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                ))}
                             </div>
                             <FormMessage />
                         </FormItem>

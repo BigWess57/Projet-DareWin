@@ -1,14 +1,20 @@
 {
-  "hardhat": {
-    "ChallengeFactory": {
-      "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
-      "startBlock": 0
+    "hardhat": {
+        "ChallengeFactory": {
+            "address": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+            "startBlock": 0
+        }
+    },
+    "mainnetFork": {
+        "ChallengeFactory": {
+            "address": "0xd23BF69104cC640E68ebeE83B9833d6Db6F220E6",
+            "startBlock": 23910926
+        }
+    },
+    "base-sepolia": {
+        "ChallengeFactory": {
+            "address": "0x0AA78A34a0f93418bBFe502A765740Ab54E5107E",
+            "startBlock": 34732737
+        }
     }
-  },
-  "base-sepolia": {
-    "ChallengeFactory": {
-      "address": "0x0AA78A34a0f93418bBFe502A765740Ab54E5107E",
-      "startBlock": 34732737
-    }
-  }
 }

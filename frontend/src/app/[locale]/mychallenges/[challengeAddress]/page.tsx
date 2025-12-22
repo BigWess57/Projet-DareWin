@@ -1,26 +1,20 @@
-'use client'
-import ChallengePage from '@/src/components/shared/RouteBaseElements/ChallengePage'
-import { Locale, useTranslations } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
-import { useParams } from 'next/navigation'
-import { use } from 'react';
+"use client";
+import ChallengePage from "@/src/components/shared/RouteBaseElements/ChallengePage";
+import { useTranslations } from "next-intl";
+import { useParams } from "next/navigation";
 
+function Challenge() {
+    const t = useTranslations("Challenge");
 
-function page() {
+    const params = useParams();
 
-    const t = useTranslations('Challenge');
-    
-    const params = useParams()
-   
-    const addr = params.challengeAddress as `0x${string}`
+    const addr = params.challengeAddress as `0x${string}`;
 
     if (!addr) {
-        return <div>{t('loading')}</div>
+        return <div>{t("loading")}</div>;
     }
 
-    return (
-        <ChallengePage contractAddress={addr} />
-    )
+    return <ChallengePage contractAddress={addr} />;
 }
 
-export default page
+export default Challenge;

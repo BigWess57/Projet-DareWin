@@ -3,18 +3,17 @@ import { Locale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import { use } from "react";
 
-export default function myChallenges({
-  params
-}: PageProps<'/[locale]/createchallenge'>) {
+export default function MyChallenges({
+    params,
+}: PageProps<"/[locale]/createchallenge">) {
+    const { locale } = use(params);
 
-  const {locale} = use(params);
+    // Enable static rendering
+    setRequestLocale(locale as Locale);
 
-  // Enable static rendering
-  setRequestLocale(locale as Locale);
-
-  return (
-    <>
-      <ChallengeFactory/>
-    </>
-  );
+    return (
+        <>
+            <ChallengeFactory />
+        </>
+    );
 }

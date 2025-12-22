@@ -9,11 +9,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: ChallengeFactory
-    network: hardhat
+    network: mainnetFork
     source:
       abi: ChallengeFactory
-      address: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
-      startBlock: 0
+      address: "0xd23BF69104cC640E68ebeE83B9833d6Db6F220E6"
+      startBlock: 23910926
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -30,7 +30,7 @@ dataSources:
 templates:
   - name: ChallengeTemplate
     kind: ethereum/contract
-    network: hardhat
+    network: mainnetFork
     source:
       abi: Challenge
     mapping:

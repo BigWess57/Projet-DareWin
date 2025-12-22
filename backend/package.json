@@ -1,12 +1,17 @@
 {
-  "devDependencies": {
-    "@nomicfoundation/hardhat-toolbox": "^6.0.0",
-    "@openzeppelin/merkle-tree": "^1.0.8",
-    "hardhat": "^2.26.1",
-    "mochawesome": "^7.1.3"
-  },
-  "dependencies": {
-    "@openzeppelin/contracts": "^5.3.0",
-    "dotenv": "^17.1.0"
-  }
+    "scripts": {
+        "hardhatNode": "cross-env FORKING_ENABLED=false npx hardhat node",
+        "hardhatNode:fork": "cross-env FORKING_ENABLED=true npx hardhat node"
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-toolbox": "^6.0.0",
+        "@openzeppelin/merkle-tree": "^1.0.8",
+        "cross-env": "^10.1.0",
+        "hardhat": "^2.26.1",
+        "mochawesome": "^7.1.3"
+    },
+    "dependencies": {
+        "@openzeppelin/contracts": "^5.3.0",
+        "dotenv": "^17.1.0"
+    }
 }
