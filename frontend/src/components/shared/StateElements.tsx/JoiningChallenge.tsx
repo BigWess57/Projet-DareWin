@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
@@ -42,6 +42,12 @@ function isHexArray(x: unknown): x is `0x${string}`[] {
         (item) => typeof item === "string" && /^0x[0-9a-fA-F]+$/.test(item),
     );
 }
+
+const PLAYER_JOINED_ABI = parseAbiItem("event PlayerJoined(address player)");
+const PLAYER_WITHDRAWN_ABI = parseAbiItem(
+    "event PlayerWithdrawn(address player)",
+);
+export const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI];
 
 const JoiningChallenge = ({
     refetchStatus,
@@ -194,15 +200,7 @@ const JoiningChallenge = ({
 
     const [loadingPlayers, setLoadingPlayers] = useState<boolean>(false);
 
-    const PLAYER_JOINED_ABI = parseAbiItem(
-        "event PlayerJoined(address player)",
-    );
-    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
-        "event PlayerWithdrawn(address player)",
-    );
-    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI];
-
-    const getPlayersForChallenge = async () => {
+    const getPlayersForChallenge = useCallback(async () => {
         try {
             setLoadingPlayers(true);
 
@@ -214,7 +212,7 @@ const JoiningChallenge = ({
             // Additionnally, GET RECENT ENTRIES BY RPC (In case TheGraph is slow)
             const Logs = (await retriveEventsFromBlock(
                 contractAddress,
-                "event PlayerJoined(address player)", 
+                "event PlayerJoined(address player)",
                 "event PlayerWithdrawn(address player)",
             )) as GetLogsReturnType<(typeof EVENT_ABIS)[number]>;
 
@@ -254,7 +252,7 @@ const JoiningChallenge = ({
         } finally {
             setLoadingPlayers(false);
         }
-    };
+    }, [contractAddress]);
 
     const joinChallenge = async () => {
         if (!address) return;
@@ -326,7 +324,7 @@ const JoiningChallenge = ({
                 duration: 3000,
             });
         }
-    }, [joinSuccess, joinReceiptError]);
+    }, [joinSuccess, joinReceiptError, address, refetch, t]);
 
     //For withdraw
     useEffect(() => {
@@ -354,7 +352,7 @@ const JoiningChallenge = ({
                 duration: 3000,
             });
         }
-    }, [withdrawSuccess, withdrawReceiptError]);
+    }, [withdrawSuccess, withdrawReceiptError, address, refetch, t]);
 
     //For start challenge
     useEffect(() => {
@@ -383,7 +381,7 @@ const JoiningChallenge = ({
                 duration: 3000,
             });
         }
-    }, [startSuccess, startReceiptError]);
+    }, [startSuccess, startReceiptError, refetchStatus, t]);
 
     // Getting data from the contract
     useEffect(() => {
@@ -407,7 +405,7 @@ const JoiningChallenge = ({
         setUserHasJoined(hasJoined);
 
         refetchStatus();
-    }, [readData, address]);
+    }, [readData, address, refetchStatus, t]);
 
     useEffect(() => {
         if (!address || !challengeCid) return;
@@ -457,11 +455,11 @@ const JoiningChallenge = ({
             .finally(() => {
                 setIsCheckingWhitelist(false); // stop loading
             });
-    }, [challengeCid, address]);
+    }, [challengeCid, address, t]);
 
     useEffect(() => {
         getPlayersForChallenge();
-    }, [address]);
+    }, [getPlayersForChallenge]);
 
     /************
      * Display

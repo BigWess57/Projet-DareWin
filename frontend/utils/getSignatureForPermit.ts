@@ -3,14 +3,24 @@ import { publicClient } from "./client";
 import { signTypedData } from "wagmi/actions";
 import { config } from "@/src/app/RainbowKitAndWagmiProvider";
 
-
 const ERC20_MINIMAL_ABI = [
-  // name() -> string
-  { name: 'name', type: 'function', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
-  // nonces(address) -> uint256  (EIP-2612)
-  { name: 'nonces', type: 'function', stateMutability: 'view', inputs: [{ name: 'owner', type: 'address' }], outputs: [{ type: 'uint256' }] },
+    // name() -> string
+    {
+        name: "name",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [{ type: "string" }],
+    },
+    // nonces(address) -> uint256  (EIP-2612)
+    {
+        name: "nonces",
+        type: "function",
+        stateMutability: "view",
+        inputs: [{ name: "owner", type: "address" }],
+        outputs: [{ type: "uint256" }],
+    },
 ];
-
 
 //Helper function for permit
 async function getTimestampPlusOneHourInSeconds() {
@@ -21,44 +31,50 @@ async function getTimestampPlusOneHourInSeconds() {
 }
 
 type SignatureResult = {
-  deadline: bigint;
-  v: number;        // present if found === true
-  r: `0x${string}`;          // root from the JSON (optional)
-  s: `0x${string}`;        // present if found === false (error / not present)
+    deadline: bigint;
+    v: number; // present if found === true
+    r: `0x${string}`; // root from the JSON (optional)
+    s: `0x${string}`; // present if found === false (error / not present)
 };
 
 export const GetRSVsig = async (
-    signerAddress: Address, 
-    tokenAddress: Address, 
-    bid: bigint, 
-    challenge: Address
+    signerAddress: Address,
+    tokenAddress: Address,
+    bid: bigint,
+    challenge: Address,
 ): Promise<SignatureResult> => {
     //For permit
     // set token deadline
     const deadline = await getTimestampPlusOneHourInSeconds();
 
     // 2) read token name (for domain)
-    const name = await publicClient.readContract({
-        address: tokenAddress,
-        abi: ERC20_MINIMAL_ABI,
-        functionName: 'name',
-        // no args
-    }).catch((e) => {
-        throw new Error(`Failed to read token name: ${String(e)}`);
-    });
+    const name = await publicClient
+        .readContract({
+            address: tokenAddress,
+            abi: ERC20_MINIMAL_ABI,
+            functionName: "name",
+            // no args
+        })
+        .catch((e) => {
+            throw new Error(`Failed to read token name: ${String(e)}`);
+        });
 
     // 3) read nonce for signer (EIP-2612 expects token.nonces(owner))
-    const nonceRaw = await publicClient.readContract({
-        address: tokenAddress,
-        abi: ERC20_MINIMAL_ABI,
-        functionName: 'nonces',
-        args: [signerAddress],
-    }).catch((e) => {
-        throw new Error(`Failed to read token nonce: ${String(e)} — token may not implement nonces(address)`);
-    });
+    const nonceRaw = await publicClient
+        .readContract({
+            address: tokenAddress,
+            abi: ERC20_MINIMAL_ABI,
+            functionName: "nonces",
+            args: [signerAddress],
+        })
+        .catch((e) => {
+            throw new Error(
+                `Failed to read token nonce: ${String(e)} — token may not implement nonces(address)`,
+            );
+        });
 
     // get the current nonce for the deployer address
-    const nonce = BigInt((nonceRaw as any) ?? 0n);
+    const nonce = (nonceRaw as bigint) ?? 0n;
 
     const chainId = await publicClient.getChainId();
 
@@ -67,34 +83,34 @@ export const GetRSVsig = async (
         name: name as string,
         version: "1",
         chainId: chainId,
-        verifyingContract: tokenAddress
+        verifyingContract: tokenAddress,
     };
 
     // set the Permit type parameters
     const types = {
-        Permit: [{
+        Permit: [
+            {
                 name: "owner",
-                type: "address"
+                type: "address",
             },
             {
                 name: "spender",
-                type: "address"
+                type: "address",
             },
             {
                 name: "value",
-                type: "uint256"
+                type: "uint256",
             },
             {
                 name: "nonce",
-                type: "uint256"
+                type: "uint256",
             },
             {
                 name: "deadline",
-                type: "uint256"
+                type: "uint256",
             },
         ],
     };
-
 
     // set the Permit type values
     const message = {
@@ -109,9 +125,9 @@ export const GetRSVsig = async (
     const signatureHex = await signTypedData(config, {
         types,
         domain,
-        primaryType: 'Permit',
+        primaryType: "Permit",
         message,
-    })
+    });
 
     const parsed = parseSignature(signatureHex);
 
@@ -119,20 +135,20 @@ export const GetRSVsig = async (
     const vVal = (() => {
         // if (typeof parsed.v === 'number') return BigInt(parsed.v);
         // recoveryParam / yParity fallback: not always present; signature library usually returns v
-        if (typeof (parsed as any).yParity === 'number') {
-            return 27 + ((parsed as any).yParity as number);
+        if (typeof parsed.yParity === "number") {
+            return 27 + (parsed.yParity as number);
         }
-        throw new Error('Unable to parse v from signature');
+        throw new Error("Unable to parse v from signature");
     })();
 
     // r and s are hex strings already
     const r = parsed.r;
     const s = parsed.s;
 
-    return  {
+    return {
         deadline,
         v: vVal,
         r,
         s,
     };
-}
+};

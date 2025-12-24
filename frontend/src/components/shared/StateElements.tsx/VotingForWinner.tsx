@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 
 import { Button } from "@/src/components/ui/button";
 import { contractAbi } from "@/constants/ChallengeInfo";
@@ -32,9 +32,10 @@ import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 import { ChallengeTimer } from "../Miscellaneous/ChallengeTimer";
 import { ContractAddressContext } from "../RouteBaseElements/ChallengePage";
 import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToast";
-import { getPlayers, PlayerEvent } from "@/utils/apiFunctions";
+import { attemptUnpin, getPlayers, PlayerEvent } from "@/utils/apiFunctions";
 import { readContract, readContracts } from "wagmi/actions";
 import { config } from "@/src/app/RainbowKitAndWagmiProvider";
+import { EVENT_ABIS } from "./JoiningChallenge";
 
 const VotingForWinner = ({
     status,
@@ -208,16 +209,8 @@ const VotingForWinner = ({
         }
     };
 
-    const PLAYER_JOINED_ABI = parseAbiItem(
-        "event PlayerJoined(address player)",
-    );
-    const PLAYER_WITHDRAWN_ABI = parseAbiItem(
-        "event PlayerWithdrawn(address player)",
-    );
-    const EVENT_ABIS = [PLAYER_JOINED_ABI, PLAYER_WITHDRAWN_ABI];
-
     // Get players from GraphQL (through next server endpoint)
-    const getAllPlayers = async () => {
+    const getAllPlayers = useCallback(async () => {
         try {
             setLoadingPlayers(true);
 
@@ -283,7 +276,7 @@ const VotingForWinner = ({
         } finally {
             setLoadingPlayers(false);
         }
-    };
+    }, [address, contractAddress]);
 
     // Subscribe to the PlayerVoted event to act whenever there is a new one
     useWatchContractEvent({
@@ -357,40 +350,12 @@ const VotingForWinner = ({
         setVotingDurationEnded(true);
     };
 
-    //Unpin the merkle proofs for joining the challenge, if
-    async function attemptUnpin(cid: string) {
-        try {
-            const res = await fetch("/api/ipfsProofs/unpinProofs", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ cid }),
-            });
-            const json = await res.json();
-            if (!res.ok) {
-                console.error("Unpin failed", json);
-                toast.error(
-                    t("unpin_error", { error: json?.error ?? res.statusText }),
-                    {
-                        duration: 3000,
-                    },
-                );
-            } else {
-                console.log(json?.message ?? "Unpinned (or not pinned)");
-            }
-        } catch (err) {
-            console.error("Network error unpinning", err);
-            toast.error(t("unpin_network_error"), {
-                duration: 3000,
-            });
-        }
-    }
-
     /******* Use effect ***** */
 
     useEffect(() => {
         getAllPlayers();
         refetchReadData();
-    }, [address]);
+    }, [address, refetchReadData, getAllPlayers]);
 
     useEffect(() => {
         if (!readData) return;
@@ -401,7 +366,25 @@ const VotingForWinner = ({
 
         // cid of the merkle proofs
         const cid = readData[1].result;
-        attemptUnpin(cid as string);
+
+        // Define the async wrapper inside or use an IIFE
+        const processUnpin = async () => {
+            try {
+                const res = await attemptUnpin(cid as string);
+                if (!res.success) {
+                    toast.error(t("unpin_error", { error: res.message }), {
+                        duration: 3000,
+                    });
+                }
+            } catch (err) {
+                console.error("Network error while unpinning", err);
+                toast.error(t("unpin_network_error"), {
+                    duration: 3000,
+                });
+            }
+        };
+
+        processUnpin();
 
         const challengeEnded = readData[2].result;
         setVotingStarted(challengeEnded as bigint);
@@ -428,12 +411,16 @@ const VotingForWinner = ({
         //store if player has joined the challenge
         const hasVoted = player[1];
         setHasVoted(hasVoted);
-    }, [readData, address]);
+    }, [readData, address, t]);
 
     //Lorsqu'une transaction est effectuée, informer l'utilisateur de l'outcome
     //For vote
     useEffect(() => {
         if (voteSuccess) {
+            // If we have ALREADY processed this (everyone voted), stop immediately.
+            // This makes the second run extremely cheap.
+            if (hasEveryoneVoted) return;
+
             // getAllPlayersVoted(players);
             // refetchReadData();
             setHasVoted(true);
@@ -464,7 +451,7 @@ const VotingForWinner = ({
                 duration: 3000,
             });
         }
-    }, [voteSuccess, voteReceiptError]);
+    }, [voteSuccess, voteReceiptError, contractAddress, hasEveryoneVoted]);
 
     //For ending vote
     useEffect(() => {
@@ -492,7 +479,7 @@ const VotingForWinner = ({
                 duration: 3000,
             });
         }
-    }, [voteEndSuccess, voteEndReceiptError]);
+    }, [voteEndSuccess, voteEndReceiptError, refetchStatus]);
 
     /****** Display *******/
 

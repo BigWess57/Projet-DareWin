@@ -432,7 +432,7 @@ const SwapWidget = () => {
         }
         setIsSwapping(false);
         cleanupDisplay();
-    }, [swapSuccess, swapReceiptError]);
+    }, [swapSuccess, swapReceiptError, t, refetchDarePrice]);
 
     // --- EFFECT: PAY -> RECEIVE (GetAmountsOut) ---
     useEffect(() => {
@@ -499,7 +499,7 @@ const SwapWidget = () => {
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [payAmount, activeField]);
+    }, [payAmount, activeField, activePayToken.symbol, isEthToDare, t]);
 
     // --- EFFECT: RECEIVE -> PAY (GetAmountsIn) ---
     useEffect(() => {
@@ -615,7 +615,15 @@ const SwapWidget = () => {
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [receiveAmount, activeField]);
+    }, [
+        receiveAmount,
+        activeField,
+        activeReceiveToken.symbol,
+        isEthToDare,
+        dareBalance,
+        ethBalance,
+        t,
+    ]);
 
     // --- FETCH REAL ETH PRICE ---
     useEffect(() => {

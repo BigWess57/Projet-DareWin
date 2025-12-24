@@ -27,35 +27,33 @@ const ChallengeWon = () => {
 
     const contractAddress = useContext(ContractAddressContext);
 
-    const {
-        data: readData /*, error: error, isPending: IsPending*/,
-        refetch: refetch,
-    } = useReadContracts({
-        contracts: [
-            {
-                address: contractAddress,
-                abi: contractAbi,
-                functionName: "highestVotes",
-            },
-            {
-                address: contractAddress,
-                abi: contractAbi,
-                functionName: "numberOfWinners",
-            },
-            {
-                address: contractAddress,
-                abi: contractAbi,
-                functionName: "prizePerWinner",
-            },
-            {
-                address: contractAddress,
-                abi: contractAbi,
-                functionName: "players",
-                args: [address as Address],
-            },
-        ],
-        account: address as `0x${string}` | undefined,
-    });
+    const { data: readData /*, error: error, isPending: IsPending*/, refetch } =
+        useReadContracts({
+            contracts: [
+                {
+                    address: contractAddress,
+                    abi: contractAbi,
+                    functionName: "highestVotes",
+                },
+                {
+                    address: contractAddress,
+                    abi: contractAbi,
+                    functionName: "numberOfWinners",
+                },
+                {
+                    address: contractAddress,
+                    abi: contractAbi,
+                    functionName: "prizePerWinner",
+                },
+                {
+                    address: contractAddress,
+                    abi: contractAbi,
+                    functionName: "players",
+                    args: [address as Address],
+                },
+            ],
+            account: address as `0x${string}` | undefined,
+        });
 
     const {
         data: hash,
@@ -132,7 +130,7 @@ const ChallengeWon = () => {
             return;
         }
         setIsWinner(false);
-    }, [readData, address]);
+    }, [readData, address, t]);
 
     //For start challenge
     useEffect(() => {
@@ -155,7 +153,7 @@ const ChallengeWon = () => {
                 duration: 3000,
             });
         }
-    }, [isSuccess, withdrawReceiptError]);
+    }, [isSuccess, withdrawReceiptError, refetch, t]);
 
     return (
         <>

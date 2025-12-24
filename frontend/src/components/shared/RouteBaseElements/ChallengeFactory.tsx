@@ -11,7 +11,7 @@ import { factoryAbi } from "@/constants/ChallengeFactoryInfo";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { decodeEventLog, parseEther } from "viem";
+import { decodeEventLog, parseEther, TransactionReceipt } from "viem";
 import { _toLowerCase } from "zod/v4/core";
 
 import { StandardMerkleTree } from "@openzeppelin/merkle-tree";
@@ -165,7 +165,7 @@ const ChallengeFactory = () => {
         });
     };
 
-    const getContractAddressFromLogs = (receipt: any) => {
+    const getContractAddressFromLogs = (receipt: TransactionReceipt) => {
         if (!receipt?.logs) return null;
 
         // Replace with your actual event ABI
@@ -288,7 +288,14 @@ const ChallengeFactory = () => {
                 duration: 3000,
             });
         }
-    }, [isSuccess, isConfirming, errorConfirmation]);
+    }, [
+        isSuccess,
+        isConfirming,
+        errorConfirmation,
+        challengeIpfsCid,
+        receipt,
+        t,
+    ]);
 
     return (
         <div className="flex-center flex-col gap-10 ">

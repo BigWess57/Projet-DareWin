@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import {
-    tokenAbi /*, tokenAddress*/,
     feeTierBronzeCap,
     feeTierSilverCap,
     feeTierGoldCap,
@@ -14,8 +13,7 @@ import {
 } from "@/constants/TokenInfo";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-import { formatEther } from "viem";
-import { useAccount, useBalance, useReadContract } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { usePathname } from "@/src/i18n/navigation";
 
 import { Home, Zap, PencilRuler } from "lucide-react";

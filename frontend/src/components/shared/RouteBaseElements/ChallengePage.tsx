@@ -30,7 +30,7 @@ const ChallengePage = ({ contractAddress }: { contractAddress: Address }) => {
         data: readData,
         error: error,
         isPending: IsPending,
-        refetch: refetch,
+        refetch,
     } = useReadContracts({
         contracts: [
             {
@@ -122,7 +122,7 @@ const ChallengePage = ({ contractAddress }: { contractAddress: Address }) => {
         // duration
         const dur = readData[2].result;
         setDuration(dur as bigint);
-    }, [readData, address]);
+    }, [readData, address, refetch]);
 
     /********* DISPLAY **********/
     return (
