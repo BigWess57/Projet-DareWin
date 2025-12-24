@@ -1,5 +1,9 @@
 import { hardhat, sepolia, holesky, baseSepolia, Chain } from "viem/chains";
 
+//MODIFY THIS ONE ONLY IF NEEDED
+//To set if we are forking the mainnet in the local node
+const FORKED_LOCAL_NODE = true;
+
 const SUPPORTED_CHAINS = {
     baseSepolia,
     sepolia,
@@ -39,20 +43,25 @@ const WETH_ADDRESS: Record<ChainKey, `0x${string}`> = {
     hardhat: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", //Forked local mainnet
 };
 
+//Used ONLY if we are in forked mainnet (local node)
+const STARTING_FORKED_MAINNET_BLOCK = 23910926n;
+
 const TOKEN_ADDRESSES: Record<ChainKey, `0x${string}`> = {
     baseSepolia: "0xF5b33B18eF224357aFB475Cbc75cae3084da46FA",
     sepolia: "0xB32F99D77195738d7dfE0502Bc0EDc6F1158ECD3",
     holesky: "0x93C1101D99048DFF77844B32081729f39F501903",
-    // hardhat: "0x5FbDB2315678afecb367f032d93F642f64180aa3", // localnet
-    hardhat: "0xd31d3e1F60552ba8B35aA3Bd17c949404fdd12c4", // forked local mainnet
+    hardhat: FORKED_LOCAL_NODE
+        ? "0xd31d3e1F60552ba8B35aA3Bd17c949404fdd12c4"
+        : "0x5FbDB2315678afecb367f032d93F642f64180aa3",
 };
 
 const CHALLENGE_FACTORY_ADDRESSES: Record<ChainKey, `0x${string}`> = {
     baseSepolia: "0x0AA78A34a0f93418bBFe502A765740Ab54E5107E",
     sepolia: "0xc665D2331f7CA33869F5F0EE563c5C5C2554D919",
     holesky: "0x411F9f26C89CFe22a5f952A1995C4250f383A387",
-    // hardhat: "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853", // localnet
-    hardhat: "0xd23BF69104cC640E68ebeE83B9833d6Db6F220E6", // forked local mainnet
+    hardhat: FORKED_LOCAL_NODE
+        ? "0xd23BF69104cC640E68ebeE83B9833d6Db6F220E6"
+        : "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
 };
 
 //subgraph URL for each chain
@@ -88,6 +97,11 @@ export const tokenAddress: `0x${string}` = TOKEN_ADDRESSES[DEFAULT_CHAIN];
 export const factoryAddress: `0x${string}` =
     CHALLENGE_FACTORY_ADDRESSES[DEFAULT_CHAIN];
 
+//Set to specific block ONLY if we are in forked mainnet (local node)
+export const startingBlockForEvents =
+    DEFAULT_CHAIN === "hardhat" && FORKED_LOCAL_NODE
+        ? STARTING_FORKED_MAINNET_BLOCK
+        : 0n;
 export const currentSubgraphURL: string = SUBGRAPH_URLS[DEFAULT_CHAIN];
 
 // Optional: Export all chains as array if needed elsewhere

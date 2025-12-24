@@ -15,12 +15,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/src/components/ui/select";
+import { Challenge } from "../RouteBaseElements/ChallengeList";
 
 interface PaginatedTabContentProps {
-    items: any[];
+    items: Challenge[];
     itemsPerPage: number;
     handleItemsPerPageChange: (value: string) => void;
-    renderItem: (item: any) => React.ReactNode;
+    renderItem: (item: Challenge) => React.ReactNode;
     emptyMessage?: string;
 }
 

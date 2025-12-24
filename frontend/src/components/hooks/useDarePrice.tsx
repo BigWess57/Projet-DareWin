@@ -157,10 +157,10 @@ export function useDarePrice() {
 
     useEffect(() => {
         refetch();
-        // Poll every 10 seconds
-        const interval = setInterval(refetch, 10000);
+        // Poll every 5 seconds
+        const interval = setInterval(refetch, 5000);
         return () => clearInterval(interval);
-    }, []);
+    }, [refetch]);
 
     return { price, pairAddress, isLoading, isError, refetch };
 }

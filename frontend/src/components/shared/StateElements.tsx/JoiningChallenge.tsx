@@ -214,7 +214,7 @@ const JoiningChallenge = ({
             // Additionnally, GET RECENT ENTRIES BY RPC (In case TheGraph is slow)
             const Logs = (await retriveEventsFromBlock(
                 contractAddress,
-                "event PlayerJoined(address player)",
+                "event PlayerJoined(address player)", 
                 "event PlayerWithdrawn(address player)",
             )) as GetLogsReturnType<(typeof EVENT_ABIS)[number]>;
 

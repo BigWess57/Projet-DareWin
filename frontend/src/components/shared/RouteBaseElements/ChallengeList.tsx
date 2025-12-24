@@ -197,9 +197,9 @@ const ChallengeList = () => {
             );
 
             // FOR GETTING RECENT ENTRIES BY RPC (In case TheGraph is slow)
-            // Using getLogs() from viem
+            // Using getLogs() from viem.
+            // ONLY DO ON TESTNET (not on local hardhat node, no need)
 
-            // ONLY DO ON TESTNET (not on local hardhat node)
             if (process.env.NEXT_PUBLIC_DEFAULT_CHAIN === "hardhat") {
                 challengesCreatedInfo = await buildChallengesObject(
                     challengeCreatedAddresses,

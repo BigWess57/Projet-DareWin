@@ -124,8 +124,8 @@
         {
             "label": "Deploy Base contracts (Fork)",
             "type": "shell",
-            // Added the extra addLiquidityDareEth script here
-            "command": "sleep 8 && npx hardhat run scripts/deployTokenAndFactory.js --network localhost && npx hardhat run scripts/addLiquidityDareEth.js --network localhost",
+            // Synchronize timestamp with current time + deploy Token and factory + add liquidity DARE/ETH (Uniswap v2)
+            "command": "sleep 8 && npx hardhat run scripts/setupCurrentTime.js --network localhost && npx hardhat run scripts/deployTokenAndFactory.js --network localhost && npx hardhat run scripts/addLiquidityDareEth.js --network localhost",
             "options": {
                 "cwd": "${workspaceFolder}/backend"
             },
@@ -196,7 +196,7 @@
             ],
             "group": {
                 "kind": "build",
-                "isDefault": true
+                "isDefault": false
             }
         },
         {
@@ -209,7 +209,7 @@
             ],
             "group": {
                 "kind": "build",
-                "isDefault": false
+                "isDefault": true
             }
         }
     ]

@@ -1,5 +1,5 @@
 "use client";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { contractAbi } from "@/constants/ChallengeInfo";
@@ -12,6 +12,11 @@ import { DurationContext } from "./RouteBaseElements/ChallengePage";
 import VotingForWinner from "./StateElements.tsx/VotingForWinner";
 import ChallengeWon from "./StateElements.tsx/ChallengeWon";
 import { ContractAddressContext } from "./RouteBaseElements/ChallengePage";
+
+const calculateTimeLeft = (startingTime: bigint, duration: bigint) => {
+    const now = Math.floor(Date.now() / 1000);
+    return Math.max(Number(startingTime) + Number(duration) - Number(now), 0);
+};
 
 //State Enum
 enum WorkflowStatus {
@@ -63,16 +68,11 @@ const ChallengeState = () => {
     const [currentDisplayStatus, setCurrentDisplayStatus] =
         useState<WorkflowStatus>(WorkflowStatus.GatheringPlayers);
 
-    const calculateTimeLeft = (startingTime: bigint) => {
-        const now = Math.floor(Date.now() / 1000);
-        return Math.max(Number(startingTime) + Number(duration) - now, 0);
-    };
-    const refreshDisplayStatus = async () => {
+    const refreshDisplayStatus = useCallback(async () => {
         //If current State is Ongoing challenge, get the start of the challenge. If the challenge is over, set the state to "Voting"
         if (status === WorkflowStatus.OngoingChallenge) {
-            // const startingTime = await getChallengeStartEvents();
             if (
-                calculateTimeLeft(challengeStart) == 0 &&
+                calculateTimeLeft(challengeStart, duration) == 0 &&
                 challengeStart !== 0n
             ) {
                 setCurrentDisplayStatus(WorkflowStatus.VotingForWinner);
@@ -80,13 +80,13 @@ const ChallengeState = () => {
             }
         }
         setCurrentDisplayStatus(status as WorkflowStatus);
-    };
+    }, [status, challengeStart, duration]);
 
     /**************** Use Effect******** */
     useEffect(() => {
         refetchStartTime();
         refreshDisplayStatus();
-    }, [status, duration, refetchStartTime]);
+    }, [status, duration, refetchStartTime, refreshDisplayStatus]);
 
     useEffect(() => {
         if (!challengeStartTime) return;

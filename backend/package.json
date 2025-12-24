@@ -4,6 +4,7 @@
         "hardhatNode:fork": "cross-env FORKING_ENABLED=true npx hardhat node"
     },
     "devDependencies": {
+        "@nomicfoundation/hardhat-network-helpers": "^1.1.2",
         "@nomicfoundation/hardhat-toolbox": "^6.0.0",
         "@openzeppelin/merkle-tree": "^1.0.8",
         "cross-env": "^10.1.0",

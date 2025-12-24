@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 import { QueryObserverResult, RefetchOptions } from "@tanstack/react-query";
 
-import { ChallengeTimer } from "./ChallengeTimer";
+import { ChallengeTimer } from "../Miscellaneous/ChallengeTimer";
 import { ContractAddressContext } from "../RouteBaseElements/ChallengePage";
 import { CurrentTransactionToast } from "../Miscellaneous/CurrentTransactionToast";
 import { getPlayers, PlayerEvent } from "@/utils/apiFunctions";
@@ -550,16 +550,16 @@ const VotingForWinner = ({
                                         !isPlayer
                                             ? "bg-gray-700 text-gray-500 cursor-not-allowed"
                                             : hasVoted
-                                                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                                                : "bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110"
+                                              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                                              : "bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:brightness-110"
                                     }
                                     `}
                                     >
                                         {hasVoted
                                             ? t("already_voted")
                                             : !isPlayer
-                                                ? t("not_a_player")
-                                                : t("vote_button")}
+                                              ? t("not_a_player")
+                                              : t("vote_button")}
                                     </Button>
                                 </div>
 

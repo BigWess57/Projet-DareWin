@@ -30,7 +30,7 @@ import {
     writeContract,
 } from "wagmi/actions";
 import { config } from "@/src/app/RainbowKitAndWagmiProvider";
-import { useDarePrice } from "./useDarePrice";
+import { useDarePrice } from "@/src/components/hooks/useDarePrice";
 import { toast } from "sonner";
 import { CurrentTransactionToast } from "./CurrentTransactionToast";
 import { useTranslations } from "next-intl";
@@ -383,8 +383,9 @@ const SwapWidget = () => {
                     ),
                     duration: 3000,
                 });
-            } catch (err: any) {
+            } catch (err) {
                 if (
+                    err instanceof Error &&
                     err.message
                         ?.toLowerCase()
                         .includes("user rejected the request")
@@ -408,7 +409,6 @@ const SwapWidget = () => {
                             <div>Tx hash : {txHash}</div>
                         </div>
                     ),
-                    // isClosable: true,
                 });
             } finally {
                 setIsSwapping(false);
@@ -578,8 +578,10 @@ const SwapWidget = () => {
 
                     setPayAmount(formattedValue);
                     setIsInsufficientBalance(inputNeeded > maxBalance);
-                } catch (err: any) {
-                    const msg = err?.message?.toLowerCase() || "";
+                } catch (err) {
+                    const msg =
+                        (err instanceof Error && err.message.toLowerCase()) ||
+                        "";
                     // Catching the specific Uniswap V2 math errors about Insufficient Liquidity
                     if (
                         msg.includes("insufficient_liquidity") ||
@@ -590,8 +592,9 @@ const SwapWidget = () => {
                     }
                     throw err;
                 }
-            } catch (error: any) {
-                const errorMsg = error.message || "";
+            } catch (error) {
+                const errorMsg =
+                    (error instanceof Error && error.message) || "";
                 // Consolidating all liquidity-related errors into one UI message
                 if (
                     errorMsg.includes("Insufficient liquidity") ||

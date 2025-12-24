@@ -1,6 +1,6 @@
 "use client";
 
-import { useFieldArray, useForm } from "react-hook-form";
+import { FieldError, useFieldArray, useForm } from "react-hook-form";
 import { useTranslations } from "next-intl";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -124,8 +124,12 @@ const ChallengeForm = ({
     // Access errors directly
     const groupErrors = form.formState.errors.groupAddresses;
     // Helper to safely get the root message (handles Array vs Object structure)
+    // const groupErrorMessage =
+    // (groupErrors as any)?.message || (groupErrors as any)?.root?.message;
+    // We use 'unknown' first to tell TS we are intentionally changing the type structure
     const groupErrorMessage =
-        (groupErrors as any)?.message || (groupErrors as any)?.root?.message;
+        (groupErrors as unknown as FieldError)?.message ||
+        (groupErrors as unknown as { root?: FieldError })?.root?.message;
 
     return (
         <Form {...form}>
