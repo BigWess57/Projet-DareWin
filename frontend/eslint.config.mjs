@@ -36,6 +36,18 @@ export default defineConfig([
                 },
             ],
             "react/react-in-jsx-scope": "off",
+            // Dapp components often bloat with ABI types and useEffects.
+            // If it hits 300, it likely needs to be split into sub-components or hooks.
+            "max-lines": [
+                "warn",
+                { max: 300, skipBlankLines: true, skipComments: true },
+            ],
+            // "max-lines-per-function": [
+            //     "warn",
+            //     { max: 100, skipBlankLines: true, skipComments: true },
+            // ],
+            // complexity: ["warn", 10], // 15 is generous; try 10 for strict mode
+            // "max-depth": ["warn", 3],
         },
     },
 ]);

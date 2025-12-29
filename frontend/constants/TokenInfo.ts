@@ -1536,3 +1536,61 @@ export const uniswapV2Router02_Abi = [
         type: "function",
     },
 ] as const;
+
+// Minimal ABIs
+export const FACTORY_ABI = [
+    {
+        constant: true,
+        inputs: [
+            {
+                internalType: "address",
+                name: "tokenA",
+                type: "address",
+            },
+            {
+                internalType: "address",
+                name: "tokenB",
+                type: "address",
+            },
+        ],
+        name: "getPair",
+        outputs: [
+            {
+                internalType: "address",
+                name: "pair",
+                type: "address",
+            },
+        ],
+        payable: false,
+        stateMutability: "view",
+        type: "function",
+    },
+] as const;
+
+export const PAIR_ABI = [
+    {
+        constant: true,
+        inputs: [],
+        name: "getReserves",
+        outputs: [
+            {
+                internalType: "uint112",
+                name: "reserve0",
+                type: "uint112",
+            },
+            {
+                internalType: "uint112",
+                name: "reserve1",
+                type: "uint112",
+            },
+            {
+                internalType: "uint32",
+                name: "blockTimestampLast",
+                type: "uint32",
+            },
+        ],
+        payable: false,
+        stateMutability: "view",
+        type: "function",
+    },
+] as const;

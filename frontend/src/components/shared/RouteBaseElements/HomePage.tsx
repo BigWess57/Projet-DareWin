@@ -1,10 +1,13 @@
+"use client";
 import Link from "next/link";
 
 import { useTranslations } from "next-intl";
-import SwapWidget from "../Miscellaneous/SwapWidget";
+import SwapWidget from "../Miscellaneous/Swap/SwapWidget";
+import { useAccount } from "wagmi";
 
 const HomePage = () => {
     const t = useTranslations("HomePage");
+    const { address } = useAccount();
 
     return (
         <div>
@@ -62,7 +65,8 @@ const HomePage = () => {
 
                 {/* Swap Component Injection */}
                 <div className="w-full flex justify-center z-20">
-                    <SwapWidget />
+                    {/* All state resets to initial values automatically on user change*/}
+                    <SwapWidget key={address} />
                 </div>
             </section>
 

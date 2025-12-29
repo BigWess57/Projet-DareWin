@@ -1,82 +1,23 @@
+import { useState, useEffect } from "react";
+
 import {
     tokenAddress,
     uniswapV2FactoryAddress,
     wethAddress,
 } from "@/config/networks";
-import { useState, useEffect } from "react";
+import { FACTORY_ABI, PAIR_ABI } from "@/constants/TokenInfo";
+
+import { TokenPrice } from "@/utils/types";
+
 import { zeroAddress, isAddress, Address, formatEther } from "viem";
 import { useReadContract } from "wagmi";
 
-// Minimal ABIs
-const FACTORY_ABI = [
-    {
-        constant: true,
-        inputs: [
-            {
-                internalType: "address",
-                name: "tokenA",
-                type: "address",
-            },
-            {
-                internalType: "address",
-                name: "tokenB",
-                type: "address",
-            },
-        ],
-        name: "getPair",
-        outputs: [
-            {
-                internalType: "address",
-                name: "pair",
-                type: "address",
-            },
-        ],
-        payable: false,
-        stateMutability: "view",
-        type: "function",
-    },
-] as const;
-
-const PAIR_ABI = [
-    {
-        constant: true,
-        inputs: [],
-        name: "getReserves",
-        outputs: [
-            {
-                internalType: "uint112",
-                name: "reserve0",
-                type: "uint112",
-            },
-            {
-                internalType: "uint112",
-                name: "reserve1",
-                type: "uint112",
-            },
-            {
-                internalType: "uint32",
-                name: "blockTimestampLast",
-                type: "uint32",
-            },
-        ],
-        payable: false,
-        stateMutability: "view",
-        type: "function",
-    },
-] as const;
-
-type TokenPrice = {
-    perEth: number;
-    perDare: number;
-    formattedFromEthToDare: string;
-    formattedFromDareToEth: string;
-};
-
-export function useDarePrice() {
+export default function useGetPrices() {
     const [pairAddress, setPairAddress] = useState<Address | undefined>();
-    const [price, setPrice] = useState<TokenPrice | null>(null);
+    const [darePrice, setDarePrice] = useState<TokenPrice | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isError, setIsError] = useState(false);
+    const [ethPrice, setEthPrice] = useState<number | null>(null); // State for Real ETH Price
 
     // 1. Get pair address from factory
     const { data: pairAddr } = useReadContract({
@@ -141,7 +82,7 @@ export function useDarePrice() {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 10,
             });
-            setPrice({
+            setDarePrice({
                 perEth: pricePerEth, // 1 ETH = X DARE
                 perDare: pricePerDare, // 1 DARE = X ETH
                 formattedFromEthToDare: `1 ETH = ${formattedEthValue} DARE`,
@@ -155,6 +96,31 @@ export function useDarePrice() {
         }
     }, [reserves, pairAddress]);
 
+    // --- FETCH REAL ETH PRICE ---
+    useEffect(() => {
+        const fetchPrice = async () => {
+            try {
+                // Using CoinGecko Free API
+                const response = await fetch(
+                    "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
+                );
+                const data = await response.json();
+                if (data?.ethereum?.usd) {
+                    setEthPrice(data.ethereum.usd);
+                }
+            } catch (error) {
+                console.log(error);
+                // Null if API fails
+                setEthPrice(null);
+            }
+        };
+
+        fetchPrice();
+        // Poll every 60 seconds
+        const interval = setInterval(fetchPrice, 60000);
+        return () => clearInterval(interval);
+    }, []);
+
     useEffect(() => {
         refetch();
         // Poll every 5 seconds
@@ -162,5 +128,5 @@ export function useDarePrice() {
         return () => clearInterval(interval);
     }, [refetch]);
 
-    return { price, pairAddress, isLoading, isError, refetch };
+    return { ethPrice, darePrice, pairAddress, isLoading, isError, refetch };
 }

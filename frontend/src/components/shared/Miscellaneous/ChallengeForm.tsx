@@ -31,8 +31,6 @@ export const getFormSchema = (t: ReturnType<typeof useTranslations>) =>
                 .refine((val) => parseFloat(val) > 0, {
                     message: t("bid_min_0"),
                 }),
-            // maxPlayers: z.coerce.number().min(2, t('max_players_min')),
-            // isGroup: z.boolean(),
             groupAddresses: z.array(
                 z.object({
                     address: z
@@ -54,10 +52,8 @@ export const getFormSchema = (t: ReturnType<typeof useTranslations>) =>
                     Number(hours) * 3600 +
                     Number(minutes) * 60 +
                     Number(seconds),
-                // maxPlayers,
                 bid,
                 description,
-                // isGroup,
                 groupAddresses,
             }),
         )
@@ -106,26 +102,19 @@ const ChallengeForm = ({
             hours: "0",
             minutes: "1",
             seconds: "0",
-            // maxPlayers: 5,
             bid: "",
             description: "",
-            // isGroup: true,
             groupAddresses: [],
         },
     });
-    // const { formState: { errors } } = form;
     const { fields, append, remove } = useFieldArray({
         control: form.control,
         name: "groupAddresses",
     });
 
-    // const { control, handleSubmit, formState: { errors } } = form; // Destructure 'errors' here!
-
     // Access errors directly
     const groupErrors = form.formState.errors.groupAddresses;
-    // Helper to safely get the root message (handles Array vs Object structure)
-    // const groupErrorMessage =
-    // (groupErrors as any)?.message || (groupErrors as any)?.root?.message;
+
     // We use 'unknown' first to tell TS we are intentionally changing the type structure
     const groupErrorMessage =
         (groupErrors as unknown as FieldError)?.message ||
@@ -331,7 +320,6 @@ const ChallengeForm = ({
                         </div>
                     </div>
                 </FormItem>
-                {/* )} */}
 
                 {/* Submit Button */}
                 <Button

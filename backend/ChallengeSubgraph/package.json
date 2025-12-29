@@ -7,8 +7,8 @@
         "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ challenge",
         "create-local": "graph create --node http://localhost:8020/ challenge",
         "remove-local": "graph remove --node http://localhost:8020/ challenge",
-        "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 challenge --network hardhat",
-        "deploy-local-fork": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 challenge --network mainnetFork",
+        "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 challenge --network hardhat --version-label v0",
+        "deploy-local-fork": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 challenge --network mainnetFork --version-label v0",
         "test": "graph test"
     },
     "dependencies": {
